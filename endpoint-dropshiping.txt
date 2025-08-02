@@ -1,0 +1,36 @@
+Claro! Aqui está a lista completa e atualizada para dropshipping na API AliExpress, incluindo busca de produtos e demais funções essenciais:
+
+Autenticação
+https://oauth.aliexpress.com/authorize
+
+https://oauth.aliexpress.com/token
+
+Produtos (Busca e Detalhes)
+aliexpress.solution.product.list — busca/lista produtos para dropshipping
+
+aliexpress.solution.product.info.get — detalhes do produto
+
+aliexpress.solution.product.schema.get — atributos/esquema do produto
+
+Pedidos
+aliexpress.trade.create — criar pedido
+
+aliexpress.trade.pay — pagar pedido
+
+aliexpress.trade.get — consultar status/detalhes do pedido
+
+aliexpress.trade.cancel — cancelar pedido
+
+aliexpress.trade.refund.submit — solicitar reembolso
+
+Logística
+aliexpress.logistics.buyer.tracking — rastrear pedido
+
+aliexpress.logistics.get — informações logísticas
+
+aliexpress.logistics.redefining.getonlinelogisticsservicelist — métodos de envio disponíveis
+
+Categorias e Atributos (Auxiliar para busca/filtros)
+aliexpress.category.redefining.getallchildattributesresult
+
+aliexpress.category.redefining.getchildattributesresult

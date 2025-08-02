@@ -32,17 +32,7 @@ print(f"🔑 APP_SECRET carregado: {'✅' if APP_SECRET else '❌'} - Valor: {AP
 # Armazenamento simples de tokens em memória (pode ser trocado por banco depois)
 aliexpress_tokens = {}
 
-# Simular tokens para desenvolvimento (remover em produção)
-def setup_dev_tokens():
-    """Configurar tokens simulados para desenvolvimento"""
-    aliexpress_tokens['access_token'] = 'dev_access_token_123456'
-    aliexpress_tokens['refresh_token'] = 'dev_refresh_token_123456'
-    aliexpress_tokens['expires_in'] = 3600
-    print("🔧 Tokens de desenvolvimento configurados")
-    print("⚠️  Usando tokens simulados - Configure credenciais reais para produção")
-
-# Configurar tokens de desenvolvimento
-setup_dev_tokens()
+# SEM TOKENS FICTÍCIOS - APENAS TOKENS REAIS
 
 def generate_sign(params):
     """Gerar assinatura MD5 para a API do AliExpress"""
@@ -68,7 +58,7 @@ def search_aliexpress_official(query):
         # Parâmetros da requisição
         timestamp = str(int(time.time() * 1000))
         params = {
-            'method': 'aliexpress.ds.product.search',  # Método de busca de produtos
+            'method': 'aliexpress.ds.product.search',  # Método correto para busca
             'app_key': APP_KEY,
             'timestamp': timestamp,
             'format': 'json',
@@ -77,7 +67,6 @@ def search_aliexpress_official(query):
             'keywords': query,
             'page_size': '20',
             'page_no': '1',
-            'sort': 'SALE_PRICE_ASC',  # Ordenar por preço
         }
         
         # Gerar assinatura
@@ -115,138 +104,20 @@ def search_aliexpress_official(query):
                 return products
             else:
                 print(f"❌ Estrutura de resposta inesperada: {data}")
-                # Se não conseguirmos produtos reais, vamos tentar uma abordagem alternativa
-                return _get_fallback_products(query)
+                # RETORNAR LISTA VAZIA - NADA DE FICTÍCIO
+                return []
         else:
             print(f"❌ Erro HTTP: {response.status_code}")
             print(f"❌ Resposta: {response.text}")
-            return _get_fallback_products(query)
+            # RETORNAR LISTA VAZIA - NADA DE FICTÍCIO
+            return []
             
     except Exception as e:
         print(f"❌ Erro na busca oficial: {e}")
-        return _get_fallback_products(query)
+        # RETORNAR LISTA VAZIA - NADA DE FICTÍCIO
+        return []
 
-def _get_fallback_products(query):
-    """Produtos de fallback com imagens reais do AliExpress"""
-    print(f"🔄 Usando produtos de fallback para: {query}")
-    
-    # Produtos reais com imagens do AliExpress
-    real_products = {
-        'smartphone': [
-            {
-                'id': '1005005640660666',
-                'title': 'Smartphone Android 6.1" 4GB RAM 64GB ROM',
-                'price': 'R$ 299,90',
-                'original_price': 'R$ 399,90',
-                'image': 'https://ae01.alicdn.com/kf/S1f8c8c8c8c8c8c8c8c8c8c8c8c8c8c8.jpg_640x640q90.jpg',
-                'rating': 4.5,
-                'reviews': 1234,
-                'seller': 'Official Store',
-                'aliexpress_url': 'https://www.aliexpress.com/item/1005005640660666.html'
-            },
-            {
-                'id': '1005005640660667',
-                'title': 'iPhone 13 Pro Max 256GB 5G Smartphone',
-                'price': 'R$ 4.999,90',
-                'original_price': 'R$ 5.999,90',
-                'image': 'https://ae01.alicdn.com/kf/S2f8c8c8c8c8c8c8c8c8c8c8c8c8c8c8.jpg_640x640q90.jpg',
-                'rating': 4.8,
-                'reviews': 567,
-                'seller': 'Apple Store',
-                'aliexpress_url': 'https://www.aliexpress.com/item/1005005640660667.html'
-            }
-        ],
-        'smartwatch': [
-            {
-                'id': '1005005640660668',
-                'title': 'Smartwatch Fitness Tracker Heart Rate Monitor',
-                'price': 'R$ 89,90',
-                'original_price': 'R$ 129,90',
-                'image': 'https://ae01.alicdn.com/kf/S3f8c8c8c8c8c8c8c8c8c8c8c8c8c8c8.jpg_640x640q90.jpg',
-                'rating': 4.3,
-                'reviews': 890,
-                'seller': 'Fitness Store',
-                'aliexpress_url': 'https://www.aliexpress.com/item/1005005640660668.html'
-            }
-        ],
-        'roupa': [
-            {
-                'id': '1005005640660669',
-                'title': 'Camiseta Nike Dri-FIT Performance',
-                'price': 'R$ 89,90',
-                'original_price': 'R$ 129,90',
-                'image': 'https://ae01.alicdn.com/kf/S4f8c8c8c8c8c8c8c8c8c8c8c8c8c8c8.jpg_640x640q90.jpg',
-                'rating': 4.6,
-                'reviews': 456,
-                'seller': 'Nike Store',
-                'aliexpress_url': 'https://www.aliexpress.com/item/1005005640660669.html'
-            },
-            {
-                'id': '1005005640660670',
-                'title': 'Vestido Feminino Elegante Moda 2024',
-                'price': 'R$ 69,90',
-                'original_price': 'R$ 99,90',
-                'image': 'https://ae01.alicdn.com/kf/S5f8c8c8c8c8c8c8c8c8c8c8c8c8c8c8.jpg_640x640q90.jpg',
-                'rating': 4.4,
-                'reviews': 789,
-                'seller': 'Fashion Store',
-                'aliexpress_url': 'https://www.aliexpress.com/item/1005005640660670.html'
-            }
-        ],
-        'tenis': [
-            {
-                'id': '1005005640660671',
-                'title': 'Tênis Nike Air Max 270 Running',
-                'price': 'R$ 199,90',
-                'original_price': 'R$ 299,90',
-                'image': 'https://ae01.alicdn.com/kf/S6f8c8c8c8c8c8c8c8c8c8c8c8c8c8c8.jpg_640x640q90.jpg',
-                'rating': 4.7,
-                'reviews': 345,
-                'seller': 'Nike Store',
-                'aliexpress_url': 'https://www.aliexpress.com/item/1005005640660671.html'
-            }
-        ]
-    }
-    
-    # Encontrar produtos baseados na query
-    products = []
-    query_lower = query.lower()
-    
-    for category, category_products in real_products.items():
-        if category in query_lower or any(word in query_lower for word in ['phone', 'cell', 'mobile', 'smart'] if category == 'smartphone'):
-            products.extend(category_products)
-    
-    # Se não encontrou produtos específicos, usar produtos gerais
-    if not products:
-        # Produtos gerais com imagens reais
-        general_products = [
-            {
-                'id': '1005005640660672',
-                'title': 'Fone de Ouvido Bluetooth Wireless',
-                'price': 'R$ 49,90',
-                'original_price': 'R$ 79,90',
-                'image': 'https://ae01.alicdn.com/kf/S7f8c8c8c8c8c8c8c8c8c8c8c8c8c8c8.jpg_640x640q90.jpg',
-                'rating': 4.2,
-                'reviews': 678,
-                'seller': 'Audio Store',
-                'aliexpress_url': 'https://www.aliexpress.com/item/1005005640660672.html'
-            },
-            {
-                'id': '1005005640660673',
-                'title': 'Câmera Digital 4K Ultra HD',
-                'price': 'R$ 399,90',
-                'original_price': 'R$ 499,90',
-                'image': 'https://ae01.alicdn.com/kf/S8f8c8c8c8c8c8c8c8c8c8c8c8c8c8c8.jpg_640x640q90.jpg',
-                'rating': 4.6,
-                'reviews': 234,
-                'seller': 'Camera Store',
-                'aliexpress_url': 'https://www.aliexpress.com/item/1005005640660673.html'
-            }
-        ]
-        products = general_products
-    
-    print(f"🎯 Encontrados {len(products)} produtos reais para: {query}")
-    return products
+# FUNÇÃO FICTÍCIA REMOVIDA - NADA DE PRODUTOS FALSOS
 
 # === 1. Gerar URL de autorização OAuth2 ===
 def generate_aliexpress_auth_url():

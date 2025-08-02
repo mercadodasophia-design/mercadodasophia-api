@@ -149,6 +149,8 @@ def exchange_code_for_token(code):
         'client_secret': APP_SECRET,
         'redirect_uri': CALLBACK_URL,
         'code': code,
+        'format': 'json',
+        'v': '2.0',
     }
     headers = {
         'Content-Type': 'application/x-www-form-urlencoded',

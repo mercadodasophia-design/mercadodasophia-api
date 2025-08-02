@@ -25,7 +25,7 @@ API_BASE_URL = 'https://api-sg.aliexpress.com/sync'
 
 # URL de callback dinâmica para produção
 RENDER_EXTERNAL_URL = os.getenv('RENDER_EXTERNAL_URL')
-CALLBACK_URL = RENDER_EXTERNAL_URL + '/api/aliexpress/oauth-callback' if RENDER_EXTERNAL_URL else 'https://mercadodasophia.com/callback'
+CALLBACK_URL = RENDER_EXTERNAL_URL + '/api/aliexpress/oauth-callback' if RENDER_EXTERNAL_URL else 'https://mercadodasophia-api.onrender.com/api/aliexpress/oauth-callback'
 
 print(f"🔑 APP_KEY carregado: {'✅' if APP_KEY else '❌'} - Valor: {APP_KEY}")
 print(f"🔑 APP_SECRET carregado: {'✅' if APP_SECRET else '❌'} - Valor: {APP_SECRET[:10] if APP_SECRET else 'N/A'}...")
@@ -65,16 +65,14 @@ def search_aliexpress_official(query):
         # Parâmetros da requisição
         timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
         params = {
-            'method': 'aliexpress.solution.product.list',  # Método correto do documento
+            'method': 'aliexpress.solution.product.list',
             'app_key': APP_KEY,
             'access_token': access_token,
             'timestamp': timestamp,
-            'format': 'json',
-            'v': '2.0',
             'sign_method': 'md5',
-            'keywords': query,
             'page_size': '20',
             'page_index': '1',
+            'keywords': query,
         }
         
         # Gerar assinatura

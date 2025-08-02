@@ -148,15 +148,9 @@ def exchange_code_for_token(code):
         'app_key': APP_KEY,
         'app_secret': APP_SECRET,
         'code': code,
-        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-        'sign_method': 'md5',
         'format': 'json',
         'v': '2.0',
     }
-    
-    # Gerar assinatura MD5
-    sign = generate_sign(data)
-    data['sign'] = sign
     
     headers = {
         'Content-Type': 'application/x-www-form-urlencoded',

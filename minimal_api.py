@@ -142,7 +142,7 @@ def aliexpress_oauth_url():
 
 # === 2. Trocar código por access_token ===
 def exchange_code_for_token(code):
-    token_url = 'https://api-sg.aliexpress.com/oauth/token'
+    token_url = 'https://api-gateway.aliexpress.com/oauth2/access_token'
     data = {
         'grant_type': 'authorization_code',
         'client_id': APP_KEY,

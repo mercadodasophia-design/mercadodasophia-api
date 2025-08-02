@@ -58,7 +58,7 @@ def search_aliexpress_official(query):
         # Parâmetros da requisição
         timestamp = str(int(time.time() * 1000))
         params = {
-            'method': 'aliexpress.ds.product.search',  # Método correto para busca
+            'method': 'aliexpress.solution.product.list',  # Método correto para busca
             'app_key': APP_KEY,
             'timestamp': timestamp,
             'format': 'json',

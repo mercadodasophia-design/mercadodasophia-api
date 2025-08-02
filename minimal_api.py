@@ -157,6 +157,37 @@ def exchange_code_for_token(code):
     try:
         print(f"🔄 Fazendo requisição para: {token_url}")
         print(f"📝 Dados: {data}")
+        print(f"📝 Headers: {headers}")
+        
+        resp = requests.post(token_url, data=data, headers=headers, timeout=30)
+        
+        print(f"📊 Status Code: {resp.status_code}")
+        print(f"📄 Response Headers: {dict(resp.headers)}")
+        print(f"📄 Response Text: {resp.text[:1000]}...")
+        
+        if resp.status_code != 200:
+            print(f"❌ Erro HTTP: {resp.status_code}")
+            print(f"❌ Resposta: {resp.text}")
+            raise Exception(f"Erro HTTP {resp.status_code}: {resp.text}")
+        
+        # Tentar fazer parse do JSON
+        try:
+            return resp.json()
+        except Exception as json_error:
+            print(f"❌ Erro ao fazer parse do JSON: {json_error}")
+            print(f"📄 Conteúdo da resposta: {resp.text}")
+            raise Exception(f"Resposta inválida do AliExpress: {resp.text}")
+            
+    except requests.exceptions.RequestException as e:
+        print(f"❌ Erro de conexão: {e}")
+        raise Exception(f"Erro de conexão com AliExpress: {e}")
+    except Exception as e:
+        print(f"❌ Erro geral: {e}")
+        raise e
+    
+    try:
+        print(f"🔄 Fazendo requisição para: {token_url}")
+        print(f"📝 Dados: {data}")
         
         resp = requests.post(token_url, data=data, headers=headers, timeout=30)
         

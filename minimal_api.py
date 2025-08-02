@@ -4,6 +4,7 @@ import requests
 import hashlib
 import time
 import os
+from datetime import datetime
 from dotenv import load_dotenv
 from urllib.parse import urlencode
 
@@ -55,18 +56,25 @@ def search_aliexpress_official(query):
     try:
         print(f"🔍 Buscando produtos reais via API oficial: {query}")
         
+        # Verificar se temos access_token
+        access_token = aliexpress_tokens.get('access_token')
+        if not access_token:
+            print("❌ Sem access_token - precisa fazer OAuth2 primeiro")
+            return []
+        
         # Parâmetros da requisição
-        timestamp = str(int(time.time() * 1000))
+        timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
         params = {
-            'method': 'aliexpress.solution.product.list',  # Método correto para busca
+            'method': 'aliexpress.solution.product.list',  # Método correto do documento
             'app_key': APP_KEY,
+            'access_token': access_token,
             'timestamp': timestamp,
             'format': 'json',
             'v': '2.0',
             'sign_method': 'md5',
             'keywords': query,
             'page_size': '20',
-            'page_no': '1',
+            'page_index': '1',
         }
         
         # Gerar assinatura

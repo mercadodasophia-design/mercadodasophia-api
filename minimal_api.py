@@ -152,8 +152,6 @@ def exchange_code_for_token(code):
     }
     headers = {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'application/json'
     }
     
     try:

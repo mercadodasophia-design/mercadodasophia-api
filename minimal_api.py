@@ -83,7 +83,7 @@ def exchange_code_for_token(code):
         'method': 'auth.token.create',
         'app_key': APP_KEY,
         'code': code,
-        'timestamp': datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
+        'timestamp': ali_timestamp(),
         'sign_method': 'md5',
         'format': 'json',
         'v': '2.0',

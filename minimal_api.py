@@ -3,11 +3,7 @@ from flask_cors import CORS
 import requests
 import hashlib
 import os
-<<<<<<< HEAD
 from datetime import datetime, timedelta, timezone
-=======
-from datetime import datetime, timedelta
->>>>>>> 9cd151aaa11b39652779cf25968daeb5f17c7827
 from dotenv import load_dotenv
 from urllib.parse import urlencode
 

@@ -3,7 +3,11 @@ from flask_cors import CORS
 import requests
 import hashlib
 import os
+<<<<<<< HEAD
+from datetime import datetime, timedelta, timezone
+=======
 from datetime import datetime, timedelta
+>>>>>>> 9cd151aaa11b39652779cf25968daeb5f17c7827
 from dotenv import load_dotenv
 from urllib.parse import urlencode
 
@@ -82,26 +86,41 @@ def aliexpress_oauth_url():
     return jsonify({'auth_url': generate_aliexpress_auth_url()})
 
 def exchange_code_for_token(code):
-    token_url = 'https://oauth.aliexpress.com/token'
+    """
+    Troca código OAuth2 por access_token
+    Baseado na documentação oficial do AliExpress
+    """
+    token_url = 'https://api-sg.aliexpress.com/auth/token/create'
+    
+    # Parâmetros obrigatórios para OAuth2 do AliExpress
     data = {
-        'grant_type': 'authorization_code',
-        'client_id': APP_KEY,
-        'client_secret': APP_SECRET,
+        'method': 'auth.token.create',
+        'app_key': APP_KEY,
         'code': code,
-        'redirect_uri': CALLBACK_URL,
+        'timestamp': datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
+        'sign_method': 'md5',
+        'format': 'json',
+        'v': '2.0',
     }
+    
+    # Gerar assinatura MD5
+    sign = generate_sign(data)
+    data['sign'] = sign
     
     headers = {
         'Content-Type': 'application/x-www-form-urlencoded',
     }
 
-    print(f"🔄 Fazendo requisição OAuth2... Dados enviados: {data}")
+    print(f"🔄 Fazendo requisição OAuth2...")
+    print(f"📝 Dados: {data}")
     resp = requests.post(token_url, data=data, headers=headers, timeout=30)
     print(f"📊 Status Code: {resp.status_code}")
     print(f"📄 Response: {resp.text[:500]}...")
 
-    resp.raise_for_status()
-    return resp.json()
+    if resp.status_code == 200:
+        return resp.json()
+    else:
+        raise Exception(f"Erro HTTP {resp.status_code}: {resp.text}")
 
 @app.route('/api/aliexpress/oauth-callback', methods=['GET'])
 def aliexpress_oauth_callback():

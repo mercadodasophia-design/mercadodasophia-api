@@ -21,10 +21,9 @@ let aliexpressTokens = {};
 
 // Função para gerar timestamp no formato correto
 function aliTimestamp() {
-    // Formato: YYYY-MM-DD HH:MM:SS (UTC+8)
+    // Formato: YYYY-MM-DD HH:MM:SS (sem timezone)
     const now = new Date();
-    const utc = new Date(now.getTime() + (8 * 60 * 60 * 1000)); // UTC+8
-    return utc.toISOString().slice(0, 19).replace('T', ' ');
+    return now.toISOString().slice(0, 19).replace('T', ' ');
 }
 
 // Função para gerar assinatura MD5

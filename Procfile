@@ -1,1 +1,1 @@
-web: gunicorn minimal_api:app --bind 0.0.0.0:$PORT 
+web: node server_oauth.js 

@@ -30,9 +30,11 @@ print(f"🔑 APP_SECRET carregado: {'✅' if APP_SECRET else '❌'} - Valor: {AP
 aliexpress_tokens = {}
 
 def ali_timestamp():
-    # Formato correto para AliExpress: YYYY-MM-DD HH:MM:SS
-    # A API espera uma string formatada, não timestamp numérico
-    return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    # Formato correto para AliExpress: YYYY-MM-DD HH:MM:SS (UTC+8)
+    # AliExpress espera China timezone (UTC+8)
+    utc_now = datetime.utcnow()
+    china_time = utc_now + timedelta(hours=8)
+    return china_time.strftime('%Y-%m-%d %H:%M:%S')
 
 def generate_sign(params):
     sorted_params = sorted(params.items())

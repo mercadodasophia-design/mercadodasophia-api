@@ -86,7 +86,8 @@ async function exchangeCodeForToken(code) {
     console.log('📝 Dados:', params);
 
     try {
-        const response = await axios.post('https://api-sg.aliexpress.com/rest', 
+        // Usar o endpoint correto baseado na documentação
+        const response = await axios.post('https://api-sg.aliexpress.com/auth/token/create', 
             new URLSearchParams(params), {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'

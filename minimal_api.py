@@ -51,6 +51,9 @@ def ali_request(method, access_token, extra_params=None):
         params.update(extra_params)
     params['sign'] = generate_sign(params)
     resp = requests.post(API_BASE_URL, data=params, timeout=30)
+    print(f"📡 Request to AliExpress API method {method}: {params}")
+    print(f"📄 Response status: {resp.status_code}")
+    print(f"📄 Response body: {resp.text[:500]}...")
     resp.raise_for_status()
     return resp.json()
 
@@ -73,6 +76,7 @@ def exchange_code_for_token(code):
         'method': 'auth.token.create',
         'app_key': APP_KEY,
         'code': code,
+        'redirect_uri': CALLBACK_URL,
         'timestamp': ali_timestamp(),
         'sign_method': 'md5',
         'format': 'json',
@@ -80,7 +84,12 @@ def exchange_code_for_token(code):
     }
     data['sign'] = generate_sign(data)
     headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+
+    print(f"🔄 Fazendo requisição OAuth2... Dados enviados: {data}")
     resp = requests.post(token_url, data=data, headers=headers, timeout=30)
+    print(f"📊 Status Code: {resp.status_code}")
+    print(f"📄 Response: {resp.text[:500]}...")
+
     resp.raise_for_status()
     return resp.json()
 
@@ -98,6 +107,7 @@ def aliexpress_oauth_callback():
         aliexpress_tokens['expires_in'] = token_data.get('expires_in')
         return jsonify({'success': True,'message':'OAuth2 autenticação realizada com sucesso!','token_data': token_data})
     except Exception as e:
+        print(f"❌ Erro ao trocar código por token: {e}")
         return jsonify({'error': str(e)}), 500
 
 # Endpoint genérico para ações de produto/pedido
@@ -118,6 +128,7 @@ def aliexpress_action():
         result = ali_request(method, access_token, extra_params)
         return jsonify({'success': True, 'result': result})
     except Exception as e:
+        print(f"❌ Erro ao chamar API AliExpress: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/aliexpress/products')

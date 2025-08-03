@@ -17,84 +17,42 @@ load_dotenv(config_path)
 app = Flask(__name__)
 CORS(app)
 
-# Configurações da API oficial do AliExpress
 APP_KEY = os.getenv('ALIEXPRESS_APP_KEY')
 APP_SECRET = os.getenv('ALIEXPRESS_APP_SECRET')
 API_BASE_URL = 'https://api-sg.aliexpress.com/sync'
 
-# URL de callback dinâmica para produção
 RENDER_EXTERNAL_URL = os.getenv('RENDER_EXTERNAL_URL')
 CALLBACK_URL = RENDER_EXTERNAL_URL + '/api/aliexpress/oauth-callback' if RENDER_EXTERNAL_URL else 'https://mercadodasophia-api.onrender.com/api/aliexpress/oauth-callback'
 
 print(f"🔑 APP_KEY carregado: {'✅' if APP_KEY else '❌'} - Valor: {APP_KEY}")
 print(f"🔑 APP_SECRET carregado: {'✅' if APP_SECRET else '❌'} - Valor: {APP_SECRET[:10] if APP_SECRET else 'N/A'}...")
 
-# Armazenamento simples de tokens em memória
 aliexpress_tokens = {}
 
-# Função para timestamp correto (GMT+8)
 def ali_timestamp():
     return (datetime.utcnow() + timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S")
 
 def generate_sign(params):
-    """Gerar assinatura MD5 para a API do AliExpress"""
     sorted_params = sorted(params.items())
     param_string = ''.join(f"{k}{v}" for k,v in sorted_params)
     sign_string = f"{APP_SECRET}{param_string}{APP_SECRET}"
     return hashlib.md5(sign_string.encode('utf-8')).hexdigest().upper()
 
-def search_aliexpress_official(query):
-    try:
-        print(f"🔍 Buscando produtos reais via API oficial: {query}")
-        access_token = aliexpress_tokens.get('access_token')
-        if not access_token:
-            print("❌ Sem access_token - precisa fazer OAuth2 primeiro")
-            return []
-
-        params = {
-            'method': 'aliexpress.solution.product.list',
-            'app_key': APP_KEY,
-            'access_token': access_token,
-            'timestamp': ali_timestamp(),
-            'sign_method': 'md5',
-            'page_size': '20',
-            'page_index': '1',
-            'keywords': query,
-        }
-        params['sign'] = generate_sign(params)
-        print(f"📡 Fazendo requisição para API oficial...")
-        response = requests.get(API_BASE_URL, params=params, timeout=30)
-        if response.status_code == 200:
-            data = response.json()
-            print(f"✅ Resposta da API: {data}")
-            if 'result' in data and 'products' in data['result']:
-                products = [
-                    {
-                        'id': item.get('product_id', ''),
-                        'title': item.get('product_title', ''),
-                        'price': item.get('product_price', ''),
-                        'original_price': item.get('product_original_price', ''),
-                        'image': item.get('product_main_image', ''),
-                        'rating': float(item.get('product_rating', 0)),
-                        'reviews': int(item.get('product_review_count', 0)),
-                        'seller': item.get('seller_name', 'AliExpress Seller'),
-                        'aliexpress_url': item.get('product_url', ''),
-                        'aliexpress_id': item.get('product_id', '')
-                    }
-                    for item in data['result']['products']
-                ]
-                print(f"🎯 Encontrados {len(products)} produtos reais")
-                return products
-            else:
-                print(f"❌ Estrutura de resposta inesperada: {data}")
-                return []
-        else:
-            print(f"❌ Erro HTTP: {response.status_code}")
-            print(f"❌ Resposta: {response.text}")
-            return []
-    except Exception as e:
-        print(f"❌ Erro na busca oficial: {e}")
-        return []
+def ali_request(method, access_token, extra_params=None):
+    params = {
+        'method': method,
+        'access_token': access_token,
+        'app_key': APP_KEY,
+        'timestamp': ali_timestamp(),
+        'format': 'json',
+        'v': '2.0'
+    }
+    if extra_params:
+        params.update(extra_params)
+    params['sign'] = generate_sign(params)
+    resp = requests.post(API_BASE_URL, data=params, timeout=30)
+    resp.raise_for_status()
+    return resp.json()
 
 def generate_aliexpress_auth_url():
     params = {
@@ -122,18 +80,9 @@ def exchange_code_for_token(code):
     }
     data['sign'] = generate_sign(data)
     headers = {'Content-Type': 'application/x-www-form-urlencoded'}
-
-    print(f"🔄 Fazendo requisição OAuth2...")
-    print(f"📝 Dados: {data}")
-
     resp = requests.post(token_url, data=data, headers=headers, timeout=30)
-    print(f"📊 Status Code: {resp.status_code}")
-    print(f"📄 Response: {resp.text[:500]}...")
-
-    if resp.status_code == 200:
-        return resp.json()
-    else:
-        raise Exception(f"Erro HTTP {resp.status_code}: {resp.text}")
+    resp.raise_for_status()
+    return resp.json()
 
 @app.route('/api/aliexpress/oauth-callback', methods=['GET', 'POST'])
 def aliexpress_oauth_callback():
@@ -143,16 +92,53 @@ def aliexpress_oauth_callback():
     if not code:
         return jsonify({'error': 'Missing code parameter'}), 400
     try:
-        print(f"🔄 Trocando código por token: {code}")
         token_data = exchange_code_for_token(code)
         aliexpress_tokens['access_token'] = token_data.get('access_token')
         aliexpress_tokens['refresh_token'] = token_data.get('refresh_token')
         aliexpress_tokens['expires_in'] = token_data.get('expires_in')
-        print(f"✅ Tokens armazenados com sucesso!")
-        print(f"🔑 Access Token: {token_data.get('access_token', '')[:20]}...")
         return jsonify({'success': True,'message':'OAuth2 autenticação realizada com sucesso!','token_data': token_data})
     except Exception as e:
-        print(f"❌ Erro na troca de código por token: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# Endpoint genérico para ações de produto/pedido
+@app.route('/api/aliexpress/action', methods=['POST'])
+def aliexpress_action():
+    access_token = aliexpress_tokens.get('access_token')
+    if not access_token:
+        return jsonify({'error': 'AliExpress não autenticado. Faça login OAuth2 primeiro.'}), 401
+
+    data = request.get_json() or {}
+    method = data.get('method')
+    extra_params = data.get('params', {})
+
+    if not method:
+        return jsonify({'error': 'Faltando parâmetro method'}), 400
+
+    try:
+        result = ali_request(method, access_token, extra_params)
+        return jsonify({'success': True, 'result': result})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/aliexpress/products')
+def aliexpress_products():
+    access_token = aliexpress_tokens.get('access_token')
+    if not access_token:
+        return jsonify({'error': 'AliExpress não autenticado. Faça login OAuth2 primeiro.'}), 401
+
+    keywords = request.args.get('keywords', '')
+    page = int(request.args.get('page', 1))
+    page_size = int(request.args.get('page_size', 20))
+
+    try:
+        data = ali_request('aliexpress.ds.product.list', access_token, {
+            'keywords': keywords,
+            'page_no': page,
+            'page_size': page_size
+        })
+        products = data.get('result', {}).get('products', [])
+        return jsonify({'success': True, 'products': products, 'raw': data})
+    except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/health')

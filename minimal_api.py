@@ -76,7 +76,7 @@ def exchange_code_for_token(code):
     Troca código OAuth2 por access_token
     Baseado na documentação oficial do AliExpress
     """
-    token_url = 'https://api-sg.aliexpress.com/auth/token/create'
+    token_url = 'https://api-sg.aliexpress.com/rest'
     
     # Parâmetros obrigatórios para OAuth2 do AliExpress
     data = {

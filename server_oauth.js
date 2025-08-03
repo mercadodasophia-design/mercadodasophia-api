@@ -52,8 +52,16 @@ function generateAuthUrl() {
         force_auth: 'true'
     };
     
+    // Garantir que todos os parâmetros estão presentes
+    if (!params.client_id) {
+        throw new Error('APP_KEY não configurado');
+    }
+    
     const queryString = new URLSearchParams(params).toString();
-    return `https://api-sg.aliexpress.com/oauth/authorize?${queryString}`;
+    const authUrl = `https://api-sg.aliexpress.com/oauth/authorize?${queryString}`;
+    
+    console.log('🔗 URL de autorização gerada:', authUrl);
+    return authUrl;
 }
 
 // Trocar código por access token

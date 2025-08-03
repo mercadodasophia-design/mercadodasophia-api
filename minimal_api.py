@@ -64,26 +64,36 @@ def generate_aliexpress_auth_url():
         'redirect_uri': CALLBACK_URL,
         'state': 'xyz123',
     }
-    return f"https://api-sg.aliexpress.com/oauth/authorize?{urlencode(params)}"
+    return f"https://oauth.aliexpress.com/authorize?{urlencode(params)}"
+    print(f"🔄 Fazendo requisição OAuth2 para trocar código por token...")
+    print(f"📝 Dados: {data}")
+    
+    resp = requests.post(token_url, data=data, headers=headers, timeout=30)
+    print(f"📊 Status Code: {resp.status_code}")
+    print(f"📄 Response: {resp.text[:500]}...")
+    
+    if resp.status_code == 200:
+        return resp.json()
+    else:
+        raise Exception(f"Erro HTTP {resp.status_code}: {resp.text}")
 
 @app.route('/api/aliexpress/oauth-url')
 def aliexpress_oauth_url():
     return jsonify({'auth_url': generate_aliexpress_auth_url()})
 
 def exchange_code_for_token(code):
-    token_url = 'https://api-sg.aliexpress.com/auth/token/create'
+    token_url = 'https://oauth.aliexpress.com/token'
     data = {
-        'method': 'auth.token.create',
-        'app_key': APP_KEY,
+        'grant_type': 'authorization_code',
+        'client_id': APP_KEY,
+        'client_secret': APP_SECRET,
         'code': code,
         'redirect_uri': CALLBACK_URL,
-        'timestamp': ali_timestamp(),
-        'sign_method': 'md5',
-        'format': 'json',
-        'v': '2.0',
     }
-    data['sign'] = generate_sign(data)
-    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+    
+    headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+    }
 
     print(f"🔄 Fazendo requisição OAuth2... Dados enviados: {data}")
     resp = requests.post(token_url, data=data, headers=headers, timeout=30)
@@ -93,21 +103,28 @@ def exchange_code_for_token(code):
     resp.raise_for_status()
     return resp.json()
 
-@app.route('/api/aliexpress/oauth-callback', methods=['GET', 'POST'])
+@app.route('/api/aliexpress/oauth-callback', methods=['GET'])
 def aliexpress_oauth_callback():
-    code = request.args.get('code') if request.method=='GET' else (
-        request.get_json().get('code') if request.is_json else request.form.get('code')
-    )
+    code = request.args.get('code')
     if not code:
         return jsonify({'error': 'Missing code parameter'}), 400
+    
     try:
         token_data = exchange_code_for_token(code)
         aliexpress_tokens['access_token'] = token_data.get('access_token')
         aliexpress_tokens['refresh_token'] = token_data.get('refresh_token')
         aliexpress_tokens['expires_in'] = token_data.get('expires_in')
-        return jsonify({'success': True,'message':'OAuth2 autenticação realizada com sucesso!','token_data': token_data})
+        
+        print(f"✅ Tokens armazenados com sucesso!")
+        print(f"🔑 Access Token: {token_data.get('access_token', '')[:20]}...")
+        
+        return jsonify({
+            'success': True, 
+            'message': 'OAuth2 autenticação realizada com sucesso!',
+            'token_data': token_data
+        })
     except Exception as e:
-        print(f"❌ Erro ao trocar código por token: {e}")
+        print(f"❌ Erro na troca de código por token: {e}")
         return jsonify({'error': str(e)}), 500
 
 # Endpoint genérico para ações de produto/pedido

@@ -63,7 +63,7 @@ def search_aliexpress_official(query):
             return []
         
         # Parâmetros da requisição
-        timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
         params = {
             'method': 'aliexpress.solution.product.list',
             'app_key': APP_KEY,
@@ -146,14 +146,14 @@ def exchange_code_for_token(code):
     Troca código OAuth2 por access_token
     Baseado na documentação oficial
     """
-    token_url = 'https://api-sg.aliexpress.com/rest'
+    token_url = 'https://api-sg.aliexpress.com/auth/token/create'
     
     # Parâmetros obrigatórios para OAuth2
     data = {
-        'method': '/auth/token/create',
+        'method': 'auth.token.create',
         'app_key': APP_KEY,
         'code': code,
-        'timestamp': datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S'),
+        'timestamp': datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
         'sign_method': 'md5',
         'format': 'json',
         'v': '2.0',
@@ -260,7 +260,7 @@ def aliexpress_products():
     
     # Timestamp no formato yyyy-MM-dd HH:mm:ss
     from datetime import datetime, timezone
-    timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+         timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     
     params = {
         'method': 'aliexpress.ds.product.list',
@@ -300,8 +300,8 @@ def aliexpress_import_product():
     if not product_id:
         return jsonify({'error': 'Faltando product_id'}), 400
     
-    from datetime import datetime
-    timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    from datetime import datetime, timezone
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     
     params = {
         'method': 'aliexpress.solution.product.info.get',
@@ -334,8 +334,8 @@ def aliexpress_create_order():
     if not access_token:
         return jsonify({'error': 'AliExpress não autenticado. Faça login OAuth2 primeiro.'}), 401
     data = request.get_json() or {}
-    from datetime import datetime
-    timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    from datetime import datetime, timezone
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     params = {
         'method': 'aliexpress.trade.create',
         'access_token': access_token,
@@ -366,8 +366,8 @@ def aliexpress_pay_order():
     order_id = data.get('order_id')
     if not order_id:
         return jsonify({'error': 'Faltando order_id'}), 400
-    from datetime import datetime
-    timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    from datetime import datetime, timezone
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     params = {
         'method': 'aliexpress.trade.pay',
         'access_token': access_token,
@@ -397,8 +397,8 @@ def aliexpress_order_status():
     order_id = request.args.get('order_id')
     if not order_id:
         return jsonify({'error': 'Faltando order_id'}), 400
-    from datetime import datetime
-    timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    from datetime import datetime, timezone
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     params = {
         'method': 'aliexpress.trade.get',
         'access_token': access_token,
@@ -429,8 +429,8 @@ def aliexpress_cancel_order():
     order_id = data.get('order_id')
     if not order_id:
         return jsonify({'error': 'Faltando order_id'}), 400
-    from datetime import datetime
-    timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    from datetime import datetime, timezone
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     params = {
         'method': 'aliexpress.trade.cancel',
         'access_token': access_token,
@@ -461,8 +461,8 @@ def aliexpress_refund_order():
     order_id = data.get('order_id')
     if not order_id:
         return jsonify({'error': 'Faltando order_id'}), 400
-    from datetime import datetime
-    timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    from datetime import datetime, timezone
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     params = {
         'method': 'aliexpress.trade.refund.submit',
         'access_token': access_token,
@@ -492,8 +492,8 @@ def aliexpress_track_order():
     order_id = request.args.get('order_id')
     if not order_id:
         return jsonify({'error': 'Faltando order_id'}), 400
-    from datetime import datetime
-    timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    from datetime import datetime, timezone
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     params = {
         'method': 'aliexpress.logistics.buyer.tracking',
         'access_token': access_token,
@@ -523,8 +523,8 @@ def aliexpress_logistics_info():
     order_id = request.args.get('order_id')
     if not order_id:
         return jsonify({'error': 'Faltando order_id'}), 400
-    from datetime import datetime
-    timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    from datetime import datetime, timezone
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     params = {
         'method': 'aliexpress.logistics.get',
         'access_token': access_token,
@@ -550,8 +550,8 @@ def aliexpress_shipping_methods():
     access_token = aliexpress_tokens.get('access_token')
     if not access_token:
         return jsonify({'error': 'AliExpress não autenticado. Faça login OAuth2 primeiro.'}), 401
-    from datetime import datetime
-    timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    from datetime import datetime, timezone
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     params = {
         'method': 'aliexpress.logistics.redefining.getonlinelogisticsservicelist',
         'access_token': access_token,
@@ -576,8 +576,8 @@ def aliexpress_categories():
     access_token = aliexpress_tokens.get('access_token')
     if not access_token:
         return jsonify({'error': 'AliExpress não autenticado. Faça login OAuth2 primeiro.'}), 401
-    from datetime import datetime
-    timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    from datetime import datetime, timezone
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     params = {
         'method': 'aliexpress.category.redefining.getallchildattributesresult',
         'access_token': access_token,
@@ -606,8 +606,8 @@ def aliexpress_category_attributes():
     category_id = request.args.get('category_id')
     if not category_id:
         return jsonify({'error': 'Faltando category_id'}), 400
-    from datetime import datetime
-    timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    from datetime import datetime, timezone
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     params = {
         'method': 'aliexpress.category.redefining.getchildattributesresult',
         'access_token': access_token,

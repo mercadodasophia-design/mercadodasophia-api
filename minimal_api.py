@@ -70,17 +70,6 @@ def generate_aliexpress_auth_url():
         'force_auth': 'true',  # Força nova autorização
     }
     return f"https://api-sg.aliexpress.com/oauth/authorize?{urlencode(params)}"
-    print(f"🔄 Fazendo requisição OAuth2 para trocar código por token...")
-    print(f"📝 Dados: {data}")
-    
-    resp = requests.post(token_url, data=data, headers=headers, timeout=30)
-    print(f"📊 Status Code: {resp.status_code}")
-    print(f"📄 Response: {resp.text[:500]}...")
-    
-    if resp.status_code == 200:
-        return resp.json()
-    else:
-        raise Exception(f"Erro HTTP {resp.status_code}: {resp.text}")
 
 @app.route('/api/aliexpress/oauth-url')
 def aliexpress_oauth_url():

@@ -153,11 +153,11 @@ app.get('/api/aliexpress/products', async (req, res) => {
     const { keywords = '', page = 1, page_size = 20 } = req.query;
     
     if (!aliexpressTokens.access_token) {
-        return res.json({
-            success: true,
-            products: getSimulatedProducts(keywords, page, page_size),
-            message: 'Dados simulados (OAuth2 não configurado)',
-            total: 3
+        return res.status(401).json({
+            success: false,
+            error: 'OAuth2 não configurado',
+            message: 'É necessário configurar OAuth2 para acessar produtos reais do AliExpress',
+            auth_url: generateAuthUrl()
         });
     }
 
@@ -194,68 +194,13 @@ app.get('/api/aliexpress/products', async (req, res) => {
     } catch (error) {
         console.error('❌ Erro na busca de produtos:', error.message);
         
-        // Fallback para dados simulados
-        res.json({
-            success: true,
-            products: getSimulatedProducts(keywords, page, page_size),
-            message: 'Dados simulados (erro na API)',
-            error: error.message,
-            total: 3
+        res.status(500).json({
+            success: false,
+            error: 'Erro na API do AliExpress',
+            message: error.message
         });
     }
 });
-
-// Dados simulados
-function getSimulatedProducts(keywords, page, pageSize) {
-    const baseProducts = [
-        {
-            id: '1005005640660666',
-            name: `Smartphone Case Premium - ${keywords || 'Tech'}`,
-            price: 'R$ 15,90',
-            originalPrice: 'R$ 29,90',
-            rating: '4.8',
-            reviewsCount: '2.5k',
-            salesCount: '15.2k',
-            image: 'https://via.placeholder.com/300x300/007bff/ffffff?text=Product',
-            url: 'https://www.aliexpress.com/item/1005005640660666.html',
-            shipping: 'Frete grátis',
-            store: 'TechStore Official',
-            aliexpressId: '1005005640660666'
-        },
-        {
-            id: '1005005640660667',
-            name: `Wireless Headphones - ${keywords || 'Audio'}`,
-            price: 'R$ 89,90',
-            originalPrice: 'R$ 159,90',
-            rating: '4.6',
-            reviewsCount: '1.8k',
-            salesCount: '8.9k',
-            image: 'https://via.placeholder.com/300x300/28a745/ffffff?text=Headphones',
-            url: 'https://www.aliexpress.com/item/1005005640660667.html',
-            shipping: 'Frete grátis',
-            store: 'AudioPro Store',
-            aliexpressId: '1005005640660667'
-        },
-        {
-            id: '1005005640660668',
-            name: `Smart Watch Fitness - ${keywords || 'Fitness'}`,
-            price: 'R$ 129,90',
-            originalPrice: 'R$ 299,90',
-            rating: '4.7',
-            reviewsCount: '3.2k',
-            salesCount: '12.1k',
-            image: 'https://via.placeholder.com/300x300/dc3545/ffffff?text=SmartWatch',
-            url: 'https://www.aliexpress.com/item/1005005640660668.html',
-            shipping: 'Frete grátis',
-            store: 'TechGear Pro',
-            aliexpressId: '1005005640660668'
-        }
-    ];
-
-    const startIdx = (page - 1) * pageSize;
-    const endIdx = startIdx + pageSize;
-    return baseProducts.slice(startIdx, endIdx);
-}
 
 // Iniciar servidor
 app.listen(PORT, () => {

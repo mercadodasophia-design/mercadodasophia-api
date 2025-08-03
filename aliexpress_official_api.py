@@ -5,14 +5,14 @@ from dotenv import load_dotenv
 import sys
 import traceback
 
-# Adicionar o path da biblioteca oficial
-sys.path.append('./exemplos/python-aliexpress-api-main')
+# Adicionar o path da biblioteca oficial (caminho correto)
+sys.path.append('../exemplos/python-aliexpress-api-main')
 
 try:
     from aliexpress_api import AliexpressApi, models
 except ImportError:
     print("❌ Erro: Biblioteca AliExpress não encontrada")
-    print("📁 Verifique se a pasta 'exemplos/python-aliexpress-api-main' existe")
+    print("📁 Verifique se a pasta '../exemplos/python-aliexpress-api-main' existe")
     sys.exit(1)
 
 # Carregar variáveis de ambiente

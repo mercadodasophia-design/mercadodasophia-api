@@ -35,6 +35,7 @@ def test_oauth_with_docs():
         'app_key': APP_KEY,
         'app_secret': APP_SECRET,
         'code': test_code,
+        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         'format': 'json',
         'v': '2.0',
     }
@@ -67,6 +68,7 @@ def test_oauth_with_docs():
         'app_key': APP_KEY,
         'app_secret': APP_SECRET,
         'code': test_code,
+        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
     }
     
     try:

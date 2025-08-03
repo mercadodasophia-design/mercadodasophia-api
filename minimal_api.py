@@ -148,6 +148,7 @@ def exchange_code_for_token(code):
         'app_key': APP_KEY,
         'app_secret': APP_SECRET,
         'code': code,
+        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         'format': 'json',
         'v': '2.0',
     }

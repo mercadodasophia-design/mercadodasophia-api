@@ -40,6 +40,27 @@ def test_oauth_with_docs():
         'format': 'json',
         'v': '2.0',
     }
+    
+    # Gerar assinatura MD5
+    def generate_sign(params):
+        """Gerar assinatura MD5 para a API do AliExpress"""
+        import hashlib
+        # Ordenar parâmetros
+        sorted_params = sorted(params.items())
+        
+        # Concatenar parâmetros
+        param_string = ''
+        for key, value in sorted_params:
+            param_string += f"{key}{value}"
+        
+        # Adicionar app_secret no início e fim
+        sign_string = f"{APP_SECRET}{param_string}{APP_SECRET}"
+        
+        # Gerar MD5
+        return hashlib.md5(sign_string.encode('utf-8')).hexdigest().upper()
+    
+    sign = generate_sign(data)
+    data['sign'] = sign
     headers = {
         'Content-Type': 'application/x-www-form-urlencoded',
     }
@@ -72,6 +93,10 @@ def test_oauth_with_docs():
         'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         'sign_method': 'md5',
     }
+    
+    # Gerar assinatura MD5
+    sign = generate_sign(data_minimal)
+    data_minimal['sign'] = sign
     
     try:
         resp = requests.post(token_url, data=data_minimal, headers=headers, timeout=30)

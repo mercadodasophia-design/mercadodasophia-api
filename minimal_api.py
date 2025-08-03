@@ -154,6 +154,10 @@ def exchange_code_for_token(code):
         'v': '2.0',
     }
     
+    # Gerar assinatura MD5
+    sign = generate_sign(data)
+    data['sign'] = sign
+    
     headers = {
         'Content-Type': 'application/x-www-form-urlencoded',
     }

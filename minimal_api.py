@@ -67,8 +67,9 @@ def generate_aliexpress_auth_url():
         'client_id': APP_KEY,
         'redirect_uri': CALLBACK_URL,
         'state': 'xyz123',
+        'force_auth': 'true',  # Força nova autorização
     }
-    return f"https://oauth.aliexpress.com/authorize?{urlencode(params)}"
+    return f"https://api-sg.aliexpress.com/oauth/authorize?{urlencode(params)}"
     print(f"🔄 Fazendo requisição OAuth2 para trocar código por token...")
     print(f"📝 Dados: {data}")
     

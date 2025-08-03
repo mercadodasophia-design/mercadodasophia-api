@@ -4,7 +4,7 @@ import requests
 import hashlib
 import time
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from dotenv import load_dotenv
 from urllib.parse import urlencode
 
@@ -63,7 +63,7 @@ def search_aliexpress_official(query):
             return []
         
         # Parâmetros da requisição
-        timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+        timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
         params = {
             'method': 'aliexpress.solution.product.list',
             'app_key': APP_KEY,
@@ -142,13 +142,18 @@ def aliexpress_oauth_url():
 
 # === 2. Trocar código por access_token ===
 def exchange_code_for_token(code):
+    """
+    Troca código OAuth2 por access_token
+    Baseado na documentação oficial
+    """
     token_url = 'https://api-sg.aliexpress.com/rest'
+    
+    # Parâmetros obrigatórios para OAuth2
     data = {
         'method': '/auth/token/create',
         'app_key': APP_KEY,
-        'app_secret': APP_SECRET,
         'code': code,
-        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'timestamp': datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S'),
         'sign_method': 'md5',
         'format': 'json',
         'v': '2.0',
@@ -162,65 +167,21 @@ def exchange_code_for_token(code):
         'Content-Type': 'application/x-www-form-urlencoded',
     }
     
-    try:
-        print(f"🔄 Fazendo requisição para: {token_url}")
-        print(f"📝 Dados: {data}")
-        print(f"📝 Headers: {headers}")
-        
-        resp = requests.post(token_url, data=data, headers=headers, timeout=30)
-        
-        print(f"📊 Status Code: {resp.status_code}")
-        print(f"📄 Response Headers: {dict(resp.headers)}")
-        print(f"📄 Response Text: {resp.text[:1000]}...")
-        
-        if resp.status_code != 200:
-            print(f"❌ Erro HTTP: {resp.status_code}")
-            print(f"❌ Resposta: {resp.text}")
-            raise Exception(f"Erro HTTP {resp.status_code}: {resp.text}")
-        
-        # Tentar fazer parse do JSON
-        try:
-            return resp.json()
-        except Exception as json_error:
-            print(f"❌ Erro ao fazer parse do JSON: {json_error}")
-            print(f"📄 Conteúdo da resposta: {resp.text}")
-            raise Exception(f"Resposta inválida do AliExpress: {resp.text}")
-            
-    except requests.exceptions.RequestException as e:
-        print(f"❌ Erro de conexão: {e}")
-        raise Exception(f"Erro de conexão com AliExpress: {e}")
-    except Exception as e:
-        print(f"❌ Erro geral: {e}")
-        raise e
+    print(f"🔄 Fazendo requisição OAuth2...")
+    print(f"📝 Dados: {data}")
     
     try:
-        print(f"🔄 Fazendo requisição para: {token_url}")
-        print(f"📝 Dados: {data}")
-        
         resp = requests.post(token_url, data=data, headers=headers, timeout=30)
-        
         print(f"📊 Status Code: {resp.status_code}")
-        print(f"📄 Response Headers: {dict(resp.headers)}")
-        print(f"📄 Response Text: {resp.text[:1000]}...")
+        print(f"📄 Response: {resp.text[:500]}...")
         
-        if resp.status_code != 200:
-            print(f"❌ Erro HTTP: {resp.status_code}")
-            print(f"❌ Resposta: {resp.text}")
-            raise Exception(f"Erro HTTP {resp.status_code}: {resp.text}")
-        
-        # Tentar fazer parse do JSON
-        try:
+        if resp.status_code == 200:
             return resp.json()
-        except Exception as json_error:
-            print(f"❌ Erro ao fazer parse do JSON: {json_error}")
-            print(f"📄 Conteúdo da resposta: {resp.text}")
-            raise Exception(f"Resposta inválida do AliExpress: {resp.text}")
+        else:
+            raise Exception(f"Erro HTTP {resp.status_code}: {resp.text}")
             
-    except requests.exceptions.RequestException as e:
-        print(f"❌ Erro de conexão: {e}")
-        raise Exception(f"Erro de conexão com AliExpress: {e}")
     except Exception as e:
-        print(f"❌ Erro geral: {e}")
+        print(f"❌ Erro: {e}")
         raise e
 
 @app.route('/api/aliexpress/oauth-callback', methods=['GET', 'POST'])
@@ -298,8 +259,8 @@ def aliexpress_products():
     page_size = int(request.args.get('page_size', 20))
     
     # Timestamp no formato yyyy-MM-dd HH:mm:ss
-    from datetime import datetime
-    timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    from datetime import datetime, timezone
+    timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
     
     params = {
         'method': 'aliexpress.ds.product.list',

@@ -149,6 +149,7 @@ def exchange_code_for_token(code):
         'app_secret': APP_SECRET,
         'code': code,
         'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'sign_method': 'md5',
         'format': 'json',
         'v': '2.0',
     }

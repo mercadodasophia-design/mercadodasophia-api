@@ -58,9 +58,11 @@ function generateAuthUrl() {
     }
     
     const queryString = new URLSearchParams(params).toString();
-    const authUrl = `https://api-sg.aliexpress.com/oauth/authorize?${queryString}`;
+    // Usar o endpoint correto baseado na documentação
+    const authUrl = `https://oauth.aliexpress.com/authorize?${queryString}`;
     
     console.log('🔗 URL de autorização gerada:', authUrl);
+    console.log('📝 Parâmetros:', params);
     return authUrl;
 }
 

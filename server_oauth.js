@@ -21,11 +21,11 @@ let aliexpressTokens = {};
 
 // Função para gerar timestamp no formato correto
 function aliTimestamp() {
-    // Usar timestamp em segundos desde epoch (formato Unix)
-    return Math.floor(Date.now() / 1000).toString();
+    // Usar timestamp em milissegundos (formato correto para AliExpress)
+    return new Date().getTime().toString();
 }
 
-// Função para gerar assinatura MD5
+// Função para gerar assinatura SHA256
 function generateSign(params) {
     const sortedParams = Object.keys(params).sort().reduce((result, key) => {
         result[key] = params[key];
@@ -37,7 +37,7 @@ function generateSign(params) {
         .join('');
 
     const signString = APP_SECRET + paramString + APP_SECRET;
-    return crypto.createHash('md5').update(signString).digest('hex').toUpperCase();
+    return crypto.createHash('sha256').update(signString).digest('hex').toUpperCase();
 }
 
 // Gerar URL de autorização OAuth2
@@ -69,11 +69,10 @@ async function exchangeCodeForToken(code) {
     const timestamp = aliTimestamp();
     
     const params = {
-        method: 'auth.token.create',
         app_key: APP_KEY,
         code: code,
         timestamp: timestamp,
-        sign_method: 'md5',
+        sign_method: 'sha256',
         format: 'json',
         v: '2.0'
     };
@@ -85,7 +84,7 @@ async function exchangeCodeForToken(code) {
 
     try {
         // Usar o endpoint correto baseado na documentação
-        const response = await axios.post('https://api-sg.aliexpress.com/auth/token/create', 
+        const response = await axios.post('https://api-sg.aliexpress.com/rest/auth/token/create', 
             new URLSearchParams(params), {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'

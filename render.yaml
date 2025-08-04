@@ -3,8 +3,8 @@ services:
     name: aliexpress-python-api
     env: python
     plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: python server.py
+    buildCommand: chmod +x build.sh && ./build.sh
+    startCommand: gunicorn server:app --bind 0.0.0.0:$PORT
     envVars:
       - key: APP_KEY
         value: 517616
@@ -13,4 +13,6 @@ services:
       - key: REDIRECT_URI
         value: https://mercadodasophia-api.onrender.com/api/aliexpress/oauth-callback
       - key: PORT
-        value: 10000 
+        value: 10000
+      - key: PYTHON_VERSION
+        value: 3.11.7 

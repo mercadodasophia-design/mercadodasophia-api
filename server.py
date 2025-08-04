@@ -670,15 +670,19 @@ def oauth_callback():
     try:
         # Criar cliente usando SDK Python oficial
         client = iop.IopClient(
-            'https://api-sg.aliexpress.com/sync',
+            'https://api-sg.aliexpress.com/rest',
             APP_KEY,
             APP_SECRET
         )
         
         # Criar requisição para gerar token
-        request_obj = iop.IopRequest('/auth/token/create', 'POST')
+        request_obj = iop.IopRequest('auth.token.create', 'POST')
         request_obj.set_simplify()
         request_obj.add_api_param('code', code)
+        request_obj.add_api_param('grant_type', 'authorization_code')
+        request_obj.add_api_param('redirect_uri', REDIRECT_URI)
+        
+        print(f'🔧 Parâmetros da requisição: code={code}, redirect_uri={REDIRECT_URI}')
         
         # Executar requisição
         response = client.execute(request_obj)
@@ -731,7 +735,7 @@ def products():
     try:
         # Criar cliente com token
         client = iop.IopClient(
-            'https://api-sg.aliexpress.com/sync',
+            'https://api-sg.aliexpress.com/rest',
             APP_KEY,
             APP_SECRET
         )
@@ -782,7 +786,7 @@ def categories():
     try:
         # Criar cliente com token
         client = iop.IopClient(
-            'https://api-sg.aliexpress.com/sync',
+            'https://api-sg.aliexpress.com/rest',
             APP_KEY,
             APP_SECRET
         )

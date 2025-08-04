@@ -47,4 +47,8 @@ logs/
 
 # Temporary files
 *.tmp
-*.temp 
+*.temp
+
+# Package files (temporary for Render)
+package.json
+package-lock.json 

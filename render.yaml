@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: aliexpress-python-api
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python server.py
+    envVars:
+      - key: APP_KEY
+        value: 517616
+      - key: APP_SECRET
+        value: TTqNmTMs5Q0QiPbulDNenhXr2My18nN4
+      - key: REDIRECT_URI
+        value: https://mercadodasophia-api.onrender.com/api/aliexpress/oauth-callback
+      - key: PORT
+        value: 10000 

@@ -51,6 +51,22 @@ def generate_gop_signature(params, app_secret):
     
     return signature
 
+def generate_api_signature(params, app_secret):
+    """Gerar assinatura para APIs de negócios do AliExpress"""
+    # Ordenar parâmetros alfabeticamente
+    sorted_params = dict(sorted(params.items()))
+    
+    # Concatenar chave=valor sem separadores
+    param_string = ''.join(f"{k}{v}" for k, v in sorted_params.items())
+    
+    # Concatenar secret + params + secret
+    to_sign = f"{app_secret}{param_string}{app_secret}"
+    
+    # Gerar MD5 em maiúsculo
+    signature = hashlib.md5(to_sign.encode('utf-8')).hexdigest().upper()
+    
+    return signature
+
 def create_test_page():
     """Cria página HTML de teste"""
     base_url = os.getenv('RENDER_EXTERNAL_URL', f'http://localhost:{PORT}')
@@ -844,22 +860,36 @@ def products():
         return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
 
     try:
-        # Configuração simplificada para testar
-        client = iop.IopClient('https://api-sg.aliexpress.com/rest', APP_KEY, APP_SECRET)
-        request_obj = iop.IopRequest('aliexpress.ds.text.search')
+        # Parâmetros para a API
+        params = {
+            "method": "aliexpress.ds.text.search",
+            "app_key": APP_KEY,
+            "timestamp": int(time.time() * 1000),
+            "sign_method": "md5",
+            "format": "json",
+            "v": "2.0",
+            "access_token": tokens['access_token'],
+            "keyWord": request.args.get('q', 'electronics'),
+            "local": "zh_CN",
+            "countryCode": "US",
+            "currency": "USD"
+        }
         
-        # Parâmetros mínimos necessários
-        request_obj.add_api_param('keyWord', request.args.get('q', 'electronics'))
-        request_obj.add_api_param('local', 'zh_CN')
-        request_obj.add_api_param('countryCode', 'US')
-        request_obj.add_api_param('currency', 'USD')
-
-        response = client.execute(request_obj, tokens['access_token'])
-        print(f'✅ Resposta produtos: {response.body}')
-
-        if response.code == '0':
-            return jsonify({'success': True, 'data': response.body})
-        return jsonify({'success': False, 'error': response.body}), 400
+        # Gerar assinatura
+        params["sign"] = generate_api_signature(params, APP_SECRET)
+        
+        # Fazer requisição HTTP direta
+        response = requests.get('https://api-sg.aliexpress.com/rest', params=params)
+        print(f'✅ Resposta produtos: {response.text}')
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get('code') == '0':
+                return jsonify({'success': True, 'data': data})
+            else:
+                return jsonify({'success': False, 'error': data}), 400
+        else:
+            return jsonify({'success': False, 'error': response.text}), response.status_code
 
     except Exception as e:
         print(f'❌ Erro ao buscar produtos: {e}')
@@ -873,19 +903,33 @@ def categories():
         return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
 
     try:
-        # Configuração simplificada para testar
-        client = iop.IopClient('https://api-sg.aliexpress.com/rest', APP_KEY, APP_SECRET)
-        request_obj = iop.IopRequest('aliexpress.ds.category.get')
+        # Parâmetros para a API
+        params = {
+            "method": "aliexpress.ds.category.get",
+            "app_key": APP_KEY,
+            "timestamp": int(time.time() * 1000),
+            "sign_method": "md5",
+            "format": "json",
+            "v": "2.0",
+            "access_token": tokens['access_token'],
+            "language": "en"
+        }
         
-        # Parâmetros mínimos necessários
-        request_obj.add_api_param('language', 'en')
-
-        response = client.execute(request_obj, tokens['access_token'])
-        print(f'✅ Resposta categorias: {response.body}')
-
-        if response.code == '0':
-            return jsonify({'success': True, 'data': response.body})
-        return jsonify({'success': False, 'error': response.body}), 400
+        # Gerar assinatura
+        params["sign"] = generate_api_signature(params, APP_SECRET)
+        
+        # Fazer requisição HTTP direta
+        response = requests.get('https://api-sg.aliexpress.com/rest', params=params)
+        print(f'✅ Resposta categorias: {response.text}')
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get('code') == '0':
+                return jsonify({'success': True, 'data': data})
+            else:
+                return jsonify({'success': False, 'error': data}), 400
+        else:
+            return jsonify({'success': False, 'error': response.text}), response.status_code
 
     except Exception as e:
         print(f'❌ Erro ao buscar categorias: {e}')

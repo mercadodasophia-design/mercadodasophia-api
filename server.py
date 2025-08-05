@@ -866,12 +866,13 @@ def products():
             "format": "json",
             "v": "2.0",
             "access_token": tokens['access_token'],
-            "keywords": request.args.get('q', 'electronics'),  # Corrigido para 'keywords'
+            "keyWord": request.args.get('q', 'electronics'),  # Correto conforme documentação
             "countryCode": "BR",  # 👈 obrigatório para Brasil
             "currency": "BRL",    # 👈 obrigatório para Brasil
             "local": "pt_BR",     # 👈 obrigatório para Brasil
-            "ship_to_country": "BR",  # opcional mas recomendado
-            "language": "pt",     # opcional para português
+            "pageSize": "20",     # Tamanho da página
+            "pageIndex": "1",     # Índice da página
+            "sortBy": "orders,desc"  # Ordenar por popularidade
         }
         
         # Gerar assinatura

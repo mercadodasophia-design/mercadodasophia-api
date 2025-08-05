@@ -808,8 +808,8 @@ def oauth_callback():
                             return jsonify({'success': True, 'tokens': tokens})
                             
                     except json.JSONDecodeError as json_error:
-                    print(f'❌ Erro ao decodificar JSON na tentativa {attempt["name"]}: {json_error}')
-                    continue
+                        print(f'❌ Erro ao decodificar JSON na tentativa {attempt["name"]}: {json_error}')
+                        continue
             else:
                 print(f'❌ Status code {response.status_code} na tentativa {attempt["name"]}')
                 continue

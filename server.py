@@ -867,6 +867,7 @@ def products():
             "v": "2.0",
             "access_token": tokens['access_token'],
             "keywords": request.args.get('q', 'electronics'),  # Corrigido para 'keywords'
+            "countryCode": "BR",  # 👈 obrigatório para Brasil
         }
         
         # Gerar assinatura

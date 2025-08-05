@@ -655,11 +655,22 @@ def oauth_callback():
     # Tentar múltiplos endpoints e métodos
     endpoints_to_try = [
         {
-            'url': 'https://api-sg.aliexpress.com/oauth/token',
+            'url': 'https://api-sg.aliexpress.com/oauth2/token',
             'method': 'POST',
             'data': {
                 "grant_type": "authorization_code",
-                "need_refresh_token": "true",
+                "client_id": APP_KEY,
+                "client_secret": APP_SECRET,
+                "redirect_uri": REDIRECT_URI,
+                "code": code,
+                "need_refresh_token": "true"
+            }
+        },
+        {
+            'url': 'https://api-sg.aliexpress.com/oauth2/token',
+            'method': 'POST',
+            'data': {
+                "grant_type": "authorization_code",
                 "client_id": APP_KEY,
                 "client_secret": APP_SECRET,
                 "redirect_uri": REDIRECT_URI,
@@ -674,18 +685,8 @@ def oauth_callback():
                 "client_id": APP_KEY,
                 "client_secret": APP_SECRET,
                 "redirect_uri": REDIRECT_URI,
-                "code": code
-            }
-        },
-        {
-            'url': 'https://api-sg.aliexpress.com/auth/token/create',
-            'method': 'POST',
-            'data': {
-                "grant_type": "authorization_code",
-                "client_id": APP_KEY,
-                "client_secret": APP_SECRET,
-                "redirect_uri": REDIRECT_URI,
-                "code": code
+                "code": code,
+                "need_refresh_token": "true"
             }
         }
     ]

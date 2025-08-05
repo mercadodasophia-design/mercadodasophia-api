@@ -4,6 +4,9 @@
 import os
 import json
 import requests
+import hashlib
+import time
+import urllib.parse
 from flask import Flask, request, jsonify
 import iop
 
@@ -29,6 +32,24 @@ def load_tokens():
         with open(TOKENS_FILE, 'r') as f:
             return json.load(f)
     return None
+
+def generate_gop_signature(params, app_secret):
+    """Gera assinatura GOP para AliExpress API"""
+    # Ordenar parâmetros alfabeticamente
+    sorted_params = sorted(params.items())
+    
+    # Concatenar parâmetros
+    param_string = ''
+    for key, value in sorted_params:
+        param_string += f'{key}{value}'
+    
+    # Adicionar app_secret no início e fim
+    sign_string = f'{app_secret}{param_string}{app_secret}'
+    
+    # Gerar MD5
+    signature = hashlib.md5(sign_string.encode('utf-8')).hexdigest().upper()
+    
+    return signature
 
 def create_test_page():
     """Cria página HTML de teste"""
@@ -688,14 +709,18 @@ def oauth_callback():
             }
         },
         {
-            'name': 'Seller API',
+            'name': 'Seller API with GOP',
             'url': 'https://api-sg.aliexpress.com/auth/token/create',
             'data': {
                 "grant_type": "authorization_code",
                 "client_id": APP_KEY,
                 "client_secret": APP_SECRET,
                 "redirect_uri": REDIRECT_URI,
-                "code": code
+                "code": code,
+                "timestamp": str(int(time.time())),
+                "format": "json",
+                "v": "2.0",
+                "sign_method": "md5"
             }
         }
     ]
@@ -708,10 +733,18 @@ def oauth_callback():
     for attempt in attempts:
         print(f'🔧 Tentativa: {attempt["name"]}')
         print(f'🔧 URL: {attempt["url"]}')
-        print(f'🔧 Data: {attempt["data"]}')
+        
+        # Gerar assinatura GOP se necessário
+        data = attempt['data'].copy()
+        if 'timestamp' in data:  # Se tem timestamp, precisa de assinatura GOP
+            signature = generate_gop_signature(data, APP_SECRET)
+            data['sign'] = signature
+            print(f'🔧 Assinatura GOP gerada: {signature}')
+        
+        print(f'🔧 Data: {data}')
         
         try:
-            response = requests.post(attempt['url'], headers=headers, data=attempt['data'])
+            response = requests.post(attempt['url'], headers=headers, data=data)
             print(f'✅ Status Code: {response.status_code}')
             print(f'✅ Content-Type: {response.headers.get("Content-Type")}')
             print(f'✅ Raw Response: {response.text[:300]}...')

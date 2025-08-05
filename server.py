@@ -869,6 +869,7 @@ def products():
             "keywords": request.args.get('q', 'electronics'),  # Corrigido para 'keywords'
             "countryCode": "BR",  # 👈 obrigatório para Brasil
             "currency": "BRL",    # 👈 obrigatório para Brasil
+            "local": "pt_BR",     # 👈 obrigatório para Brasil
             "ship_to_country": "BR",  # opcional mas recomendado
             "language": "pt",     # opcional para português
         }

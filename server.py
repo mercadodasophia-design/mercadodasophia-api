@@ -844,18 +844,15 @@ def products():
         return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
 
     try:
-        # Configuração exata conforme documentação
+        # Configuração simplificada para testar
         client = iop.IopClient('https://api-sg.aliexpress.com/rest', APP_KEY, APP_SECRET)
         request_obj = iop.IopRequest('aliexpress.ds.text.search')
         
-        # Parâmetros exatos conforme documentação
+        # Parâmetros mínimos necessários
         request_obj.add_api_param('keyWord', request.args.get('q', 'electronics'))
-        request_obj.add_api_param('local', 'zh_CN')  # Conforme exemplo da documentação
+        request_obj.add_api_param('local', 'zh_CN')
         request_obj.add_api_param('countryCode', 'US')
         request_obj.add_api_param('currency', 'USD')
-        request_obj.add_api_param('pageSize', '20')
-        request_obj.add_api_param('pageIndex', '1')
-        request_obj.add_api_param('sortBy', 'min_price,asc')  # Conforme exemplo da documentação
 
         response = client.execute(request_obj, tokens['access_token'])
         print(f'✅ Resposta produtos: {response.body}')
@@ -876,12 +873,11 @@ def categories():
         return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
 
     try:
-        # Configuração exata conforme documentação
+        # Configuração simplificada para testar
         client = iop.IopClient('https://api-sg.aliexpress.com/rest', APP_KEY, APP_SECRET)
         request_obj = iop.IopRequest('aliexpress.ds.category.get')
         
-        # Parâmetros exatos conforme documentação
-        request_obj.add_api_param('categoryId', '15')  # Conforme exemplo da documentação
+        # Parâmetros mínimos necessários
         request_obj.add_api_param('language', 'en')
 
         response = client.execute(request_obj, tokens['access_token'])

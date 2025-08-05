@@ -722,6 +722,13 @@ def oauth_callback():
                 "v": "2.0",
                 "sign_method": "md5"
             }
+        },
+        {
+            'name': 'SDK Official',
+            'url': 'SDK_METHOD',
+            'data': {
+                "code": code
+            }
         }
     ]
 
@@ -744,12 +751,45 @@ def oauth_callback():
         print(f'🔧 Data: {data}')
         
         try:
-            response = requests.post(attempt['url'], headers=headers, data=data)
-            print(f'✅ Status Code: {response.status_code}')
-            print(f'✅ Content-Type: {response.headers.get("Content-Type")}')
-            print(f'✅ Raw Response: {response.text[:300]}...')
+            if attempt['url'] == 'SDK_METHOD':
+                # Usar SDK oficial do AliExpress
+                print(f'🔧 Usando SDK oficial do AliExpress...')
+                try:
+                    client = iop.IopClient('https://api-sg.aliexpress.com', APP_KEY, APP_SECRET)
+                    request_obj = iop.IopRequest('auth.token.create', 'POST')
+                    request_obj.add_api_param('code', code)
+                    request_obj.add_api_param('grant_type', 'authorization_code')
+                    request_obj.add_api_param('client_id', APP_KEY)
+                    request_obj.add_api_param('client_secret', APP_SECRET)
+                    request_obj.add_api_param('redirect_uri', REDIRECT_URI)
+                    
+                    response = client.execute(request_obj)
+                    print(f'✅ SDK Response: {response.body}')
+                    
+                    if response.code == '0':
+                        tokens = response.body
+                        print(f'✅ Sucesso usando SDK oficial!')
+                        save_tokens(tokens)
+                        
+                        if request.headers.get('Accept', '').find('text/html') != -1:
+                            return create_callback_page(tokens)
+                        else:
+                            return jsonify({'success': True, 'tokens': tokens})
+                    else:
+                        print(f'❌ Erro no SDK: {response.body}')
+                        continue
+                        
+                except Exception as sdk_error:
+                    print(f'❌ Erro no SDK: {sdk_error}')
+                    continue
+            else:
+                # Usar requisição HTTP normal
+                response = requests.post(attempt['url'], headers=headers, data=data)
+                print(f'✅ Status Code: {response.status_code}')
+                print(f'✅ Content-Type: {response.headers.get("Content-Type")}')
+                print(f'✅ Raw Response: {response.text[:300]}...')
 
-            if response.status_code == 200:
+                if response.status_code == 200:
                 try:
                     tokens = response.json()
                     

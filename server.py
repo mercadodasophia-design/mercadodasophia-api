@@ -53,17 +53,14 @@ def generate_gop_signature(params, app_secret):
 
 def generate_api_signature(params, app_secret):
     """Gerar assinatura para APIs de negócios do AliExpress"""
-    # Ordenar parâmetros alfabeticamente
-    sorted_params = dict(sorted(params.items()))
+    # 1️⃣ Ordenar e concatenar key+value
+    sorted_params = "".join(f"{k}{v}" for k, v in sorted(params.items()))
     
-    # Concatenar chave=valor sem separadores
-    param_string = ''.join(f"{k}{v}" for k, v in sorted_params.items())
+    # 2️⃣ Concatenar secret + params + secret
+    to_sign = f"{app_secret}{sorted_params}{app_secret}"
     
-    # Concatenar secret + params + secret
-    to_sign = f"{app_secret}{param_string}{app_secret}"
-    
-    # Gerar MD5 em maiúsculo
-    signature = hashlib.md5(to_sign.encode('utf-8')).hexdigest().upper()
+    # 3️⃣ Gerar MD5 maiúsculo
+    signature = hashlib.md5(to_sign.encode("utf-8")).hexdigest().upper()
     
     return signature
 
@@ -860,7 +857,7 @@ def products():
         return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
 
     try:
-        # Parâmetros para a API
+        # Parâmetros para a API conforme documentação
         params = {
             "method": "aliexpress.ds.text.search",
             "app_key": APP_KEY,
@@ -869,17 +866,14 @@ def products():
             "format": "json",
             "v": "2.0",
             "access_token": tokens['access_token'],
-            "keyWord": request.args.get('q', 'electronics'),
-            "local": "zh_CN",
-            "countryCode": "US",
-            "currency": "USD"
+            "keywords": request.args.get('q', 'electronics'),  # Corrigido para 'keywords'
         }
         
         # Gerar assinatura
         params["sign"] = generate_api_signature(params, APP_SECRET)
         
-        # Fazer requisição HTTP direta
-        response = requests.get('https://api-sg.aliexpress.com/rest', params=params)
+        # Fazer requisição HTTP direta para /sync
+        response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
         print(f'✅ Resposta produtos: {response.text}')
         
         if response.status_code == 200:
@@ -903,7 +897,7 @@ def categories():
         return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
 
     try:
-        # Parâmetros para a API
+        # Parâmetros para a API conforme documentação
         params = {
             "method": "aliexpress.ds.category.get",
             "app_key": APP_KEY,
@@ -918,8 +912,8 @@ def categories():
         # Gerar assinatura
         params["sign"] = generate_api_signature(params, APP_SECRET)
         
-        # Fazer requisição HTTP direta
-        response = requests.get('https://api-sg.aliexpress.com/rest', params=params)
+        # Fazer requisição HTTP direta para /sync
+        response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
         print(f'✅ Resposta categorias: {response.text}')
         
         if response.status_code == 200:

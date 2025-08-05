@@ -846,7 +846,9 @@ def products():
     try:
         client = iop.IopClient('https://api-sg.aliexpress.com/rest', APP_KEY, APP_SECRET)
         request_obj = iop.IopRequest('aliexpress.ds.text.search')
-        request_obj.set_simplify()
+        
+        # Não usar set_simplify() para APIs de negócios
+        # request_obj.set_simplify()
         
         # Parâmetros conforme documentação
         request_obj.add_api_param('keyWord', request.args.get('q', 'electronics'))
@@ -877,10 +879,13 @@ def categories():
 
     try:
         client = iop.IopClient('https://api-sg.aliexpress.com/rest', APP_KEY, APP_SECRET)
-        request_obj = iop.IopRequest('aliexpress.ds.category.get', 'POST')
-        request_obj.set_simplify()
-        request_obj.add_api_param('target_currency', 'USD')
-        request_obj.add_api_param('target_language', 'EN')
+        request_obj = iop.IopRequest('aliexpress.ds.category.get')
+        
+        # Não usar set_simplify() para APIs de negócios
+        # request_obj.set_simplify()
+        
+        # Parâmetros conforme documentação
+        request_obj.add_api_param('language', 'en')
 
         response = client.execute(request_obj, tokens['access_token'])
         print(f'✅ Resposta categorias: {response.body}')

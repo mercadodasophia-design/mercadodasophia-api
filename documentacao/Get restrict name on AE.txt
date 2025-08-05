@@ -1,0 +1,68 @@
+Get restrict name on AE
+GET/POST
+aliexpress.ds.address.get
+Description：Get restrict names which are same to names in web page form
+Parameter
+Name
+Type
+Required or not
+Description
+language
+String
+No
+language
+countryCode
+String
+Yes
+countryCode
+isMultiLanguage
+String
+No
+support multi language
+Response Parameters
+Name
+Type
+Description
+result
+Object
+result
+Error code
+Error code
+Error message
+Solution
+Address Exception
+Address Exception
+Country code error, please check country code
+GET/POST
+aliexpress.ds.address.get
+JAVA
+PHP
+.NET
+RUBY
+PYTHON
+CURL
+client = iop.IopClient(url, appkey ,appSecret)
+request = iop.IopRequest('aliexpress.ds.address.get')
+request.add_api_param('language', 'JA')
+request.add_api_param('countryCode', 'JP')
+request.add_api_param('isMultiLanguage', 'true')
+response = client.execute(request)
+print(response.type)
+print(response.body)
+
+Streamlined Return
+Non-Refinement Return
+{
+  "result": {
+    "ret": "true",
+    "msg": "error message",
+    "code": "code",
+    "data": {
+      "country": "US",
+      "children": "childrenStr",
+      "type": "country"
+    }
+  },
+  "code": "0",
+  "request_id": "0ba2887315178178017221014"
+}

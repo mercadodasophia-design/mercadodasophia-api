@@ -1,0 +1,126 @@
+buyer query order details
+GET/POST
+aliexpress.trade.ds.order.get
+Description：buyers query order details for dropshipper
+Parameter
+Name
+Type
+Required or not
+Description
+single_order_query
+Object
+Yes
+order query conditions
+Response Parameters
+Name
+Type
+Description
+result
+Object
+order information
+Error code
+Error code
+Error message
+Solution
+isv.insufficient-permission
+isv.insufficient-permission
+Insufficient permissions，please check the parameters
+isp.service-unavailable
+isp.service-unavailable
+Service timed out, please try again
+isv.invalid-authorization
+isv.invalid-authorization
+Accessing data not belonging to you，please check the parameters
+InternalError
+InternalError
+System error,Need to contact technical support
+GET/POST
+aliexpress.trade.ds.order.get
+JAVA
+PHP
+.NET
+RUBY
+PYTHON
+CURL
+client = iop.IopClient(url, appkey ,appSecret)
+request = iop.IopRequest('aliexpress.trade.ds.order.get')
+request.add_api_param('single_order_query', '{\"order_id\":\"10000001\"}')
+response = client.execute(request, access_token)
+print(response.type)
+print(response.body)
+
+Streamlined Return
+Non-Refinement Return
+{
+  "result": {
+    "gmt_create": "2018-08-28 05:39:01",
+    "order_status": "FUND_PROCESSING",
+    "logistics_info_list": [
+      {
+        "logistics_service": "EMS",
+        "logistics_no": "CP0_318495001"
+      }
+    ],
+    "pay_timeout_second": "86400",
+    "store_info": {
+      "store_id": "1046007",
+      "store_name": "John\u0027s Shoes Shop",
+      "store_url": "https://www.aliexpress.com/store/1046007"
+    },
+    "user_order_amount": {
+      "amount": "199.00",
+      "currency_code": "USD"
+    },
+    "order_paidtime_string": "2019-06-03T18:05:47-07:00[America/Los_Angeles]",
+    "order_amount": {
+      "amount": "199.00",
+      "currency_code": "USD"
+    },
+    "child_order_list": [
+      {
+        "shipping_discount_fee": {
+          "amount": "299.00",
+          "currency_code": "USD"
+        },
+        "sale_fee": {
+          "amount": "299.00",
+          "currency_code": "USD"
+        },
+        "end_reason": "CANCELED",
+        "actual_fee": {
+          "amount": "299.00",
+          "currency_code": "USD"
+        },
+        "product_count": "3",
+        "sku_id": "12345",
+        "sale_discount_fee": {
+          "amount": "299.00",
+          "currency_code": "USD"
+        },
+        "product_price": {
+          "amount": "299.00",
+          "currency_code": "USD"
+        },
+        "price_include_tax": "true",
+        "product_name": "John\u0027s Shoes",
+        "shipping_fee": {
+          "amount": "299.00",
+          "currency_code": "USD"
+        },
+        "actual_shipping_fee": {
+          "amount": "299.00",
+          "currency_code": "USD"
+        },
+        "product_id": "2100000012",
+        "already_include_tax": "true",
+        "actual_tax_fee": {
+          "amount": "199.00",
+          "currency_code": "USD"
+        }
+      }
+    ],
+    "logistics_status": "SELLER_SEND_GOODS"
+  },
+  "code": "0",
+  "request_id": "0ba2887315178178017221014"
+}

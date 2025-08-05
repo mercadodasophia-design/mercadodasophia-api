@@ -1,0 +1,54 @@
+search event report
+GET/POST
+aliexpress.ds.search.event.report
+Description：Used for report business event to help analysis out-site business CR. Will use AI to analysis the reported data and help you optimize your business
+Parameter
+Name
+Type
+Required or not
+Description
+report_text
+String
+Yes
+out site event, for business analysis
+Response Parameters
+Name
+Type
+Description
+code
+String
+code
+msg
+String
+msg
+data
+String
+data
+Error code
+Error code
+Error message
+Solution
+No Data
+GET/POST
+aliexpress.ds.search.event.report
+JAVA
+PHP
+.NET
+RUBY
+PYTHON
+CURL
+client = iop.IopClient(url, appkey ,appSecret)
+request = iop.IopRequest('aliexpress.ds.search.event.report')
+request.add_api_param('report_text', 'time=1640966400123&event=EXP')
+response = client.execute(request)
+print(response.type)
+print(response.body)
+
+Streamlined Return
+Non-Refinement Return
+{
+  "msg": "msg",
+  "code": "0",
+  "data": "data",
+  "request_id": "0ba2887315178178017221014"
+}

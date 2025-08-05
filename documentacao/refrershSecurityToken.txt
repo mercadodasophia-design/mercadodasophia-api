@@ -1,0 +1,108 @@
+refreshSecurityToken
+GET/POST
+/auth/token/security/refresh
+Description：refresh access_token safely for api call
+Parameter
+Name
+Type
+Required or not
+Description
+refresh_token
+String
+Yes
+refresh_token
+Response Parameters
+Name
+Type
+Description
+expires_in
+Number
+The expiring time of the access token, in seconds,Relative Time
+account_id
+String
+Account Allow null. if(account_platform=seller_center) account_id=null
+seller_id
+String
+seller id
+user_id
+String
+user id
+user_nick
+String
+user nick
+havana_id
+String
+havana id
+account_platform
+String
+Account platform
+access_token
+String
+Access token
+account
+String
+User account(login user)
+refresh_token
+String
+Refresh token, used to refresh the token when ârefresh_expires_inâ>0.
+refresh_expires_in
+Number
+The expiring time of the refresh token,Relative Time
+expire_time
+Number
+Expired time of access token, absolute time
+refresh_token_valid_time
+Number
+Expired time of refresh token,absolute time
+sp
+String
+authorization platform
+locale
+String
+language
+Error code
+Error code
+Error message
+Solution
+IllegalRefreshToken
+Illegal Refresh Token
+The specified refresh token is invalid or expired, please check and try again
+AUTH_TYPE_UNSUPPORTED
+Authorization type not supported
+The authorization type is not supported. Please check the authorization type.
+GET/POST
+/auth/token/security/refresh
+JAVA
+PHP
+.NET
+RUBY
+PYTHON
+CURL
+IopClient client = new IopClient(url, appkey, appSecret);
+IopRequest request = new IopRequest();
+request.setApiName("/auth/token/security/refresh");
+request.addApiParameter("refresh_token", "50001600212wcwiOabwyjtEH11acc19aBOvQr9ZYkYDlr987D8BB88LIB8bj");
+IopResponse response = client.execute(request, Protocol.GOP);
+System.out.println(response.getBody());
+Thread.sleep(10);
+
+Streamlined Return
+{
+  "refresh_token_valid_time": "1500",
+  "havana_id": "10000",
+  "code": "0",
+  "expire_time": "1500",
+  "locale": "zh_CN",
+  "user_nick": "cn1001",
+  "access_token": "50000601c30atpedfgu3LVvik87Ixlsvle3mSoB7701ceb156fPunYZ43GBg",
+  "refresh_token": "500016000300bwa2WteaQyfwBMnPxurcA0mXGhQdTt18356663CfcDTYpWoi",
+  "account_id": "7063844",
+  "user_id": "10101",
+  "account_platform": "seller_center",
+  "refresh_expires_in": "60",
+  "expires_in": "10",
+  "sp": "global",
+  "request_id": "0ba2887315178178017221014",
+  "seller_id": "1001",
+  "account": "xxx@126.com"
+}

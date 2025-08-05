@@ -1,0 +1,77 @@
+New Freight Query API
+GET/POST
+aliexpress.ds.freight.query
+Description：(Latest) Freight Query API - get deliveryOptions and freight price
+Parameter
+Name
+Type
+Required or not
+Description
+queryDeliveryReq
+Object
+Yes
+delivery query request
+Response Parameters
+Name
+Type
+Description
+result
+Object
+result
+Error code
+Error code
+Error message
+Solution
+DELIVERY_NOT_AVAILABLE_TO_YOUR_ADDRESS
+DELIVERY_NOT_AVAILABLE_TO_YOUR_ADDRESS
+Logistics cannot be delivered to the specified address
+DELIVERY_INFO_EMPTY
+DELIVERY_INFO_EMPTY
+The product ID is wrong, please check the product ID
+GET/POST
+aliexpress.ds.freight.query
+JAVA
+PHP
+.NET
+RUBY
+PYTHON
+CURL
+client = iop.IopClient(url, appkey ,appSecret)
+request = iop.IopRequest('aliexpress.ds.freight.query')
+request.add_api_param('queryDeliveryReq', '{\"quantity\":\"1\",\"shipToCountry\":\"FR\",\"productId\":\"3256802900954148\",\"provinceCode\":\"provice\",\"cityCode\":\"city\",\"selectedSkuId\":\"12000023999200390\",\"language\":\"en_US\",\"currency\":\"USD\",\"locale\":\"zh_CN\"}')
+response = client.execute(request, access_token)
+print(response.type)
+print(response.body)
+
+Streamlined Return
+Non-Refinement Return
+{
+  "result": {
+    "msg": "Call succeeds",
+    "code": "200",
+    "success": "true",
+    "delivery_options": [
+      {
+        "code": "CAINIAO_FULFILLMENT_STD",
+        "shipping_fee_currency": "USD",
+        "free_shipping": "false",
+        "mayHavePFS": "false",
+        "guaranteed_delivery_days": "100",
+        "max_delivery_days": "40",
+        "tracking": "true",
+        "shipping_fee_format": "US $1.99",
+        "free_shipping_threshold": "$10.00",
+        "estimated_delivery_time": "null",
+        "delivery_date_desc": "null",
+        "company": "AliExpress Selection Standard",
+        "ship_from_country": "CN",
+        "min_delivery_days": "20",
+        "available_stock": "100",
+        "ddpIncludeVATTax": "true",
+        "shipping_fee_cent": "1.99"
+      }
+    ]
+  },
+  "code": "0",
+  "request_id": "0ba2887315178178017221014"
+}

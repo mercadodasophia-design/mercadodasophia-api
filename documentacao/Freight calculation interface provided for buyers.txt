@@ -1,0 +1,63 @@
+Freight calculation interface provided for buyers
+GET/POST
+aliexpress.logistics.buyer.freight.calculate
+Description：Freight calculation interface provided for buyers
+Parameter
+Name
+Type
+Required or not
+Description
+param_aeop_freight_calculate_for_buyer_d_t_o
+Object
+Yes
+Shipping Calculation Request Parameters
+Response Parameters
+Name
+Type
+Description
+result
+Object
+result
+Error code
+Error code
+Error message
+Solution
+No Data
+GET/POST
+aliexpress.logistics.buyer.freight.calculate
+JAVA
+PHP
+.NET
+RUBY
+PYTHON
+CURL
+client = iop.IopClient(url, appkey ,appSecret)
+request = iop.IopRequest('aliexpress.logistics.buyer.freight.calculate')
+request.add_api_param('param_aeop_freight_calculate_for_buyer_d_t_o', '{\"country_code\":\"RU\",\"price\":\"1.89\",\"product_id\":\"777777\",\"city_code\":\"99988777\",\"sku_id\":\"12000000424324\",\"product_num\":\"1\",\"send_goods_country_code\":\"CN\",\"province_code\":\"888777\",\"price_currency\":\"USD\"}')
+response = client.execute(request, access_token)
+print(response.type)
+print(response.body)
+
+Streamlined Return
+Non-Refinement Return
+{
+  "result": {
+    "error_desc": "product id is needed.",
+    "success": "true",
+    "aeop_freight_calculate_result_for_buyer_d_t_o_list": [
+      {
+        "service_name": "CAINIAO_STANDARD",
+        "estimated_delivery_time": "5-8day",
+        "freight": {
+          "amount": "1.0",
+          "cent": "1000",
+          "currency_code": "USD"
+        },
+        "error_code": "0",
+        "tracking_available": "true"
+      }
+    ]
+  },
+  "code": "0",
+  "request_id": "0ba2887315178178017221014"
+}

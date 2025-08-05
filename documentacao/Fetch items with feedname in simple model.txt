@@ -1,0 +1,77 @@
+Fetch items with feedname in simple model
+GET/POST
+aliexpress.ds.feed.itemids.get
+Description：fetch item id list by feedname
+Parameter
+Name
+Type
+Required or not
+Description
+page_size
+Number
+No
+number of each page
+category_id
+String
+No
+first level category id, you can get from category query
+feed_name
+String
+Yes
+query api ‘aliexpress.ds.feedname.get’
+search_id
+String
+No
+Response Parameters
+Name
+Type
+Description
+result
+Object
+result object
+rsp_msg
+String
+result msg
+rsp_code
+Number
+result code
+ret
+Boolean
+true is success, false for fail
+Error code
+Error code
+Error message
+Solution
+No Data
+GET/POST
+aliexpress.ds.feed.itemids.get
+JAVA
+PHP
+.NET
+RUBY
+PYTHON
+CURL
+client = iop.IopClient(url, appkey ,appSecret)
+request = iop.IopRequest('aliexpress.ds.feed.itemids.get')
+request.add_api_param('page_size', '200')
+request.add_api_param('category_id', '21')
+request.add_api_param('feed_name', 'DS bestseller')
+request.add_api_param('search_id', 'abc123')
+response = client.execute(request, access_token)
+print(response.type)
+print(response.body)
+
+Streamlined Return
+Non-Refinement Return
+{
+  "result": {
+    "total": "total item id left ",
+    "products": [],
+    "search_id": "search id"
+  },
+  "ret": "true",
+  "code": "0",
+  "rsp_code": "200",
+  "rsp_msg": "success",
+  "request_id": "0ba2887315178178017221014"
+}

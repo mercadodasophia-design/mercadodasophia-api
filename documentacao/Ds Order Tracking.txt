@@ -1,0 +1,85 @@
+Ds Order Tracking
+GET/POST
+aliexpress.ds.order.tracking.get
+Description：Get DropShip Order Tracking info
+Parameter
+Name
+Type
+Required or not
+Description
+ae_order_id
+String
+Yes
+Order ID which you get from order.create
+language
+String
+Yes
+language
+Response Parameters
+Name
+Type
+Description
+result
+Object
+result
+Error code
+Error code
+Error message
+Solution
+UnsupportedParamMapping
+UnsupportedParamMapping
+Parameter error, please check the parameters
+TRACKING DATA NOT FOUND
+TRACKING DATA NOT FOUND
+The logistics number is wrong, please check the logistics number
+GET/POST
+aliexpress.ds.order.tracking.get
+JAVA
+PHP
+.NET
+RUBY
+PYTHON
+CURL
+client = iop.IopClient(url, appkey ,appSecret)
+request = iop.IopRequest('aliexpress.ds.order.tracking.get')
+request.add_api_param('ae_order_id', '12345')
+request.add_api_param('language', 'en_US')
+response = client.execute(request, access_token)
+print(response.type)
+print(response.body)
+
+Streamlined Return
+Non-Refinement Return
+{
+  "result": {
+    "ret": "true",
+    "msg": "error message",
+    "code": "error code",
+    "data": {
+      "tracking_detail_line_list": [
+        {
+          "detail_node_list": [
+            {
+              "time_stamp": "1720181940000",
+              "tracking_detail_desc": "Package delivered",
+              "tracking_name": "Delivery update"
+            }
+          ],
+          "package_item_list": [
+            {
+              "sku_desc": "Color:Large",
+              "quantity": "1",
+              "item_id": "1005005511268056",
+              "item_title": "car sunshade car sunshade retractable sunscreen heat insulation front windshield parasol"
+            }
+          ],
+          "carrier_name": "AliExpress Selection Standard",
+          "mail_no": "62727952231",
+          "eta_time_stamps": "1720514236934"
+        }
+      ]
+    }
+  },
+  "code": "0",
+  "request_id": "0ba2887315178178017221014"
+}

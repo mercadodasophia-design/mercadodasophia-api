@@ -1,0 +1,72 @@
+get products' special info like certification
+GET/POST
+aliexpress.ds.product.specialinfo.get
+Description：get products' special info like certification
+Parameter
+Name
+Type
+Required or not
+Description
+itemId
+Number
+Yes
+product id
+countryCodes
+String[]
+Yes
+country code
+appKey
+String
+Yes
+your appkey
+Response Parameters
+Name
+Type
+Description
+result
+Object
+result
+Error code
+Error code
+Error message
+Solution
+No Data
+GET/POST
+aliexpress.ds.product.specialinfo.get
+JAVA
+PHP
+.NET
+RUBY
+PYTHON
+CURL
+client = iop.IopClient(url, appkey ,appSecret)
+request = iop.IopRequest('aliexpress.ds.product.specialinfo.get')
+request.add_api_param('itemId', '317776878')
+request.add_api_param('countryCodes', 'US')
+request.add_api_param('appKey', 'your app code')
+response = client.execute(request)
+print(response.type)
+print(response.body)
+
+Streamlined Return
+Non-Refinement Return
+{
+  "result": {
+    "ret": "true",
+    "code": "null",
+    "data": {
+      "item_qualification_list": [
+        {
+          "value_type": "EU_CE",
+          "name": "null",
+          "value": "https://example.pdf",
+          "key": "item_EU_CE_certificate"
+        }
+      ],
+      "product_id": "317776878"
+    },
+    "err_message": "\"\""
+  },
+  "code": "0",
+  "request_id": "0ba2887315178178017221014"
+}

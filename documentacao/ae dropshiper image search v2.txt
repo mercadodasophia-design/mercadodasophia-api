@@ -1,0 +1,74 @@
+ae dropshiper image search v2
+GET/POST
+aliexpress.ds.image.searchV2
+Description：ae dropshiper image search v2
+Parameter
+Name
+Type
+Required or not
+Description
+param0
+Object
+No
+param0
+Response Parameters
+Name
+Type
+Description
+result
+Object
+result
+Error code
+Error code
+Error message
+Solution
+No Data
+GET/POST
+aliexpress.ds.image.searchV2
+JAVA
+PHP
+.NET
+RUBY
+PYTHON
+CURL
+client = iop.IopClient(url, appkey ,appSecret)
+request = iop.IopRequest('aliexpress.ds.image.searchV2')
+request.add_api_param('param0', '{\"sort_type\":\"price\",\"image_base64\":\"imageBase64\",\"currency\":\"USD\",\"lang\":\"en\",\"search_type\":\"same\",\"sort_order\":\"asc\",\"ship_to\":\"US\"}')
+response = client.execute(request, access_token)
+print(response.type)
+print(response.body)
+
+Streamlined Return
+Non-Refinement Return
+{
+  "result": {
+    "ret": "true",
+    "code": "null",
+    "data": [
+      {
+        "latest_volume": "25",
+        "ship_from": "US",
+        "product_detail_url": "https://www.aliexpress.com/item/1005006918079912.html?skuId\u003d12000038722872673\u0026pdp_ext_f\u003d%7B%22sku_id%22%3A%2212000038722872673%22%7D",
+        "target_sale_price": "2532",
+        "second_level_category_id": "1417",
+        "discount": "65",
+        "product_main_image_url": "//ae-pic-a1.aliexpress-media.com/kf/S4ecd9088593344a1b794f748c06dc3b0R/12-16-8-21V-Cordless-Drill-Rechargeable-Electric-Screwdriver-Lithium-Battery-Household-Multi-function-2-Speed.jpg_350x350xz.jpg",
+        "evaluate_rate": "4.4",
+        "first_level_category_id": "1420",
+        "target_sale_price_currency": "USD",
+        "product_title": "12/16.8/21V Cordless Drill Rechargeable Electric Screwdriver Lithium Battery Household Multi-function 2 Speed Power Tools",
+        "shop_id": "1103438687",
+        "second_level_category_title": "Power Tools",
+        "target_original_price_currency": "USD",
+        "product_id": "1005006918079912",
+        "first_level_category_title": "Tools",
+        "similarity_score": "0.967",
+        "target_original_price": "7353"
+      }
+    ],
+    "messages": "null",
+    "empty": "false"
+  },
+  "code": "0",
+  "request_id": "0ba2887315178178017221014"
+}

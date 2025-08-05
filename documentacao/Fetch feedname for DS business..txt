@@ -1,0 +1,63 @@
+Latest update:
+2023-06-19 11:49:27
+6184
+Fetch feedname for DS business.
+GET/POST
+aliexpress.ds.feedname.get
+Description：Fetch feedname for DS business. Feedname refers to a list of itemId.
+Parameter
+Name
+Type
+Required or not
+Description
+app_signature
+String
+No
+API signature
+Response Parameters
+Name
+Type
+Description
+resp_result
+Object
+Respond results
+Error code
+Error code
+Error message
+Solution
+No Data
+GET/POST
+aliexpress.ds.feedname.get
+JAVA
+PHP
+.NET
+RUBY
+PYTHON
+CURL
+client = iop.IopClient(url, appkey ,appSecret)
+request = iop.IopRequest('aliexpress.ds.feedname.get')
+request.add_api_param('app_signature', 'your_signature')
+response = client.execute(request)
+print(response.type)
+print(response.body)
+
+Streamlined Return
+Non-Refinement Return
+{
+  "code": "0",
+  "resp_result": {
+    "result": {
+      "current_record_count": "50",
+      "promos": [
+        {
+          "promo_name": "single days big sale",
+          "promo_desc": "single days big sale",
+          "product_num": "100"
+        }
+      ]
+    },
+    "resp_code": "200",
+    "resp_msg": "success"
+  },
+  "request_id": "0ba2887315178178017221014"
+}

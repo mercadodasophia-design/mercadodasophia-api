@@ -1,0 +1,75 @@
+Latest update:
+2023-06-19 12:23:38
+10007
+API for fetch AE Category's ID and Category Name
+GET/POST
+aliexpress.ds.category.get
+Description：It is an API for fetch AE Category's ID and Category Name: - We export level categories - We support i18n categories names. Supported languages: hi de ru pt ko in en it fr zh es iw ar vi th uk ja id pl he nl tr - If you have level 3 category's id or level 4, you can query to parent category info(level 2) from this API
+Parameter
+Name
+Type
+Required or not
+Description
+categoryId
+String
+No
+categoryId
+language
+String
+No
+language:hi de ru pt ko in en it fr zh es iw ar vi th uk ja id pl he nl tr
+app_signature
+String
+No
+signature
+Response Parameters
+Name
+Type
+Description
+resp_result
+Object
+Respond result
+Error code
+Error code
+Error message
+Solution
+UnsupportedParamMapping
+UnsupportedParamMapping
+Unsupported parameters, please check the parameters
+GET/POST
+aliexpress.ds.category.get
+JAVA
+PHP
+.NET
+RUBY
+PYTHON
+CURL
+client = iop.IopClient(url, appkey ,appSecret)
+request = iop.IopRequest('aliexpress.ds.category.get')
+request.add_api_param('categoryId', '15')
+request.add_api_param('language', 'en')
+request.add_api_param('app_signature', 'your signature')
+response = client.execute(request)
+print(response.type)
+print(response.body)
+
+Streamlined Return
+Non-Refinement Return
+{
+  "code": "0",
+  "resp_result": {
+    "result": {
+      "total_result_count": "111",
+      "categories": [
+        {
+          "parent_category_id": "22222",
+          "category_name": "dress",
+          "category_id": "111111"
+        }
+      ]
+    },
+    "resp_code": "200",
+    "resp_msg": "success"
+  },
+  "request_id": "0ba2887315178178017221014"
+}

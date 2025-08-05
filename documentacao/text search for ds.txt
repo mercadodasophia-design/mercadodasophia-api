@@ -1,0 +1,130 @@
+text search for ds
+GET/POST
+aliexpress.ds.text.search
+Description：text search for ds
+Parameter
+Name
+Type
+Required or not
+Description
+keyWord
+String
+No
+query word
+local
+String
+Yes
+lang: en_US
+countryCode
+String
+Yes
+ship to country
+categoryId
+Number
+No
+categoryId
+sortBy
+String
+No
+accept value: min_price,asc min_price,desc orders,asc orders,desc comments,asc comments,desc
+pageSize
+Number
+No
+page size
+pageIndex
+Number
+No
+page index
+currency
+String
+Yes
+currency
+searchExtend
+Object[]
+No
+search extend
+selectionName
+String
+No
+text search within specific selection
+Response Parameters
+Name
+Type
+Description
+code
+String
+code
+msg
+String
+message
+data
+Object
+data
+Error code
+Error code
+Error message
+Solution
+IllegalAccessToken
+IllegalAccessToken
+AccessToken error, please check the accessToken
+GET/POST
+aliexpress.ds.text.search
+JAVA
+PHP
+.NET
+RUBY
+PYTHON
+CURL
+client = iop.IopClient(url, appkey ,appSecret)
+request = iop.IopRequest('aliexpress.ds.text.search')
+request.add_api_param('keyWord', '\u88D9\u5B50')
+request.add_api_param('local', 'zh_CN')
+request.add_api_param('countryCode', 'US')
+request.add_api_param('categoryId', '349')
+request.add_api_param('sortBy', 'min_price,asc')
+request.add_api_param('pageSize', '20')
+request.add_api_param('pageIndex', '1')
+request.add_api_param('currency', 'USD')
+request.add_api_param('searchExtend', '[{\"min\":\"min\",\"max\":\"max\",\"searchKey\":\"searchKey\",\"searchValue\":\"searchValue\"}]')
+request.add_api_param('selectionName', 'selection name')
+response = client.execute(request)
+print(response.type)
+print(response.body)
+
+Streamlined Return
+Non-Refinement Return
+{
+  "msg": "message",
+  "code": "0",
+  "data": {
+    "pageIndex": "pageIndex",
+    "pageSize": "pageSize",
+    "totalCount": "totalCount",
+    "products": [
+      {
+        "productVideoUrl": "productVideoUrl",
+        "originalPrice": "12.73",
+        "originalPriceCurrency": "USD",
+        "salePrice": "6.62",
+        "discount": "48%",
+        "itemMainPic": "itemMainPic",
+        "title": "title",
+        "type": "search",
+        "originalPriceFormat": "originalPriceFormat",
+        "score": "score",
+        "itemId": "itemId",
+        "targetSalePrice": "6.62",
+        "cateId": "cateId",
+        "targetOriginalPriceCurrency": "USD",
+        "originMinPrice": "originMinPrice",
+        "evaluateRate": "97.8%",
+        "salePriceFormat": "salePriceFormat",
+        "orders": "orders",
+        "targetOriginalPrice": "12.73",
+        "itemUrl": "itemUrl",
+        "salePriceCurrency": "USD"
+      }
+    ]
+  },
+  "request_id": "0ba2887315178178017221014"
+}

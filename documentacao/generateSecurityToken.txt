@@ -1,0 +1,94 @@
+generateSecurityToken
+GET/POST
+/auth/token/security/create
+Description：generate access_token safely for call api
+Parameter
+Name
+Type
+Required or not
+Description
+code
+String
+Yes
+oauth code, get from app callback URL
+uuid
+String
+No
+uuid
+Response Parameters
+Name
+Type
+Description
+expires_in
+Number
+The expiring time of the access token, in seconds
+account_id
+String
+Account ID，Allow null. if(account_platform=seller_center) account_id=null
+user_id
+String
+user id
+seller_id
+String
+seller id
+access_token
+String
+Access token
+refresh_token
+String
+Refresh token, used to refresh the token when “refresh_expires_in”>0.
+refresh_expires_in
+Number
+The expiring time of th refresh token
+expire_time
+Number
+expire time
+refresh_token_valid_time
+Number
+refresh token valid time
+sp
+String
+sp
+locale
+String
+locale
+Error code
+Error code
+Error message
+Solution
+isv.402
+Creation failed
+Parameter error, please check the parameters
+GET/POST
+/auth/token/security/create
+JAVA
+PHP
+.NET
+RUBY
+PYTHON
+CURL
+client = iop.IopClient(url, appkey ,appSecret)
+request = iop.IopRequest('/auth/token/security/create')
+request.add_api_param('code', '0_2DL4DV3jcU1UOT7WGI1A4rY91')
+request.add_api_param('uuid', 'uuid')
+response = client.execute(request)
+print(response.type)
+print(response.body)
+
+Streamlined Return
+{
+  "refresh_token_valid_time": "1437129035362",
+  "code": "0",
+  "expire_time": "1437129035362",
+  "locale": "zh_CN",
+  "access_token": "50000601c30atpedfgu3LVvik87Ixlsvle3mSoB7701ceb156fPunYZ43GBg",
+  "refresh_token": "500016000300bwa2WteaQyfwBMnPxurcA0mXGhQdTt18356663CfcDTYpWoi",
+  "account_id": "7063844",
+  "user_id": "1001",
+  "refresh_expires_in": "60",
+  "expires_in": "10",
+  "sp": "ae",
+  "request_id": "0ba2887315178178017221014",
+  "seller_id": "1001"
+}
+

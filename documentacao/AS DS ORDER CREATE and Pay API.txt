@@ -1,0 +1,108 @@
+AE DS Order Create and Pay API
+GET/POST
+aliexpress.ds.order.create
+Description：API for place order in DS business
+Parameter
+Name
+Type
+Required or not
+Description
+ds_extend_request
+Object
+No
+DS ExtendParam
+param_place_order_request4_open_api_d_t_o
+Object
+Yes
+specific order parameters
+Response Parameters
+Name
+Type
+Description
+result
+Object
+result
+Error code
+Error code
+Error message
+Solution
+B_DROPSHIPPER_DELIVERY_ADDRESS_VALIDATE_FAIL
+B_DROPSHIPPER_DELIVERY_ADDRESS_VALIDATE_FAIL
+The address is wrong, please check the address
+B_DROPSHIPPER_DELIVERY_ADDRESS_CPF_CN_INVALID
+B_DROPSHIPPER_DELIVERY_ADDRESS_CPF_CN_INVALID
+CPF error, please check CPF
+B_DROPSHIPPER_DELIVERY_ADDRESS_CPF_NOT_MATCH
+B_DROPSHIPPER_DELIVERY_ADDRESS_CPF_NOT_MATCH
+CPF error, please check CPF
+BLACKLIST_BUYER_IN_LIST
+BLACKLIST_BUYER_IN_LIST
+The user ID status is abnormal. Please try to change the user to place the order.
+USER_ACCOUNT_DISABLED
+USER_ACCOUNT_DISABLED
+The user ID status is abnormal. Please try to change the user to place the order.
+PRICE_PAY_CURRENCY_ERROR
+PRICE_PAY_CURRENCY_ERROR
+Products should declare as same currency.
+DELIVERY_METHOD_NOT_EXIST
+DELIVERY_METHOD_NOT_EXIST
+Please fill valid delivery method (You can use se aliexpress.freight.query check it)
+INVENTORY_HOLD_ERROR
+INVENTORY_HOLD_ERROR
+Inventory is insufficient or system error occured.
+REPEATED_ORDER_ERROR
+REPEATED_ORDER_ERROR
+Duplicate order, please try again
+ERROR_WHEN_BUILD_FOR_PLACE_ORDER
+ERROR_WHEN_BUILD_FOR_PLACE_ORDER
+Order cannot be placed,Need to contact technical support
+A001_ORDER_CANNOT_BE_PLACED
+A001_ORDER_CANNOT_BE_PLACED
+Order cannot be placed,Need to contact technical support
+A002_INVALID_ZONE
+A002_INVALID_ZONE
+Order cannot be placed,Need to contact technical support
+A003_SUSPICIOUS_BUYER
+A003_SUSPICIOUS_BUYER
+Order cannot be placed,Need to contact technical support
+A004_CANNOT_USER_COUPON
+A004_CANNOT_USER_COUPON
+Order cannot be placed,Need to contact technical support
+A005_INVALID_COUNTRIES
+A005_INVALID_COUNTRIES
+Order cannot be placed,Need to contact technical support
+A006_INVALID_ACCOUNT_INFO
+A006_INVALID_ACCOUNT_INFO
+Order cannot be placed,Need to contact technical support
+GET/POST
+aliexpress.ds.order.create
+JAVA
+PHP
+.NET
+RUBY
+PYTHON
+CURL
+IopClient client = new IopClient(url, appkey, appSecret);
+IopRequest request = new IopRequest();
+request.setApiName("aliexpress.ds.order.create");
+request.addApiParameter("ds_extend_request", "{\"trade_extra_param\":{\"business_model\":\"wholesale/retail\"},\"payment\":{\"try_to_pay\":\"false\",\"pay_currency\":\"USD\"},\"promotion\":{\"promotion_code\":\"testCode\",\"promotion_channel_info\":\"promotionChannelInfo\"}}");
+request.addApiParameter("param_place_order_request4_open_api_d_t_o", "{\"product_items\":[{\"logistics_service_name\":\"EPAM\",\"sku_attr\":\"14:70221\",\"product_count\":\"2\",\"product_id\":\"1223211\",\"order_memo\":\"Please put it in a gift box.\"},{\"logistics_service_name\":\"EPAM\",\"sku_attr\":\"14:70221\",\"product_count\":\"2\",\"product_id\":\"1223211\",\"order_memo\":\"Please put it in a gift box.\"}],\"logistics_address\":{\"zip\":\"12222\",\"rut_no\":\"123-K\",\"country\":\"RU\",\"address\":\"sh Kashirskoe dom 142 (QIWI)\",\"passport_no_date\":\"02-23-2018\",\"address2\":\"sh Kashirskoe dom 142 (QIWI)\",\"city\":\"Mosco\",\"contact_person\":\"RU  TEST TEST\",\"mobile_no\":\"12334445\",\"passport_no\":\"12345\",\"locale\":\"en_US\",\"foreigner_passport_no\":\"123456789\",\"location_tree_address_id\":\"903200190000000000-903200190137000000\",\"full_name\":\"RU  TEST TEST\",\"province\":\"Mosco\",\"is_foreigner\":\"true\",\"tax_number\":\"xxx\",\"tax_company\":\"Soceite General\",\"cpf\":\"111\",\"passport_organization\":\"xxxx\",\"phone_country\":\"+7\",\"vat_no\":\"123456778\"},\"out_order_id\":\"123456789\"}");
+IopResponse response = client.execute(request, accessToken, Protocol.TOP);
+System.out.println(response.getBody());
+Thread.sleep(10);
+
+Streamlined Return
+Non-Refinement Return
+{
+  "result": {
+    "error_msg": "PARM_ILLEGL",
+    "error_code": "PARM_ILLEGL",
+    "is_success": "true",
+    "order_list": [
+      1000000000
+    ]
+  },
+  "code": "0",
+  "request_id": "0ba2887315178178017221014"
+}
+

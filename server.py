@@ -687,6 +687,17 @@ def oauth_callback():
             }
         },
         {
+            'name': 'Seller OAuth',
+            'url': 'https://api-sg.aliexpress.com/seller/oauth/token',
+            'data': {
+                "grant_type": "authorization_code",
+                "client_id": APP_KEY,
+                "client_secret": APP_SECRET,
+                "redirect_uri": REDIRECT_URI,
+                "code": code
+            }
+        },
+        {
             'name': 'Alternative OAuth',
             'url': 'https://api-sg.aliexpress.com/oauth2/token',
             'data': {
@@ -724,7 +735,7 @@ def oauth_callback():
             }
         },
         {
-            'name': 'SDK Official',
+            'name': 'SDK Official - Correct Method',
             'url': 'SDK_METHOD',
             'data': {
                 "code": code
@@ -752,16 +763,13 @@ def oauth_callback():
         
         try:
             if attempt['url'] == 'SDK_METHOD':
-                # Usar SDK oficial do AliExpress
-                print(f'🔧 Usando SDK oficial do AliExpress...')
+                # Usar SDK oficial do AliExpress - Método correto da documentação
+                print(f'🔧 Usando SDK oficial do AliExpress (método correto)...')
                 try:
                     client = iop.IopClient('https://api-sg.aliexpress.com', APP_KEY, APP_SECRET)
-                    request_obj = iop.IopRequest('auth.token.create', 'POST')
+                    request_obj = iop.IopRequest('/auth/token/create')
                     request_obj.add_api_param('code', code)
-                    request_obj.add_api_param('grant_type', 'authorization_code')
-                    request_obj.add_api_param('client_id', APP_KEY)
-                    request_obj.add_api_param('client_secret', APP_SECRET)
-                    request_obj.add_api_param('redirect_uri', REDIRECT_URI)
+                    # Não adicionar uuid conforme documentação
                     
                     response = client.execute(request_obj)
                     print(f'✅ SDK Response: {response.body}')

@@ -792,22 +792,22 @@ def oauth_callback():
                 if response.status_code == 200:
                     try:
                         tokens = response.json()
-                    
-                    if 'error' in tokens:
-                        print(f'❌ Erro na tentativa {attempt["name"]}: {tokens.get("error")}')
-                        continue
-                    
-                    print(f'✅ Sucesso na tentativa {attempt["name"]}!')
-                    save_tokens(tokens)
-                    
-                    # Retornar página HTML se a requisição aceita HTML
-                    if request.headers.get('Accept', '').find('text/html') != -1:
-                        return create_callback_page(tokens)
-                    else:
-                        # Retornar JSON para requisições programáticas
-                        return jsonify({'success': True, 'tokens': tokens})
                         
-                except json.JSONDecodeError as json_error:
+                        if 'error' in tokens:
+                            print(f'❌ Erro na tentativa {attempt["name"]}: {tokens.get("error")}')
+                            continue
+                        
+                        print(f'✅ Sucesso na tentativa {attempt["name"]}!')
+                        save_tokens(tokens)
+                        
+                        # Retornar página HTML se a requisição aceita HTML
+                        if request.headers.get('Accept', '').find('text/html') != -1:
+                            return create_callback_page(tokens)
+                        else:
+                            # Retornar JSON para requisições programáticas
+                            return jsonify({'success': True, 'tokens': tokens})
+                            
+                    except json.JSONDecodeError as json_error:
                     print(f'❌ Erro ao decodificar JSON na tentativa {attempt["name"]}: {json_error}')
                     continue
             else:

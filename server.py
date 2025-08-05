@@ -880,14 +880,62 @@ def products():
         
         # Fazer requisição HTTP direta para /sync
         response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
-        print(f'✅ Resposta produtos: {response.text}')
+        print(f'✅ Resposta produtos: {response.text[:500]}...')
         
         if response.status_code == 200:
             data = response.json()
+            print(f'📊 ESTRUTURA COMPLETA - BUSCA PRODUTOS:')
+            print(json.dumps(data, indent=2, ensure_ascii=False))
+            
             # Verificar se há produtos na resposta
             if 'aliexpress_ds_text_search_response' in data:
-                return jsonify({'success': True, 'data': data})
+                search_response = data['aliexpress_ds_text_search_response']
+                
+                # Analisar estrutura dos dados
+                result = search_response.get('result', {})
+                print(f'🔍 ANÁLISE ESTRUTURA - BUSCA RESULT:')
+                print(f'  - Keys disponíveis: {list(result.keys())}')
+                
+                # Extrair informações úteis para o frontend
+                processed_search = {
+                    'total_count': result.get('total_count', 0),
+                    'page_size': result.get('page_size', 20),
+                    'page_index': result.get('page_index', 1),
+                    'products': [],
+                    'raw_data': result
+                }
+                
+                # Extrair lista de produtos
+                if 'products' in result:
+                    products_data = result['products']
+                    if 'selection_search_product' in products_data:
+                        products = products_data['selection_search_product']
+                        if isinstance(products, list):
+                            processed_search['products'] = products
+                        else:
+                            processed_search['products'] = [products]
+                
+                print(f'📋 DADOS DE BUSCA PROCESSADOS:')
+                print(f'  - Total de produtos: {processed_search["total_count"]}')
+                print(f'  - Produtos encontrados: {len(processed_search["products"])}')
+                print(f'  - Página: {processed_search["page_index"]}/{processed_search["page_size"]}')
+                
+                # Log do primeiro produto para análise
+                if processed_search['products']:
+                    first_product = processed_search['products'][0]
+                    print(f'📦 EXEMPLO PRIMEIRO PRODUTO:')
+                    print(f'  - ID: {first_product.get("itemId", "N/A")}')
+                    print(f'  - Título: {first_product.get("title", "N/A")[:50]}...')
+                    print(f'  - Preço: {first_product.get("targetSalePrice", "N/A")}')
+                    print(f'  - Keys disponíveis: {list(first_product.keys())}')
+                
+                return jsonify({
+                    'success': True, 
+                    'data': data,
+                    'processed': processed_search
+                })
             else:
+                print(f'❌ ESTRUTURA INESPERADA BUSCA: {list(data.keys())}')
                 return jsonify({'success': False, 'error': data}), 400
         else:
             return jsonify({'success': False, 'error': response.text}), response.status_code
@@ -982,10 +1030,66 @@ def product_details(product_id):
         
         if response.status_code == 200:
             data = response.json()
+            print(f'📊 ESTRUTURA COMPLETA - DETALHES PRODUTO {product_id}:')
+            print(json.dumps(data, indent=2, ensure_ascii=False))
+            
             # Verificar se há dados na resposta
             if 'aliexpress_ds_product_get_response' in data:
-                return jsonify({'success': True, 'data': data['aliexpress_ds_product_get_response']})
+                product_response = data['aliexpress_ds_product_get_response']
+                
+                # Analisar estrutura dos dados
+                result = product_response.get('result', {})
+                print(f'🔍 ANÁLISE ESTRUTURA - RESULT:')
+                print(f'  - Keys disponíveis: {list(result.keys())}')
+                
+                # Extrair informações úteis para o frontend
+                processed_data = {
+                    'basic_info': {
+                        'product_id': product_id,
+                        'title': result.get('product_title', ''),
+                        'description': result.get('product_description', ''),
+                        'main_image': result.get('product_main_image', ''),
+                    },
+                    'pricing': {
+                        'min_price': result.get('min_price', ''),
+                        'max_price': result.get('max_price', ''),
+                        'currency': result.get('currency_code', 'BRL'),
+                    },
+                    'images': [],
+                    'variations': [],
+                    'raw_data': result  # Dados completos para análise
+                }
+                
+                # Extrair galeria de imagens
+                if 'product_images' in result:
+                    images = result['product_images']
+                    if isinstance(images, list):
+                        processed_data['images'] = images
+                    elif isinstance(images, dict) and 'product_image' in images:
+                        processed_data['images'] = images['product_image'] if isinstance(images['product_image'], list) else [images['product_image']]
+                
+                # Extrair variações/SKUs
+                if 'ae_item_sku_info_dtos' in result:
+                    sku_info = result['ae_item_sku_info_dtos']
+                    if 'ae_item_sku_info_d_t_o' in sku_info:
+                        skus = sku_info['ae_item_sku_info_d_t_o']
+                        if isinstance(skus, list):
+                            processed_data['variations'] = skus
+                        else:
+                            processed_data['variations'] = [skus]
+                
+                print(f'📋 DADOS PROCESSADOS PARA FRONTEND:')
+                print(f'  - Imagens encontradas: {len(processed_data["images"])}')
+                print(f'  - Variações encontradas: {len(processed_data["variations"])}')
+                print(f'  - Título: {processed_data["basic_info"]["title"][:50]}...')
+                
+                return jsonify({
+                    'success': True, 
+                    'data': product_response,
+                    'processed': processed_data
+                })
             else:
+                print(f'❌ ESTRUTURA INESPERADA: {list(data.keys())}')
                 return jsonify({'success': False, 'error': data}), 400
         else:
             return jsonify({'success': False, 'error': response.text}), response.status_code
@@ -1075,10 +1179,50 @@ def freight_calculation(product_id):
         
         if response.status_code == 200:
             data = response.json()
+            print(f'📊 ESTRUTURA COMPLETA - FRETE PRODUTO {product_id}:')
+            print(json.dumps(data, indent=2, ensure_ascii=False))
+            
             # Verificar se há dados na resposta
             if 'aliexpress_logistics_buyer_freight_calculate_response' in data:
-                return jsonify({'success': True, 'data': data['aliexpress_logistics_buyer_freight_calculate_response']})
+                freight_response = data['aliexpress_logistics_buyer_freight_calculate_response']
+                
+                # Analisar estrutura dos dados
+                result = freight_response.get('result', {})
+                print(f'🔍 ANÁLISE ESTRUTURA - FRETE RESULT:')
+                print(f'  - Keys disponíveis: {list(result.keys())}')
+                print(f'  - Success: {result.get("success", "N/A")}')
+                print(f'  - Error: {result.get("error_desc", "N/A")}')
+                
+                # Extrair informações úteis para o frontend
+                processed_freight = {
+                    'success': result.get('success', False),
+                    'error_message': result.get('error_desc', ''),
+                    'shipping_options': [],
+                    'raw_data': result
+                }
+                
+                # Extrair opções de frete se disponíveis
+                if 'freight_calculate_result_for_buyer_d_t_o_list' in result:
+                    freight_list = result['freight_calculate_result_for_buyer_d_t_o_list']
+                    if 'freight_calculate_result_for_buyer_d_t_o' in freight_list:
+                        options = freight_list['freight_calculate_result_for_buyer_d_t_o']
+                        if isinstance(options, list):
+                            processed_freight['shipping_options'] = options
+                        else:
+                            processed_freight['shipping_options'] = [options]
+                
+                print(f'📋 DADOS DE FRETE PROCESSADOS:')
+                print(f'  - Sucesso: {processed_freight["success"]}')
+                print(f'  - Opções de frete: {len(processed_freight["shipping_options"])}')
+                print(f'  - Erro: {processed_freight["error_message"]}')
+                
+                return jsonify({
+                    'success': True, 
+                    'data': freight_response,
+                    'processed': processed_freight
+                })
             else:
+                print(f'❌ ESTRUTURA INESPERADA FRETE: {list(data.keys())}')
                 return jsonify({'success': False, 'error': data}), 400
         else:
             return jsonify({'success': False, 'error': response.text}), response.status_code

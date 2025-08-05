@@ -844,11 +844,9 @@ def products():
         return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
 
     try:
-        client = iop.IopClient('https://api-sg.aliexpress.com/rest', APP_KEY, APP_SECRET)
+        # Tentar URL base diferente para APIs de dropshipping
+        client = iop.IopClient('https://api-sg.aliexpress.com', APP_KEY, APP_SECRET)
         request_obj = iop.IopRequest('aliexpress.ds.text.search')
-        
-        # Não usar set_simplify() para APIs de negócios
-        # request_obj.set_simplify()
         
         # Parâmetros conforme documentação
         request_obj.add_api_param('keyWord', request.args.get('q', 'electronics'))
@@ -878,11 +876,9 @@ def categories():
         return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
 
     try:
-        client = iop.IopClient('https://api-sg.aliexpress.com/rest', APP_KEY, APP_SECRET)
+        # Tentar URL base diferente para APIs de dropshipping
+        client = iop.IopClient('https://api-sg.aliexpress.com', APP_KEY, APP_SECRET)
         request_obj = iop.IopRequest('aliexpress.ds.category.get')
-        
-        # Não usar set_simplify() para APIs de negócios
-        # request_obj.set_simplify()
         
         # Parâmetros conforme documentação
         request_obj.add_api_param('language', 'en')

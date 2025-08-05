@@ -652,7 +652,7 @@ def oauth_callback():
 
     print(f'🔍 Callback OAuth recebido com code: {code}')
 
-    url = "https://api-sg.aliexpress.com/auth/token/create"
+    url = "https://api-sg.aliexpress.com/oauth/token"
     headers = {
         "Content-Type": "application/x-www-form-urlencoded",
         "Accept": "application/json"

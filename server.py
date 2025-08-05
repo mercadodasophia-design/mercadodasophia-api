@@ -655,7 +655,7 @@ def oauth_callback():
     # Tentar múltiplos endpoints e métodos
     endpoints_to_try = [
         {
-            'url': 'https://api-sg.aliexpress.com/oauth2/token',
+            'url': 'https://api-sg.aliexpress.com/oauth/token',
             'method': 'POST',
             'data': {
                 "grant_type": "authorization_code",
@@ -667,7 +667,7 @@ def oauth_callback():
             }
         },
         {
-            'url': 'https://api-sg.aliexpress.com/oauth2/token',
+            'url': 'https://api-sg.aliexpress.com/oauth/token',
             'method': 'POST',
             'data': {
                 "grant_type": "authorization_code",
@@ -678,7 +678,7 @@ def oauth_callback():
             }
         },
         {
-            'url': 'https://api-sg.aliexpress.com/oauth/token',
+            'url': 'https://api-sg.aliexpress.com/auth/token/create',
             'method': 'POST',
             'data': {
                 "grant_type": "authorization_code",
@@ -693,8 +693,7 @@ def oauth_callback():
 
     headers = {
         "Content-Type": "application/x-www-form-urlencoded",
-        "Accept": "application/json",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        "Accept": "application/json"
     }
 
     for i, endpoint in enumerate(endpoints_to_try):

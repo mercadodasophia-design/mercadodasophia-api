@@ -702,7 +702,7 @@ def oauth_callback():
         else:
             print(f'✅ Todos os parâmetros obrigatórios presentes')
         
-        # Fazer requisição POST
+        # Fazer requisição POST para obter o token
         response = requests.post(url, data=data, headers=headers)
         
         print(f'✅ Status Code: {response.status_code}')
@@ -738,6 +738,7 @@ def oauth_callback():
                 
         except ValueError as json_error:
             print(f'❌ Erro ao parsear JSON: {json_error}')
+            print(f'❌ Resposta não é JSON válido: {response.text[:200]}...')
             return jsonify({
                 'success': False,
                 'message': 'Resposta inválida da API',

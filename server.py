@@ -844,18 +844,18 @@ def products():
         return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
 
     try:
-        # Tentar URL base diferente para APIs de dropshipping
-        client = iop.IopClient('https://api-sg.aliexpress.com', APP_KEY, APP_SECRET)
+        # Configuração exata conforme documentação
+        client = iop.IopClient('https://api-sg.aliexpress.com/rest', APP_KEY, APP_SECRET)
         request_obj = iop.IopRequest('aliexpress.ds.text.search')
         
-        # Parâmetros conforme documentação
+        # Parâmetros exatos conforme documentação
         request_obj.add_api_param('keyWord', request.args.get('q', 'electronics'))
-        request_obj.add_api_param('local', 'en_US')
+        request_obj.add_api_param('local', 'zh_CN')  # Conforme exemplo da documentação
         request_obj.add_api_param('countryCode', 'US')
         request_obj.add_api_param('currency', 'USD')
         request_obj.add_api_param('pageSize', '20')
         request_obj.add_api_param('pageIndex', '1')
-        request_obj.add_api_param('sortBy', 'orders,desc')
+        request_obj.add_api_param('sortBy', 'min_price,asc')  # Conforme exemplo da documentação
 
         response = client.execute(request_obj, tokens['access_token'])
         print(f'✅ Resposta produtos: {response.body}')
@@ -876,11 +876,12 @@ def categories():
         return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
 
     try:
-        # Tentar URL base diferente para APIs de dropshipping
-        client = iop.IopClient('https://api-sg.aliexpress.com', APP_KEY, APP_SECRET)
+        # Configuração exata conforme documentação
+        client = iop.IopClient('https://api-sg.aliexpress.com/rest', APP_KEY, APP_SECRET)
         request_obj = iop.IopRequest('aliexpress.ds.category.get')
         
-        # Parâmetros conforme documentação
+        # Parâmetros exatos conforme documentação
+        request_obj.add_api_param('categoryId', '15')  # Conforme exemplo da documentação
         request_obj.add_api_param('language', 'en')
 
         response = client.execute(request_obj, tokens['access_token'])

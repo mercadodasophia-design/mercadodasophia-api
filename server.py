@@ -662,29 +662,54 @@ def oauth_callback():
         "code": code
     }
 
+    # Log dos parâmetros para debug
+    print(f'🔧 URL: {url}')
+    print(f'🔧 Data: {data}')
+    print(f'🔧 Headers: {{"Content-Type": "application/x-www-form-urlencoded"}}')
+
     try:
         response = requests.post(url, data=data, headers={"Content-Type": "application/x-www-form-urlencoded"})
         print(f'✅ Status Code: {response.status_code}')
-        print(f'✅ Raw Response: {response.text}')
+        print(f'✅ Raw Response: {response.text[:500]}...')  # Limitar o log para não sobrecarregar
 
-        tokens = response.json()
+        # Verificar se a resposta é JSON válido
+        if response.status_code == 200:
+            try:
+                tokens = response.json()
+                
+                if 'error' in tokens:
+                    return jsonify({
+                        'success': False,
+                        'message': 'Erro ao gerar token',
+                        'error': tokens.get('error'),
+                        'error_description': tokens.get('error_description')
+                    }), 400
 
-        if 'error' in tokens:
+                save_tokens(tokens)
+                
+                # Retornar página HTML se a requisição aceita HTML
+                if request.headers.get('Accept', '').find('text/html') != -1:
+                    return create_callback_page(tokens)
+                else:
+                    # Retornar JSON para requisições programáticas
+                    return jsonify({'success': True, 'tokens': tokens})
+                    
+            except json.JSONDecodeError as json_error:
+                print(f'❌ Erro ao decodificar JSON: {json_error}')
+                print(f'❌ Resposta não é JSON válido: {response.text[:200]}...')
+                return jsonify({
+                    'success': False,
+                    'message': 'Resposta da API não é JSON válido',
+                    'status_code': response.status_code,
+                    'response_preview': response.text[:200]
+                }), 400
+        else:
+            print(f'❌ Status code não é 200: {response.status_code}')
             return jsonify({
                 'success': False,
-                'message': 'Erro ao gerar token',
-                'error': tokens.get('error'),
-                'error_description': tokens.get('error_description')
-            }), 400
-
-        save_tokens(tokens)
-        
-        # Retornar página HTML se a requisição aceita HTML
-        if request.headers.get('Accept', '').find('text/html') != -1:
-            return create_callback_page(tokens)
-        else:
-            # Retornar JSON para requisições programáticas
-            return jsonify({'success': True, 'tokens': tokens})
+                'message': f'Erro HTTP {response.status_code}',
+                'response_preview': response.text[:200]
+            }), response.status_code
 
     except Exception as e:
         print(f'❌ Erro no callback OAuth: {e}')

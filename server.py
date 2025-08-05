@@ -949,6 +949,101 @@ def tokens_status():
         } if tokens else None
     })
 
+@app.route('/api/aliexpress/product/<product_id>')
+def product_details(product_id):
+    """Buscar detalhes completos de um produto"""
+    tokens = load_tokens()
+    if not tokens or not tokens.get('access_token'):
+        return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
+
+    try:
+        # Parâmetros para a API conforme documentação
+        params = {
+            "method": "aliexpress.ds.product.get",
+            "app_key": APP_KEY,
+            "timestamp": int(time.time() * 1000),
+            "sign_method": "md5",
+            "format": "json",
+            "v": "2.0",
+            "access_token": tokens['access_token'],
+            "product_id": product_id,
+            "ship_to_country": "BR",  # 👈 obrigatório para Brasil
+            "target_currency": "BRL",    # 👈 obrigatório para Brasil
+            "target_language": "pt",     # 👈 obrigatório para Brasil
+            "remove_personal_benefit": "false"
+        }
+        
+        # Gerar assinatura
+        params["sign"] = generate_api_signature(params, APP_SECRET)
+        
+        # Fazer requisição HTTP direta para /sync
+        response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
+        print(f'✅ Resposta detalhes produto {product_id}: {response.text[:500]}...')
+        
+        if response.status_code == 200:
+            data = response.json()
+            # Verificar se há dados na resposta
+            if 'aliexpress_ds_product_get_response' in data:
+                return jsonify({'success': True, 'data': data['aliexpress_ds_product_get_response']})
+            else:
+                return jsonify({'success': False, 'error': data}), 400
+        else:
+            return jsonify({'success': False, 'error': response.text}), response.status_code
+
+    except Exception as e:
+        print(f'❌ Erro ao buscar detalhes do produto {product_id}: {e}')
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/aliexpress/freight/<product_id>')
+def freight_calculation(product_id):
+    """Calcular frete para um produto"""
+    tokens = load_tokens()
+    if not tokens or not tokens.get('access_token'):
+        return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
+
+    try:
+        # Parâmetros para cálculo de frete conforme documentação
+        freight_params = {
+            "country_code": "BR",
+            "price": "10.00",  # Preço padrão para cálculo
+            "product_id": product_id,
+            "product_num": "1",
+            "send_goods_country_code": "CN",
+            "price_currency": "USD"
+        }
+        
+        params = {
+            "method": "aliexpress.logistics.buyer.freight.calculate",
+            "app_key": APP_KEY,
+            "timestamp": int(time.time() * 1000),
+            "sign_method": "md5",
+            "format": "json",
+            "v": "2.0",
+            "access_token": tokens['access_token'],
+            "param_aeop_freight_calculate_for_buyer_d_t_o": json.dumps(freight_params)
+        }
+        
+        # Gerar assinatura
+        params["sign"] = generate_api_signature(params, APP_SECRET)
+        
+        # Fazer requisição HTTP direta para /sync
+        response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
+        print(f'✅ Resposta frete produto {product_id}: {response.text[:500]}...')
+        
+        if response.status_code == 200:
+            data = response.json()
+            # Verificar se há dados na resposta
+            if 'aliexpress_logistics_buyer_freight_calculate_response' in data:
+                return jsonify({'success': True, 'data': data['aliexpress_logistics_buyer_freight_calculate_response']})
+            else:
+                return jsonify({'success': False, 'error': data}), 400
+        else:
+            return jsonify({'success': False, 'error': response.text}), response.status_code
+
+    except Exception as e:
+        print(f'❌ Erro ao calcular frete do produto {product_id}: {e}')
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 if __name__ == '__main__':
     print(f'🚀 Servidor rodando na porta {PORT}')
     print(f'APP_KEY: {"✅" if APP_KEY else "❌"} | APP_SECRET: {"✅" if APP_SECRET else "❌"} | REDIRECT_URI: {REDIRECT_URI}')

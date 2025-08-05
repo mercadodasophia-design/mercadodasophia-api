@@ -845,12 +845,17 @@ def products():
 
     try:
         client = iop.IopClient('https://api-sg.aliexpress.com/rest', APP_KEY, APP_SECRET)
-        request_obj = iop.IopRequest('aliexpress.ds.product.search', 'POST')
+        request_obj = iop.IopRequest('aliexpress.ds.text.search')
         request_obj.set_simplify()
-        request_obj.add_api_param('category_id', '3')  # Eletrônicos
-        request_obj.add_api_param('target_currency', 'USD')
-        request_obj.add_api_param('target_language', 'EN')
-        request_obj.add_api_param('tracking_id', 'test_tracking')
+        
+        # Parâmetros conforme documentação
+        request_obj.add_api_param('keyWord', request.args.get('q', 'electronics'))
+        request_obj.add_api_param('local', 'en_US')
+        request_obj.add_api_param('countryCode', 'US')
+        request_obj.add_api_param('currency', 'USD')
+        request_obj.add_api_param('pageSize', '20')
+        request_obj.add_api_param('pageIndex', '1')
+        request_obj.add_api_param('sortBy', 'orders,desc')
 
         response = client.execute(request_obj, tokens['access_token'])
         print(f'✅ Resposta produtos: {response.body}')

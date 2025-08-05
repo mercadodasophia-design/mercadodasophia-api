@@ -883,7 +883,8 @@ def products():
         
         if response.status_code == 200:
             data = response.json()
-            if data.get('code') == '0':
+            # Verificar se há produtos na resposta
+            if 'aliexpress_ds_text_search_response' in data:
                 return jsonify({'success': True, 'data': data})
             else:
                 return jsonify({'success': False, 'error': data}), 400

@@ -790,8 +790,8 @@ def oauth_callback():
                 print(f'✅ Raw Response: {response.text[:300]}...')
 
                 if response.status_code == 200:
-                try:
-                    tokens = response.json()
+                    try:
+                        tokens = response.json()
                     
                     if 'error' in tokens:
                         print(f'❌ Erro na tentativa {attempt["name"]}: {tokens.get("error")}')

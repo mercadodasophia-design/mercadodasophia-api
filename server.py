@@ -662,8 +662,7 @@ def oauth_callback():
         "client_id": APP_KEY,
         "client_secret": APP_SECRET,
         "redirect_uri": REDIRECT_URI,
-        "code": code,
-        "need_refresh_token": "true"
+        "code": code
     }
 
     print(f'🔧 URL: {url}')

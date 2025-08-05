@@ -668,30 +668,47 @@ def oauth_callback():
     print(f'🔍 Callback OAuth recebido com code: {code}')
     
     try:
-        # Criar cliente usando SDK Python oficial
-        client = iop.IopClient(
-            'https://api-sg.aliexpress.com/oauth',
-            APP_KEY,
-            APP_SECRET
-        )
+        # Usar requests diretamente para OAuth token exchange
+        url = "https://api-sg.aliexpress.com/oauth/token"
         
-        # Criar requisição para gerar token
-        request_obj = iop.IopRequest('token', 'POST')
-        request_obj.set_simplify()
-        request_obj.add_api_param('code', code)
-        request_obj.add_api_param('grant_type', 'authorization_code')
-        request_obj.add_api_param('redirect_uri', REDIRECT_URI)
+        data = {
+            "grant_type": "authorization_code",
+            "need_refresh_token": "true",
+            "client_id": APP_KEY,
+            "client_secret": APP_SECRET,
+            "redirect_uri": REDIRECT_URI,
+            "code": code
+        }
+        
+        headers = {
+            "Content-Type": "application/x-www-form-urlencoded"
+        }
         
         print(f'🔧 Parâmetros da requisição: code={code}, redirect_uri={REDIRECT_URI}')
+        print(f'🔧 URL: {url}')
+        print(f'🔧 Data: {data}')
         
-        # Executar requisição
-        response = client.execute(request_obj)
+        # Fazer requisição POST
+        response = requests.post(url, data=data, headers=headers)
         
-        print(f'✅ Resposta do token: {response.body}')
+        print(f'✅ Status Code: {response.status_code}')
+        print(f'✅ Raw Response: {response.text}')
         
-        if response.code == '0' or response.type is None:
+        # Verificar se a resposta é JSON válido
+        try:
+            tokens = response.json()
+            print(f'✅ JSON Response: {tokens}')
+            
+            # Verificar se há erro na resposta
+            if 'error' in tokens:
+                return jsonify({
+                    'success': False,
+                    'message': 'Erro ao gerar token',
+                    'error': tokens.get('error'),
+                    'error_description': tokens.get('error_description')
+                }), 400
+            
             # Sucesso - salvar tokens
-            tokens = response.body
             save_tokens(tokens)
             
             # Retornar página HTML se a requisição aceita HTML
@@ -704,14 +721,15 @@ def oauth_callback():
                     'message': 'Token gerado com sucesso',
                     'data': tokens
                 })
-        else:
+                
+        except ValueError as json_error:
+            print(f'❌ Erro ao parsear JSON: {json_error}')
             return jsonify({
                 'success': False,
-                'message': 'Erro ao gerar token',
-                'error': response.message,
-                'code': response.code,
-                'type': response.type
-            }), 400
+                'message': 'Resposta inválida da API',
+                'raw_response': response.text,
+                'status_code': response.status_code
+            }), 500
             
     except Exception as error:
         print(f'❌ Erro no callback OAuth: {error}')

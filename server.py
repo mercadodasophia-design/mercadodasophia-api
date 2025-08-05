@@ -670,16 +670,16 @@ def oauth_callback():
     
     try:
         # Usar requests diretamente para OAuth token exchange
-        url = "https://api-sg.aliexpress.com/auth/token/create"
+        url = "https://api-sg.aliexpress.com/oauth/token"
         
-        # Preparar dados para o endpoint /auth/token/create
+        # Preparar dados para OAuth2 token exchange
         data = {
-            "code": str(code),
-            "app_key": str(APP_KEY),
-            "app_secret": str(APP_SECRET),
-            "timestamp": str(int(time.time())),
-            "sign_method": "sha256",
-            "format": "json"
+            "grant_type": "authorization_code",
+            "need_refresh_token": "true",
+            "client_id": str(APP_KEY),
+            "client_secret": str(APP_SECRET),
+            "redirect_uri": str(REDIRECT_URI),
+            "code": str(code)
         }
         
         headers = {

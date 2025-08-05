@@ -3,43 +3,32 @@
 
 import os
 import json
-import time
 import requests
-from flask import Flask, request, jsonify, render_template_string
-from dotenv import load_dotenv
+from flask import Flask, request, jsonify
 import iop
-
-# Carregar variáveis de ambiente
-load_dotenv()
 
 app = Flask(__name__)
 
-# Configurações
-APP_KEY = os.getenv('APP_KEY', '517616')
+# ===================== CONFIGURAÇÕES =====================
+APP_KEY = os.getenv('APP_KEY', '517616')  # Substitua pela sua APP_KEY
 APP_SECRET = os.getenv('APP_SECRET', 'TTqNmTMs5Q0QiPbulDNenhXr2My18nN4')
-REDIRECT_URI = os.getenv('REDIRECT_URI', 'https://mercadodasophia-api.onrender.com/api/aliexpress/oauth-callback')
-PORT = int(os.getenv('PORT', 10000))
+PORT = int(os.getenv('PORT', 5000))
 
-# Cache para tokens
-token_cache = {
-    'access_token': None,
-    'refresh_token': None,
-    'expires_in': None
-}
+REDIRECT_URI = "https://mercadodasophia-api.onrender.com/api/aliexpress/oauth-callback"
 
+TOKENS_FILE = 'tokens.json'
+
+# ===================== FUNÇÕES AUXILIARES =====================
 def save_tokens(tokens):
-    """Salva tokens no cache"""
-    if tokens and 'access_token' in tokens:
-        token_cache.update({
-            'access_token': tokens.get('access_token'),
-            'refresh_token': tokens.get('refresh_token'),
-            'expires_in': tokens.get('expires_in')
-        })
-        print('✅ Tokens salvos em cache')
+    with open(TOKENS_FILE, 'w') as f:
+        json.dump(tokens, f)
+    print('💾 Tokens salvos com sucesso!')
 
 def load_tokens():
-    """Carrega tokens do cache"""
-    return token_cache if token_cache['access_token'] else None
+    if os.path.exists(TOKENS_FILE):
+        with open(TOKENS_FILE, 'r') as f:
+            return json.load(f)
+    return None
 
 def create_test_page():
     """Cria página HTML de teste"""
@@ -565,13 +554,13 @@ def create_callback_page(data):
                 <div class="token-card">
                     <h4>Access Token</h4>
                     <div class="token-value">''' + str(data.get('access_token', 'N/A')) + '''</div>
-                                         <button class="copy-btn" onclick="copyToClipboard(''' + str(data.get('access_token', '')) + ''')">Copiar</button>
+                    <button class="copy-btn" onclick="copyToClipboard(''' + str(data.get('access_token', '')) + ''')">Copiar</button>
                 </div>
                 
                 <div class="token-card">
                     <h4>Refresh Token</h4>
                     <div class="token-value">''' + str(data.get('refresh_token', 'N/A')) + '''</div>
-                                         <button class="copy-btn" onclick="copyToClipboard(''' + str(data.get('refresh_token', '')) + ''')">Copiar</button>
+                    <button class="copy-btn" onclick="copyToClipboard(''' + str(data.get('refresh_token', '')) + ''')">Copiar</button>
                 </div>
                 
                 <div class="token-card">
@@ -625,7 +614,7 @@ def create_callback_page(data):
 </html>
     '''
 
-# Rotas
+# ===================== ROTAS PRINCIPAIS =====================
 @app.route('/')
 def index():
     """Página inicial com links de teste"""
@@ -647,219 +636,115 @@ def index():
 @app.route('/api/aliexpress/auth')
 def auth():
     """Gera URL de autorização"""
-    auth_url = f'https://api-sg.aliexpress.com/oauth/authorize?response_type=code&force_auth=true&client_id={APP_KEY}&redirect_uri={REDIRECT_URI}'
-    
-    print(f'🔍 URL de autorização gerada: {auth_url}')
-    
-    return jsonify({
-        'success': True,
-        'auth_url': auth_url,
-        'app_key': APP_KEY,
-        'redirect_uri': REDIRECT_URI
-    })
+    auth_url = (
+        f'https://api-sg.aliexpress.com/oauth/authorize?response_type=code'
+        f'&force_auth=true&client_id={APP_KEY}&redirect_uri={REDIRECT_URI}'
+    )
+    print(f'🔗 URL de autorização gerada: {auth_url}')
+    return jsonify({'success': True, 'auth_url': auth_url})
 
 @app.route('/api/aliexpress/oauth-callback')
 def oauth_callback():
     """Callback OAuth"""
     code = request.args.get('code')
-    
     if not code:
         return jsonify({'error': 'Código de autorização não fornecido'}), 400
-    
+
     print(f'🔍 Callback OAuth recebido com code: {code}')
-    
+
+    url = "https://api-sg.aliexpress.com/oauth/token"
+    data = {
+        "grant_type": "authorization_code",
+        "need_refresh_token": "true",
+        "client_id": APP_KEY,
+        "client_secret": APP_SECRET,
+        "redirect_uri": REDIRECT_URI,
+        "code": code
+    }
+
     try:
-        # Usar requests diretamente para OAuth token exchange
-        url = "https://api-sg.aliexpress.com/oauth/token"
-        
-        # Preparar dados para OAuth2 token exchange
-        # Garantir que redirect_uri seja exatamente igual ao registrado
-        redirect_uri = "https://mercadodasophia-api.onrender.com/api/aliexpress/oauth-callback"
-        
-        data = {
-            "grant_type": "authorization_code",
-            "need_refresh_token": "true",
-            "client_id": str(APP_KEY),
-            "client_secret": str(APP_SECRET),
-            "redirect_uri": redirect_uri,
-            "code": str(code)
-        }
-        
-        headers = {
-            "Content-Type": "application/x-www-form-urlencoded"
-        }
-        
-        print(f'🔧 Parâmetros da requisição: code={code}, redirect_uri={REDIRECT_URI}')
-        print(f'🔧 URL: {url}')
-        print(f'🔧 Data: {data}')
-        print(f'🔧 Headers: {headers}')
-        
-        # Verificar se todos os parâmetros obrigatórios estão presentes
-        required_params = ['grant_type', 'need_refresh_token', 'client_id', 'client_secret', 'redirect_uri', 'code']
-        missing_params = [param for param in required_params if param not in data]
-        if missing_params:
-            print(f'❌ Parâmetros faltando: {missing_params}')
-        else:
-            print(f'✅ Todos os parâmetros obrigatórios presentes')
-        
-        # Fazer requisição POST para obter o token
-        response = requests.post(url, data=data, headers=headers)
-        
+        response = requests.post(url, data=data, headers={"Content-Type": "application/x-www-form-urlencoded"})
         print(f'✅ Status Code: {response.status_code}')
         print(f'✅ Raw Response: {response.text}')
-        
-        # Verificar se a resposta é JSON válido
-        try:
-            tokens = response.json()
-            print(f'✅ JSON Response: {tokens}')
-            
-            # Verificar se há erro na resposta
-            if 'error' in tokens:
-                return jsonify({
-                    'success': False,
-                    'message': 'Erro ao gerar token',
-                    'error': tokens.get('error'),
-                    'error_description': tokens.get('error_description')
-                }), 400
-            
-            # Sucesso - salvar tokens
-            save_tokens(tokens)
-            
-            # Retornar página HTML se a requisição aceita HTML
-            if request.headers.get('Accept', '').find('text/html') != -1:
-                return create_callback_page(tokens)
-            else:
-                # Retornar JSON para requisições programáticas
-                return jsonify({
-                    'success': True,
-                    'message': 'Token gerado com sucesso',
-                    'data': tokens
-                })
-                
-        except ValueError as json_error:
-            print(f'❌ Erro ao parsear JSON: {json_error}')
-            print(f'❌ Resposta não é JSON válido: {response.text[:200]}...')
+
+        tokens = response.json()
+
+        if 'error' in tokens:
             return jsonify({
                 'success': False,
-                'message': 'Resposta inválida da API',
-                'raw_response': response.text,
-                'status_code': response.status_code
-            }), 500
-            
-    except Exception as error:
-        print(f'❌ Erro no callback OAuth: {error}')
-        return jsonify({
-            'success': False,
-            'message': 'Erro interno do servidor',
-            'error': str(error)
-        }), 500
+                'message': 'Erro ao gerar token',
+                'error': tokens.get('error'),
+                'error_description': tokens.get('error_description')
+            }), 400
+
+        save_tokens(tokens)
+        
+        # Retornar página HTML se a requisição aceita HTML
+        if request.headers.get('Accept', '').find('text/html') != -1:
+            return create_callback_page(tokens)
+        else:
+            # Retornar JSON para requisições programáticas
+            return jsonify({'success': True, 'tokens': tokens})
+
+    except Exception as e:
+        print(f'❌ Erro no callback OAuth: {e}')
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/api/aliexpress/products')
 def products():
     """Buscar produtos"""
     tokens = load_tokens()
-    if not tokens:
-        return jsonify({
-            'success': False,
-            'message': 'Token não encontrado. Faça autorização primeiro.',
-            'auth_url': f'https://api-sg.aliexpress.com/oauth/authorize?response_type=code&force_auth=true&client_id={APP_KEY}&redirect_uri={REDIRECT_URI}'
-        }), 401
-    
+    if not tokens or not tokens.get('access_token'):
+        return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
+
     try:
-        # Criar cliente com token
-        client = iop.IopClient(
-            'https://api-sg.aliexpress.com/rest',
-            APP_KEY,
-            APP_SECRET
-        )
-        
-        # Criar requisição para buscar produtos
-        request_obj = iop.IopRequest('aliexpress.ds.product.get', 'POST')
+        client = iop.IopClient('https://api-sg.aliexpress.com/rest', APP_KEY, APP_SECRET)
+        request_obj = iop.IopRequest('aliexpress.ds.product.search', 'POST')
         request_obj.set_simplify()
-        request_obj.add_api_param('category_id', '3')  # Electronics
+        request_obj.add_api_param('category_id', '3')  # Eletrônicos
         request_obj.add_api_param('target_currency', 'USD')
         request_obj.add_api_param('target_language', 'EN')
         request_obj.add_api_param('tracking_id', 'test_tracking')
-        
-        # Executar requisição
+
         response = client.execute(request_obj, tokens['access_token'])
-        
         print(f'✅ Resposta produtos: {response.body}')
-        
-        if response.code == '0' or response.type is None:
-            return jsonify({
-                'success': True,
-                'data': response.body
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'message': response.message,
-                'error': response.body
-            }), 400
-            
-    except Exception as error:
-        print(f'❌ Erro ao buscar produtos: {error}')
-        return jsonify({
-            'success': False,
-            'message': 'Erro interno do servidor',
-            'error': str(error)
-        }), 500
+
+        if response.code == '0':
+            return jsonify({'success': True, 'data': response.body})
+        return jsonify({'success': False, 'error': response.body}), 400
+
+    except Exception as e:
+        print(f'❌ Erro ao buscar produtos: {e}')
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/api/aliexpress/categories')
 def categories():
     """Buscar categorias"""
     tokens = load_tokens()
-    if not tokens:
-        return jsonify({
-            'success': False,
-            'message': 'Token não encontrado. Faça autorização primeiro.'
-        }), 401
-    
+    if not tokens or not tokens.get('access_token'):
+        return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
+
     try:
-        # Criar cliente com token
-        client = iop.IopClient(
-            'https://api-sg.aliexpress.com/rest',
-            APP_KEY,
-            APP_SECRET
-        )
-        
-        # Criar requisição para buscar categorias
+        client = iop.IopClient('https://api-sg.aliexpress.com/rest', APP_KEY, APP_SECRET)
         request_obj = iop.IopRequest('aliexpress.ds.category.get', 'POST')
         request_obj.set_simplify()
-        request_obj.add_api_param('category_id', '3')
         request_obj.add_api_param('target_currency', 'USD')
         request_obj.add_api_param('target_language', 'EN')
-        request_obj.add_api_param('tracking_id', 'test_tracking')
-        
-        # Executar requisição
+
         response = client.execute(request_obj, tokens['access_token'])
-        
-        if response.code == '0' or response.type is None:
-            return jsonify({
-                'success': True,
-                'data': response.body
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'message': response.message,
-                'error': response.body
-            }), 400
-            
-    except Exception as error:
-        print(f'❌ Erro ao buscar categorias: {error}')
-        return jsonify({
-            'success': False,
-            'message': 'Erro interno do servidor',
-            'error': str(error)
-        }), 500
+        print(f'✅ Resposta categorias: {response.body}')
+
+        if response.code == '0':
+            return jsonify({'success': True, 'data': response.body})
+        return jsonify({'success': False, 'error': response.body}), 400
+
+    except Exception as e:
+        print(f'❌ Erro ao buscar categorias: {e}')
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/api/aliexpress/tokens/status')
 def tokens_status():
-    """Status dos tokens"""
     tokens = load_tokens()
-    
     return jsonify({
         'success': True,
         'has_tokens': bool(tokens),
@@ -871,11 +756,6 @@ def tokens_status():
     })
 
 if __name__ == '__main__':
-    print(f'Servidor rodando na porta {PORT}')
-    print(f'🔧 Configurações carregadas:')
-    print(f'  APP_KEY: {"✅ Configurado" if APP_KEY else "❌ Não configurado"}')
-    print(f'  APP_SECRET: {"✅ Configurado" if APP_SECRET else "❌ Não configurado"}')
-    print(f'  REDIRECT_URI: {"✅ Configurado" if REDIRECT_URI else "❌ Não configurado"}')
-    print(f'🌐 Acesse: http://localhost:{PORT} para ver a página de teste')
-    
+    print(f'🚀 Servidor rodando na porta {PORT}')
+    print(f'APP_KEY: {"✅" if APP_KEY else "❌"} | APP_SECRET: {"✅" if APP_SECRET else "❌"} | REDIRECT_URI: {REDIRECT_URI}')
     app.run(host='0.0.0.0', port=PORT, debug=False) 

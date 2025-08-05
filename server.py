@@ -673,12 +673,15 @@ def oauth_callback():
         url = "https://api-sg.aliexpress.com/oauth/token"
         
         # Preparar dados para OAuth2 token exchange
+        # Garantir que redirect_uri seja exatamente igual ao registrado
+        redirect_uri = "https://mercadodasophia-api.onrender.com/api/aliexpress/oauth-callback"
+        
         data = {
             "grant_type": "authorization_code",
             "need_refresh_token": "true",
             "client_id": str(APP_KEY),
             "client_secret": str(APP_SECRET),
-            "redirect_uri": str(REDIRECT_URI),
+            "redirect_uri": redirect_uri,
             "code": str(code)
         }
         
@@ -689,6 +692,15 @@ def oauth_callback():
         print(f'🔧 Parâmetros da requisição: code={code}, redirect_uri={REDIRECT_URI}')
         print(f'🔧 URL: {url}')
         print(f'🔧 Data: {data}')
+        print(f'🔧 Headers: {headers}')
+        
+        # Verificar se todos os parâmetros obrigatórios estão presentes
+        required_params = ['grant_type', 'need_refresh_token', 'client_id', 'client_secret', 'redirect_uri', 'code']
+        missing_params = [param for param in required_params if param not in data]
+        if missing_params:
+            print(f'❌ Parâmetros faltando: {missing_params}')
+        else:
+            print(f'✅ Todos os parâmetros obrigatórios presentes')
         
         # Fazer requisição POST
         response = requests.post(url, data=data, headers=headers)

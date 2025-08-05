@@ -14,7 +14,7 @@ app = Flask(__name__)
 
 # ===================== CONFIGURAÇÕES =====================
 APP_KEY = os.getenv('APP_KEY', '517616')  # Substitua pela sua APP_KEY
-APP_SECRET = os.getenv('APP_SECRET', 'TTqNmTMs5Q0QiPbulDNenhXr2My18nN4')
+APP_SECRET = os.getenv('APP_SECRET', 'skAvaPWbGLkkx5TlKf8kvLmILQtTV2sq')
 PORT = int(os.getenv('PORT', 5000))
 
 REDIRECT_URI = "https://mercadodasophia-api.onrender.com/api/aliexpress/oauth-callback"

@@ -1002,11 +1002,54 @@ def freight_calculation(product_id):
         return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
 
     try:
-        # Parâmetros para cálculo de frete conforme documentação
+        # Primeiro, buscar detalhes do produto para obter o skuId
+        product_params = {
+            "method": "aliexpress.ds.product.get",
+            "app_key": APP_KEY,
+            "timestamp": int(time.time() * 1000),
+            "sign_method": "md5",
+            "format": "json",
+            "v": "2.0",
+            "access_token": tokens['access_token'],
+            "product_id": product_id,
+            "ship_to_country": "BR",
+            "target_currency": "BRL",
+            "target_language": "pt",
+            "remove_personal_benefit": "false"
+        }
+        
+        product_params["sign"] = generate_api_signature(product_params, APP_SECRET)
+        product_response = requests.get('https://api-sg.aliexpress.com/sync', params=product_params)
+        
+        if product_response.status_code != 200:
+            return jsonify({'success': False, 'error': 'Erro ao buscar detalhes do produto'}), 400
+            
+        product_data = product_response.json()
+        if 'aliexpress_ds_product_get_response' not in product_data:
+            return jsonify({'success': False, 'error': 'Dados do produto não encontrados'}), 400
+            
+        # Extrair o primeiro skuId disponível
+        result = product_data['aliexpress_ds_product_get_response'].get('result', {})
+        sku_info = result.get('ae_item_sku_info_dtos', {}).get('ae_item_sku_info_d_t_o', [])
+        
+        if not sku_info:
+            return jsonify({'success': False, 'error': 'Nenhum SKU encontrado para o produto'}), 400
+            
+        # Pegar o primeiro SKU disponível
+        first_sku = sku_info[0] if isinstance(sku_info, list) else sku_info
+        sku_id = first_sku.get('sku_id')
+        
+        if not sku_id:
+            return jsonify({'success': False, 'error': 'SKU ID não encontrado'}), 400
+            
+        print(f'✅ SKU ID encontrado: {sku_id}')
+        
+        # Agora calcular frete com o skuId
         freight_params = {
             "country_code": "BR",
-            "price": "10.00",  # Preço padrão para cálculo
+            "price": "10.00",
             "product_id": product_id,
+            "sku_id": sku_id,  # 👈 SKU ID obrigatório
             "product_num": "1",
             "send_goods_country_code": "CN",
             "price_currency": "USD"
@@ -1028,7 +1071,7 @@ def freight_calculation(product_id):
         
         # Fazer requisição HTTP direta para /sync
         response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
-        print(f'✅ Resposta frete produto {product_id}: {response.text[:500]}...')
+        print(f'✅ Resposta frete produto {product_id} (sku: {sku_id}): {response.text[:500]}...')
         
         if response.status_code == 200:
             data = response.json()

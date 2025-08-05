@@ -766,7 +766,8 @@ def oauth_callback():
                 # Usar SDK oficial do AliExpress - Método correto da documentação
                 print(f'🔧 Usando SDK oficial do AliExpress (método correto)...')
                 try:
-                    client = iop.IopClient('https://api-sg.aliexpress.com', APP_KEY, APP_SECRET)
+                    # URL base correta conforme documentação
+                    client = iop.IopClient('https://api-sg.aliexpress.com/rest', APP_KEY, APP_SECRET)
                     request_obj = iop.IopRequest('/auth/token/create')
                     request_obj.add_api_param('code', code)
                     # Não adicionar uuid conforme documentação

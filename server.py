@@ -652,100 +652,63 @@ def oauth_callback():
 
     print(f'🔍 Callback OAuth recebido com code: {code}')
 
-    # Tentar múltiplos endpoints e métodos
-    endpoints_to_try = [
-        {
-            'url': 'https://api-sg.aliexpress.com/oauth/token',
-            'method': 'POST',
-            'data': {
-                "grant_type": "authorization_code",
-                "client_id": APP_KEY,
-                "client_secret": APP_SECRET,
-                "redirect_uri": REDIRECT_URI,
-                "code": code,
-                "need_refresh_token": "true"
-            }
-        },
-        {
-            'url': 'https://api-sg.aliexpress.com/oauth/token',
-            'method': 'POST',
-            'data': {
-                "grant_type": "authorization_code",
-                "client_id": APP_KEY,
-                "client_secret": APP_SECRET,
-                "redirect_uri": REDIRECT_URI,
-                "code": code
-            }
-        },
-        {
-            'url': 'https://api-sg.aliexpress.com/auth/token/create',
-            'method': 'POST',
-            'data': {
-                "grant_type": "authorization_code",
-                "client_id": APP_KEY,
-                "client_secret": APP_SECRET,
-                "redirect_uri": REDIRECT_URI,
-                "code": code,
-                "need_refresh_token": "true"
-            }
-        }
-    ]
-
+    url = "https://api-sg.aliexpress.com/oauth/token"
     headers = {
         "Content-Type": "application/x-www-form-urlencoded",
         "Accept": "application/json"
     }
+    data = {
+        "grant_type": "authorization_code",
+        "client_id": APP_KEY,
+        "client_secret": APP_SECRET,
+        "redirect_uri": REDIRECT_URI,
+        "code": code,
+        "need_refresh_token": "true"
+    }
 
-    for i, endpoint in enumerate(endpoints_to_try):
-        print(f'🔧 Tentativa {i+1}: {endpoint["method"]} {endpoint["url"]}')
-        print(f'🔧 Data: {endpoint["data"]}')
-        
+    print(f'🔧 URL: {url}')
+    print(f'🔧 Data: {data}')
+    print(f'🔧 Headers: {headers}')
+
+    try:
+        response = requests.post(url, headers=headers, data=data)
+        print(f'✅ Status Code: {response.status_code}')
+        print(f'✅ Content-Type: {response.headers.get("Content-Type")}')
+        print(f'✅ Raw Response: {response.text[:500]}...')
+
+        # Tenta retornar JSON
         try:
-            if endpoint['method'] == 'POST':
-                response = requests.post(endpoint['url'], data=endpoint['data'], headers=headers)
-            else:
-                response = requests.get(endpoint['url'], params=endpoint['data'], headers=headers)
+            tokens = response.json()
             
-            print(f'✅ Status Code: {response.status_code}')
-            print(f'✅ Raw Response: {response.text[:300]}...')
+            if 'error' in tokens:
+                return jsonify({
+                    'success': False,
+                    'message': 'Erro ao gerar token',
+                    'error': tokens.get('error'),
+                    'error_description': tokens.get('error_description')
+                }), 400
 
-            if response.status_code == 200:
-                try:
-                    tokens = response.json()
-                    
-                    if 'error' in tokens:
-                        print(f'❌ Erro na tentativa {i+1}: {tokens.get("error")}')
-                        continue
-                    
-                    print(f'✅ Sucesso na tentativa {i+1}!')
-                    save_tokens(tokens)
-                    
-                    # Retornar página HTML se a requisição aceita HTML
-                    if request.headers.get('Accept', '').find('text/html') != -1:
-                        return create_callback_page(tokens)
-                    else:
-                        # Retornar JSON para requisições programáticas
-                        return jsonify({'success': True, 'tokens': tokens})
-                        
-                except json.JSONDecodeError as json_error:
-                    print(f'❌ Erro ao decodificar JSON na tentativa {i+1}: {json_error}')
-                    continue
+            save_tokens(tokens)
+            
+            # Retornar página HTML se a requisição aceita HTML
+            if request.headers.get('Accept', '').find('text/html') != -1:
+                return create_callback_page(tokens)
             else:
-                print(f'❌ Status code {response.status_code} na tentativa {i+1}')
-                continue
+                # Retornar JSON para requisições programáticas
+                return jsonify({'success': True, 'tokens': tokens})
                 
-        except Exception as e:
-            print(f'❌ Erro na tentativa {i+1}: {e}')
-            continue
+        except json.JSONDecodeError as json_error:
+            print(f'❌ Erro ao decodificar JSON: {json_error}')
+            return jsonify({
+                'success': False,
+                'message': 'Resposta da API não é JSON válido',
+                'status_code': response.status_code,
+                'response_preview': response.text[:200]
+            }), 400
 
-    # Se chegou aqui, nenhuma tentativa funcionou
-    error_message = "Todas as tentativas de troca de código por token falharam"
-    print(f'❌ {error_message}')
-    return jsonify({
-        'success': False,
-        'message': error_message,
-        'details': 'Verifique os logs para mais informações'
-    }), 400
+    except Exception as e:
+        print(f'❌ Erro no callback OAuth: {e}')
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/api/aliexpress/products')
 def products():

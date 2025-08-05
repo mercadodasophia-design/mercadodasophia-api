@@ -665,10 +665,14 @@ def oauth_callback():
     # Log dos parâmetros para debug
     print(f'🔧 URL: {url}')
     print(f'🔧 Data: {data}')
-    print(f'🔧 Headers: {{"Content-Type": "application/x-www-form-urlencoded"}}')
+    print(f'🔧 Headers: {{"Content-Type": "application/x-www-form-urlencoded", "Accept": "application/json"}}')
 
     try:
-        response = requests.post(url, data=data, headers={"Content-Type": "application/x-www-form-urlencoded"})
+        headers = {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Accept": "application/json"
+        }
+        response = requests.post(url, data=data, headers=headers)
         print(f'✅ Status Code: {response.status_code}')
         print(f'✅ Raw Response: {response.text[:500]}...')  # Limitar o log para não sobrecarregar
 

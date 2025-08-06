@@ -1025,11 +1025,12 @@ def product_details(product_id):
                 'success': True, 
                 'data': processed_data
             })
+            
         else:
             print(f'❌ ESTRUTURA INESPERADA: {list(data.keys())}')
             return jsonify({'success': False, 'error': data}), 400
-        else:
-            return jsonify({'success': False, 'error': response.text}), response.status_code
+    else:
+        return jsonify({'success': False, 'error': response.text}), response.status_code
 
     except Exception as e:
         print(f'❌ Erro ao buscar detalhes do produto {product_id}: {e}')

@@ -1077,14 +1077,21 @@ def freight_calculation(product_id):
         if not sku_info:
             return jsonify({'success': False, 'error': 'Nenhum SKU encontrado para o produto'}), 400
             
-        # Pegar o primeiro SKU dispon├¡vel
-        first_sku = sku_info[0] if isinstance(sku_info, list) else sku_info
-        sku_id = first_sku.get('sku_id')
+        # Tentar todos os SKUs disponíveis até encontrar um com frete
+        sku_list = sku_info if isinstance(sku_info, list) else [sku_info]
+        sku_id = None
+        
+        for i, sku in enumerate(sku_list):
+            current_sku_id = sku.get('sku_id')
+            if current_sku_id:
+                print(f'Ô£à Testando SKU {i+1}/{len(sku_list)}: {current_sku_id}')
+                sku_id = current_sku_id
+                break
         
         if not sku_id:
-            return jsonify({'success': False, 'error': 'SKU ID n├úo encontrado'}), 400
+            return jsonify({'success': False, 'error': 'Nenhum SKU ID encontrado'}), 400
             
-        print(f'Ô£à SKU ID encontrado: {sku_id}')
+        print(f'Ô£à SKU ID selecionado: {sku_id}')
         
         # Extrair preço do produto se disponível
         product_price = "10.00"  # Preço padrão
@@ -1097,35 +1104,67 @@ def freight_calculation(product_id):
         
         print(f'💰 Preço do produto para frete: {product_price}')
         
-        # Agora calcular frete com o skuId e CEP
-        freight_params = {
-            "country_code": "BR",
-            "post_code": "61771800",  # CEP padrão
-            "price": product_price,
-            "product_id": product_id,
-            "sku_id": sku_id,  # SKU ID obrigatório
-            "product_num": "1",
-            "send_goods_country_code": "CN",
-            "price_currency": "USD"
-        }
-        
-        params = {
-            "method": "aliexpress.logistics.buyer.freight.calculate",
-            "app_key": APP_KEY,
-            "timestamp": int(time.time() * 1000),
-            "sign_method": "md5",
-            "format": "json",
-            "v": "2.0",
-            "access_token": tokens['access_token'],
-            "param_aeop_freight_calculate_for_buyer_d_t_o": json.dumps(freight_params)
-        }
-        
-        # Gerar assinatura
-        params["sign"] = generate_api_signature(params, APP_SECRET)
-        
-        # Fazer requisi├º├úo HTTP direta para /sync
-        response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
-        print(f'Ô£à Resposta frete produto {product_id} (sku: {sku_id}): {response.text[:500]}...')
+        # Tentar calcular frete com diferentes SKUs
+        for i, sku in enumerate(sku_list):
+            current_sku_id = sku.get('sku_id')
+            if not current_sku_id:
+                continue
+                
+            print(f'🚚 Tentativa {i+1}/{len(sku_list)} - SKU: {current_sku_id}')
+            
+            # Calcular frete com o SKU atual
+            freight_params = {
+                "country_code": "BR",
+                "post_code": "61771800",  # CEP padrão
+                "price": product_price,
+                "product_id": product_id,
+                "sku_id": current_sku_id,  # SKU ID atual
+                "product_num": "1",
+                "send_goods_country_code": "CN",
+                "price_currency": "USD"
+            }
+            
+            params = {
+                "method": "aliexpress.logistics.buyer.freight.calculate",
+                "app_key": APP_KEY,
+                "timestamp": int(time.time() * 1000),
+                "sign_method": "md5",
+                "format": "json",
+                "v": "2.0",
+                "access_token": tokens['access_token'],
+                "param_aeop_freight_calculate_for_buyer_d_t_o": json.dumps(freight_params)
+            }
+            
+            # Gerar assinatura
+            params["sign"] = generate_api_signature(params, APP_SECRET)
+            
+            # Fazer requisição HTTP direta para /sync
+            response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
+            print(f'🚚 Resposta frete produto {product_id} (sku: {current_sku_id}): {response.text[:500]}...')
+            
+            if response.status_code == 200:
+                data = response.json()
+                if 'aliexpress_logistics_buyer_freight_calculate_response' in data:
+                    freight_response = data['aliexpress_logistics_buyer_freight_calculate_response']
+                    result = freight_response.get('result', {})
+                    
+                    # Se encontrou opções de frete, usar este SKU
+                    if result.get('success', False) or 'freight_calculate_result_for_buyer_d_t_o_list' in result:
+                        print(f'✅ SKU {current_sku_id} tem opções de frete!')
+                        break
+                    else:
+                        print(f'❌ SKU {current_sku_id} sem opções de frete: {result.get("error_desc", "N/A")}')
+                        continue
+            else:
+                print(f'❌ Erro HTTP {response.status_code} para SKU {current_sku_id}')
+                continue
+        else:
+            # Se chegou aqui, nenhum SKU funcionou
+            print(f'❌ Nenhum SKU encontrou opções de frete para o produto {product_id}')
+            return jsonify({
+                'success': False, 
+                'error': 'Nenhuma opção de frete disponível para este produto'
+            }), 400
         
         if response.status_code == 200:
             data = response.json()

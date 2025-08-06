@@ -688,65 +688,7 @@ def oauth_callback():
 
     # Tentar diferentes abordagens
     attempts = [
-        {
-            'name': 'DS API Standard',
-            'url': 'https://api-sg.aliexpress.com/oauth/token',
-            'data': {
-                "grant_type": "authorization_code",
-                "client_id": APP_KEY,
-                "client_secret": APP_SECRET,
-                "redirect_uri": REDIRECT_URI,
-                "code": code
-            }
-        },
-        {
-            'name': 'Seller OAuth',
-            'url': 'https://api-sg.aliexpress.com/seller/oauth/token',
-            'data': {
-                "grant_type": "authorization_code",
-                "client_id": APP_KEY,
-                "client_secret": APP_SECRET,
-                "redirect_uri": REDIRECT_URI,
-                "code": code
-            }
-        },
-        {
-            'name': 'Alternative OAuth',
-            'url': 'https://api-sg.aliexpress.com/oauth2/token',
-            'data': {
-                "grant_type": "authorization_code",
-                "client_id": APP_KEY,
-                "client_secret": APP_SECRET,
-                "redirect_uri": REDIRECT_URI,
-                "code": code
-            }
-        },
-        {
-            'name': 'Direct API',
-            'url': 'https://api-sg.aliexpress.com/api/oauth/token',
-            'data': {
-                "grant_type": "authorization_code",
-                "client_id": APP_KEY,
-                "client_secret": APP_SECRET,
-                "redirect_uri": REDIRECT_URI,
-                "code": code
-            }
-        },
-        {
-            'name': 'Seller API with GOP',
-            'url': 'https://api-sg.aliexpress.com/auth/token/create',
-            'data': {
-                "grant_type": "authorization_code",
-                "client_id": APP_KEY,
-                "client_secret": APP_SECRET,
-                "redirect_uri": REDIRECT_URI,
-                "code": code,
-                "timestamp": str(int(time.time())),
-                "format": "json",
-                "v": "2.0",
-                "sign_method": "md5"
-            }
-        },
+        
         {
             'name': 'SDK Official - Correct Method',
             'url': 'SDK_METHOD',

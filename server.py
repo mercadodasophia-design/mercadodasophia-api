@@ -1095,14 +1095,38 @@ def freight_calculation(product_id):
         
         # Extrair preço do produto se disponível
         product_price = "10.00"  # Preço padrão
+        
+        # Tentar extrair preço de diferentes locais
         if 'ae_item_base_info_dto' in result:
             base_info = result['ae_item_base_info_dto']
-            if 'min_price' in base_info:
-                product_price = str(base_info['min_price'])
-            elif 'max_price' in base_info:
-                product_price = str(base_info['max_price'])
+            print(f'🔍 Procurando preço em ae_item_base_info_dto: {list(base_info.keys())}')
+            
+            # Tentar diferentes campos de preço
+            price_fields = ['min_price', 'max_price', 'price', 'sale_price', 'original_price']
+            for field in price_fields:
+                if field in base_info and base_info[field]:
+                    product_price = str(base_info[field])
+                    print(f'💰 Preço encontrado em {field}: {product_price}')
+                    break
         
-        print(f'💰 Preço do produto para frete: {product_price}')
+        # Se não encontrou, tentar nos SKUs
+        if product_price == "10.00" and 'ae_item_sku_info_dtos' in result:
+            sku_info = result['ae_item_sku_info_dtos']
+            if 'ae_item_sku_info_d_t_o' in sku_info:
+                skus = sku_info['ae_item_sku_info_d_t_o']
+                if isinstance(skus, list) and len(skus) > 0:
+                    first_sku = skus[0]
+                    print(f'🔍 Procurando preço no primeiro SKU: {list(first_sku.keys())}')
+                    
+                    # Tentar diferentes campos de preço no SKU
+                    sku_price_fields = ['price', 'sale_price', 'original_price', 'sku_price']
+                    for field in sku_price_fields:
+                        if field in first_sku and first_sku[field]:
+                            product_price = str(first_sku[field])
+                            print(f'💰 Preço encontrado no SKU em {field}: {product_price}')
+                            break
+        
+        print(f'💰 Preço final do produto para frete: {product_price}')
         
         # Tentar calcular frete com diferentes SKUs
         for i, sku in enumerate(sku_list):

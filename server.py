@@ -12,7 +12,7 @@ import iop
 
 app = Flask(__name__)
 
-# ===================== CONFIGURA├ç├òES =====================
+# ===================== CONFIGURA├º├ÁES =====================
 APP_KEY = os.getenv('APP_KEY', '517616')  # Substitua pela sua APP_KEY
 APP_SECRET = os.getenv('APP_SECRET', 'skAvaPWbGLkkx5TlKf8kvLmILQtTV2sq')
 PORT = int(os.getenv('PORT', 5000))
@@ -21,7 +21,7 @@ REDIRECT_URI = "https://mercadodasophia-api.onrender.com/api/aliexpress/oauth-ca
 
 TOKENS_FILE = 'tokens.json'
 
-# ===================== FUN├ç├òES AUXILIARES =====================
+# ===================== FUN├º├ÁES AUXILIARES =====================
 def save_tokens(tokens):
     with open(TOKENS_FILE, 'w') as f:
         json.dump(tokens, f)
@@ -975,32 +975,28 @@ def product_details(product_id):
             print(f'­ƒôè ESTRUTURA COMPLETA - DETALHES PRODUTO {product_id}:')
             print(json.dumps(data, indent=2, ensure_ascii=False))
             
-            # Verificar se h├í dados na resposta
-            if 'aliexpress_ds_product_get_response' in data:
-                product_response = data['aliexpress_ds_product_get_response']
-                
-                # Analisar estrutura dos dados
-                result = product_response.get('result', {})
-                print(f'­ƒöì AN├üLISE ESTRUTURA - RESULT:')
-                print(f'  - Keys dispon├¡veis: {list(result.keys())}')
-                
-                # Extrair informa├º├Áes ├║teis para o frontend
-                processed_data = {
-                    'basic_info': {
-                        'product_id': product_id,
-                        'title': result.get('product_title', ''),
-                        'description': result.get('product_description', ''),
-                        'main_image': result.get('product_main_image', ''),
-                    },
-                    'pricing': {
-                        'min_price': result.get('min_price', ''),
-                        'max_price': result.get('max_price', ''),
-                        'currency': result.get('currency_code', 'BRL'),
-                    },
-                    'images': [],
-                    'variations': [],
-                    'raw_data': result  # Dados completos para an├ílise
-                }
+            # Verificar se há dados na resposta
+            result = data.get('result', {})
+            print(f'🔍 ANÁLISE ESTRUTURA - RESULT:')
+            print(f'  - Keys disponíveis: {list(result.keys())}')
+            
+            # Extrair informações úteis para o frontend
+            processed_data = {
+                'basic_info': {
+                    'product_id': product_id,
+                    'title': result.get('product_title', ''),
+                    'description': result.get('product_description', ''),
+                    'main_image': result.get('product_main_image', ''),
+                },
+                'pricing': {
+                    'min_price': result.get('min_price', ''),
+                    'max_price': result.get('max_price', ''),
+                    'currency': result.get('currency_code', 'BRL'),
+                },
+                'images': [],
+                'variations': [],
+                'raw_data': result  # Dados completos para análise
+            }
                 
                 # Extrair galeria de imagens
                 if 'product_images' in result:
@@ -1027,8 +1023,7 @@ def product_details(product_id):
                 
                 return jsonify({
                     'success': True, 
-                    'data': product_response,
-                    'processed': processed_data
+                    'data': processed_data
                 })
             else:
                 print(f'ÔØî ESTRUTURA INESPERADA: {list(data.keys())}')

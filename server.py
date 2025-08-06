@@ -1112,16 +1112,15 @@ def freight_calculation(product_id):
                 
             print(f'🚚 Tentativa {i+1}/{len(sku_list)} - SKU: {current_sku_id}')
             
-            # Calcular frete com o SKU atual
+            # Calcular frete com o SKU atual (conforme documentação oficial)
             freight_params = {
                 "country_code": "BR",
-                "post_code": "61771800",  # CEP padrão
-                "price": product_price,
-                "product_id": product_id,
-                "sku_id": current_sku_id,  # SKU ID atual
-                "product_num": "1",
+                "product_id": int(product_id),
+                "product_num": 1,
                 "send_goods_country_code": "CN",
-                "price_currency": "USD"
+                "sku_id": current_sku_id,  # SKU ID (opcional mas recomendado)
+                "price": product_price,  # Preço (opcional)
+                "price_currency": "USD"  # Moeda (opcional)
             }
             
             params = {
@@ -1149,7 +1148,7 @@ def freight_calculation(product_id):
                     result = freight_response.get('result', {})
                     
                     # Se encontrou opções de frete, usar este SKU
-                    if result.get('success', False) or 'freight_calculate_result_for_buyer_d_t_o_list' in result:
+                    if result.get('success', False) or 'aeop_freight_calculate_result_for_buyer_d_t_o_list' in result:
                         print(f'✅ SKU {current_sku_id} tem opções de frete!')
                         break
                     else:
@@ -1190,11 +1189,11 @@ def freight_calculation(product_id):
                     'raw_data': result
                 }
                 
-                # Extrair opções de frete se disponíveis
-                if 'freight_calculate_result_for_buyer_d_t_o_list' in result:
-                    freight_list = result['freight_calculate_result_for_buyer_d_t_o_list']
-                    if 'freight_calculate_result_for_buyer_d_t_o' in freight_list:
-                        options = freight_list['freight_calculate_result_for_buyer_d_t_o']
+                # Extrair opções de frete se disponíveis (conforme documentação)
+                if 'aeop_freight_calculate_result_for_buyer_d_t_o_list' in result:
+                    freight_list = result['aeop_freight_calculate_result_for_buyer_d_t_o_list']
+                    if 'aeop_freight_calculate_result_for_buyer_d_t_o' in freight_list:
+                        options = freight_list['aeop_freight_calculate_result_for_buyer_d_t_o']
                         if isinstance(options, list):
                             processed_freight['freight_options'] = options
                         else:

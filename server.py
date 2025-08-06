@@ -1086,12 +1086,24 @@ def freight_calculation(product_id):
             
         print(f'Ô£à SKU ID encontrado: {sku_id}')
         
-        # Agora calcular frete com o skuId
+        # Extrair preço do produto se disponível
+        product_price = "10.00"  # Preço padrão
+        if 'ae_item_base_info_dto' in result:
+            base_info = result['ae_item_base_info_dto']
+            if 'min_price' in base_info:
+                product_price = str(base_info['min_price'])
+            elif 'max_price' in base_info:
+                product_price = str(base_info['max_price'])
+        
+        print(f'💰 Preço do produto para frete: {product_price}')
+        
+        # Agora calcular frete com o skuId e CEP
         freight_params = {
             "country_code": "BR",
-            "price": "10.00",
+            "post_code": "61771800",  # CEP padrão
+            "price": product_price,
             "product_id": product_id,
-            "sku_id": sku_id,  # ­ƒæê SKU ID obrigat├│rio
+            "sku_id": sku_id,  # SKU ID obrigatório
             "product_num": "1",
             "send_goods_country_code": "CN",
             "price_currency": "USD"
@@ -1131,33 +1143,32 @@ def freight_calculation(product_id):
                 print(f'  - Success: {result.get("success", "N/A")}')
                 print(f'  - Error: {result.get("error_desc", "N/A")}')
                 
-                # Extrair informa├º├Áes ├║teis para o frontend
+                # Extrair informações úteis para o frontend
                 processed_freight = {
                     'success': result.get('success', False),
                     'error_message': result.get('error_desc', ''),
-                    'shipping_options': [],
+                    'freight_options': [],
                     'raw_data': result
                 }
                 
-                # Extrair op├º├Áes de frete se dispon├¡veis
+                # Extrair opções de frete se disponíveis
                 if 'freight_calculate_result_for_buyer_d_t_o_list' in result:
                     freight_list = result['freight_calculate_result_for_buyer_d_t_o_list']
                     if 'freight_calculate_result_for_buyer_d_t_o' in freight_list:
                         options = freight_list['freight_calculate_result_for_buyer_d_t_o']
                         if isinstance(options, list):
-                            processed_freight['shipping_options'] = options
+                            processed_freight['freight_options'] = options
                         else:
-                            processed_freight['shipping_options'] = [options]
+                            processed_freight['freight_options'] = [options]
                 
-                print(f'­ƒôï DADOS DE FRETE PROCESSADOS:')
+                print(f'📦 DADOS DE FRETE PROCESSADOS:')
                 print(f'  - Sucesso: {processed_freight["success"]}')
-                print(f'  - Op├º├Áes de frete: {len(processed_freight["shipping_options"])}')
+                print(f'  - Opções de frete: {len(processed_freight["freight_options"])}')
                 print(f'  - Erro: {processed_freight["error_message"]}')
                 
                 return jsonify({
                     'success': True, 
-                    'data': freight_response,
-                    'processed': processed_freight
+                    'data': processed_freight
                 })
             else:
                 print(f'ÔØî ESTRUTURA INESPERADA FRETE: {list(data.keys())}')

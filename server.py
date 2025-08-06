@@ -945,9 +945,8 @@ def product_details(product_id):
     tokens = load_tokens()
     if not tokens or not tokens.get('access_token'):
         return jsonify({'success': False, 'message': 'Token n├úo encontrado. Fa├ºa autoriza├º├úo primeiro.'}), 401
-
     try:
-        # Par├ómetros para a API conforme documenta├º├úo
+        # Parâmetros para a API conforme documentação
         params = {
             "method": "aliexpress.ds.product.get",
             "app_key": APP_KEY,
@@ -957,22 +956,22 @@ def product_details(product_id):
             "v": "2.0",
             "access_token": tokens['access_token'],
             "product_id": product_id,
-            "ship_to_country": "BR",  # ­ƒæê obrigat├│rio para Brasil
-            "target_currency": "BRL",    # ­ƒæê obrigat├│rio para Brasil
-            "target_language": "pt",     # ­ƒæê obrigat├│rio para Brasil
+            "ship_to_country": "BR",   # obrigatório para Brasil
+            "target_currency": "BRL",  # obrigatório para Brasil
+            "target_language": "pt",   # obrigatório para Brasil
             "remove_personal_benefit": "false"
         }
         
         # Gerar assinatura
         params["sign"] = generate_api_signature(params, APP_SECRET)
         
-        # Fazer requisi├º├úo HTTP direta para /sync
+        # Fazer requisição HTTP direta para /sync
         response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
-        print(f'Ô£à Resposta detalhes produto {product_id}: {response.text[:500]}...')
-        
+        print(f'📡 Resposta detalhes produto {product_id}: {response.text[:500]}...')
+
         if response.status_code == 200:
             data = response.json()
-            print(f'­ƒôè ESTRUTURA COMPLETA - DETALHES PRODUTO {product_id}:')
+            print(f'✅ ESTRUTURA COMPLETA - DETALHES PRODUTO {product_id}:')
             print(json.dumps(data, indent=2, ensure_ascii=False))
             
             # Verificar se há dados na resposta
@@ -1004,38 +1003,37 @@ def product_details(product_id):
                 if isinstance(images, list):
                     processed_data['images'] = images
                 elif isinstance(images, dict) and 'product_image' in images:
-                    processed_data['images'] = images['product_image'] if isinstance(images['product_image'], list) else [images['product_image']]
+                    processed_data['images'] = (
+                        images['product_image'] 
+                        if isinstance(images['product_image'], list) 
+                        else [images['product_image']]
+                    )
             
             # Extrair variações/SKUs
             if 'ae_item_sku_info_dtos' in result:
                 sku_info = result['ae_item_sku_info_dtos']
                 if 'ae_item_sku_info_d_t_o' in sku_info:
                     skus = sku_info['ae_item_sku_info_d_t_o']
-                    if isinstance(skus, list):
-                        processed_data['variations'] = skus
-                    else:
-                        processed_data['variations'] = [skus]
+                    processed_data['variations'] = skus if isinstance(skus, list) else [skus]
             
             print(f'📊 DADOS PROCESSADOS PARA FRONTEND:')
             print(f'  - Imagens encontradas: {len(processed_data["images"])}')
             print(f'  - Variações encontradas: {len(processed_data["variations"])}')
             print(f'  - Título: {processed_data["basic_info"]["title"][:50]}...')
             
-            return jsonify({
-                'success': True, 
-                'data': processed_data
-            })
-        else:
+            return jsonify({'success': True, 'data': processed_data})
+        
+        # Caso a API retorne erro ou não seja 200
+        try:
+            data = response.json()
             print(f'❌ ESTRUTURA INESPERADA: {list(data.keys())}')
             return jsonify({'success': False, 'error': data}), 400
-        else:
+        except:
             return jsonify({'success': False, 'error': response.text}), response.status_code
 
     except Exception as e:
         print(f'❌ Erro ao buscar detalhes do produto {product_id}: {e}')
         return jsonify({'success': False, 'message': str(e)}), 500
-
-
 
 @app.route('/api/aliexpress/freight/<product_id>')
 def freight_calculation(product_id):

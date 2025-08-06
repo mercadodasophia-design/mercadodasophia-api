@@ -997,34 +997,34 @@ def product_details(product_id):
                 'variations': [],
                 'raw_data': result  # Dados completos para análise
             }
-                
-                # Extrair galeria de imagens
-                if 'product_images' in result:
-                    images = result['product_images']
-                    if isinstance(images, list):
-                        processed_data['images'] = images
-                    elif isinstance(images, dict) and 'product_image' in images:
-                        processed_data['images'] = images['product_image'] if isinstance(images['product_image'], list) else [images['product_image']]
-                
-                # Extrair varia├º├Áes/SKUs
-                if 'ae_item_sku_info_dtos' in result:
-                    sku_info = result['ae_item_sku_info_dtos']
-                    if 'ae_item_sku_info_d_t_o' in sku_info:
-                        skus = sku_info['ae_item_sku_info_d_t_o']
-                        if isinstance(skus, list):
-                            processed_data['variations'] = skus
-                        else:
-                            processed_data['variations'] = [skus]
-                
-                print(f'­ƒôï DADOS PROCESSADOS PARA FRONTEND:')
-                print(f'  - Imagens encontradas: {len(processed_data["images"])}')
-                print(f'  - Varia├º├Áes encontradas: {len(processed_data["variations"])}')
-                print(f'  - T├¡tulo: {processed_data["basic_info"]["title"][:50]}...')
-                
-                return jsonify({
-                    'success': True, 
-                    'data': processed_data
-                })
+            
+            # Extrair galeria de imagens
+            if 'product_images' in result:
+                images = result['product_images']
+                if isinstance(images, list):
+                    processed_data['images'] = images
+                elif isinstance(images, dict) and 'product_image' in images:
+                    processed_data['images'] = images['product_image'] if isinstance(images['product_image'], list) else [images['product_image']]
+            
+            # Extrair variações/SKUs
+            if 'ae_item_sku_info_dtos' in result:
+                sku_info = result['ae_item_sku_info_dtos']
+                if 'ae_item_sku_info_d_t_o' in sku_info:
+                    skus = sku_info['ae_item_sku_info_d_t_o']
+                    if isinstance(skus, list):
+                        processed_data['variations'] = skus
+                    else:
+                        processed_data['variations'] = [skus]
+            
+            print(f'📊 DADOS PROCESSADOS PARA FRONTEND:')
+            print(f'  - Imagens encontradas: {len(processed_data["images"])}')
+            print(f'  - Variações encontradas: {len(processed_data["variations"])}')
+            print(f'  - Título: {processed_data["basic_info"]["title"][:50]}...')
+            
+            return jsonify({
+                'success': True, 
+                'data': processed_data
+            })
             else:
                 print(f'ÔØî ESTRUTURA INESPERADA: {list(data.keys())}')
                 return jsonify({'success': False, 'error': data}), 400

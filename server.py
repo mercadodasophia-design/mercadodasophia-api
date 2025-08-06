@@ -1192,8 +1192,8 @@ def freight_calculation(product_id):
                 # Extrair opções de frete se disponíveis (conforme documentação)
                 if 'aeop_freight_calculate_result_for_buyer_d_t_o_list' in result:
                     freight_list = result['aeop_freight_calculate_result_for_buyer_d_t_o_list']
-                    if 'aeop_freight_calculate_result_for_buyer_d_t_o' in freight_list:
-                        options = freight_list['aeop_freight_calculate_result_for_buyer_d_t_o']
+                    if 'aeop_freight_calculate_result_for_buyer_dto' in freight_list:
+                        options = freight_list['aeop_freight_calculate_result_for_buyer_dto']
                         if isinstance(options, list):
                             processed_freight['freight_options'] = options
                         else:

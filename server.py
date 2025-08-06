@@ -1028,11 +1028,11 @@ def product_details(product_id):
         else:
             print(f'❌ ESTRUTURA INESPERADA: {list(data.keys())}')
             return jsonify({'success': False, 'error': data}), 400
-    else:
-        return jsonify({'success': False, 'error': response.text}), response.status_code
+        else:
+            return jsonify({'success': False, 'error': response.text}), response.status_code
 
     except Exception as e:
-        print(f'ÔØî Erro ao buscar detalhes do produto {product_id}: {e}')
+        print(f'❌ Erro ao buscar detalhes do produto {product_id}: {e}')
         return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/api/aliexpress/freight/<product_id>')

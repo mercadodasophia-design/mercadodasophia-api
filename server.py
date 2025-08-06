@@ -1025,9 +1025,9 @@ def product_details(product_id):
                 'success': True, 
                 'data': processed_data
             })
-            else:
-                print(f'ÔØî ESTRUTURA INESPERADA: {list(data.keys())}')
-                return jsonify({'success': False, 'error': data}), 400
+        else:
+            print(f'❌ ESTRUTURA INESPERADA: {list(data.keys())}')
+            return jsonify({'success': False, 'error': data}), 400
         else:
             return jsonify({'success': False, 'error': response.text}), response.status_code
 

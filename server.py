@@ -975,22 +975,27 @@ def product_details(product_id):
             print(json.dumps(data, indent=2, ensure_ascii=False))
             
             # Verificar se há dados na resposta
-            result = data.get('result', {})
-            print(f'🔍 ANÁLISE ESTRUTURA - RESULT:')
-            print(f'  - Keys disponíveis: {list(result.keys())}')
+            if 'aliexpress_ds_product_get_response' in data:
+                product_response = data['aliexpress_ds_product_get_response']
+                result = product_response.get('result', {})
+                print(f'🔍 ANÁLISE ESTRUTURA - RESULT:')
+                print(f'  - Keys disponíveis: {list(result.keys())}')
+            else:
+                print(f'❌ ESTRUTURA INESPERADA: {list(data.keys())}')
+                return jsonify({'success': False, 'error': data}), 400
             
             # Extrair informações úteis para o frontend
             processed_data = {
                 'basic_info': {
                     'product_id': product_id,
-                    'title': result.get('product_title', ''),
-                    'description': result.get('product_description', ''),
-                    'main_image': result.get('product_main_image', ''),
+                    'title': result.get('ae_item_base_info_dto', {}).get('subject', ''),
+                    'description': result.get('ae_item_base_info_dto', {}).get('detail', ''),
+                    'main_image': result.get('ae_multimedia_info_dto', {}).get('image_urls', '').split(';')[0] if result.get('ae_multimedia_info_dto', {}).get('image_urls') else '',
                 },
                 'pricing': {
-                    'min_price': result.get('min_price', ''),
-                    'max_price': result.get('max_price', ''),
-                    'currency': result.get('currency_code', 'BRL'),
+                    'min_price': '',
+                    'max_price': '',
+                    'currency': 'BRL',
                 },
                 'images': [],
                 'variations': [],
@@ -998,16 +1003,12 @@ def product_details(product_id):
             }
             
             # Extrair galeria de imagens
-            if 'product_images' in result:
-                images = result['product_images']
-                if isinstance(images, list):
-                    processed_data['images'] = images
-                elif isinstance(images, dict) and 'product_image' in images:
-                    processed_data['images'] = (
-                        images['product_image'] 
-                        if isinstance(images['product_image'], list) 
-                        else [images['product_image']]
-                    )
+            if 'ae_multimedia_info_dto' in result:
+                multimedia_info = result['ae_multimedia_info_dto']
+                if 'image_urls' in multimedia_info:
+                    image_urls = multimedia_info['image_urls']
+                    if image_urls:
+                        processed_data['images'] = image_urls.split(';')
             
             # Extrair variações/SKUs
             if 'ae_item_sku_info_dtos' in result:

@@ -1523,6 +1523,269 @@ def sku_attributes_batch():
         print(f'❌ Erro no processamento em lote: {e}')
         return jsonify({'success': False, 'message': str(e)}), 500
 
+@app.route('/api/aliexpress/translate-attributes', methods=['POST'])
+def translate_attributes():
+    """Traduzir atributos de produtos usando nossa documentação"""
+    try:
+        data = request.get_json()
+        attributes_data = data.get('attributes', [])
+        
+        # Dicionário de tradução baseado na nossa documentação
+        attribute_translations = {
+            # Códigos básicos (13xxx)
+            '13143': 'Cor',
+            '13144': 'Tamanho', 
+            '13145': 'Material',
+            '13146': 'Estilo',
+            '13147': 'Padrão',
+            '13148': 'Tipo',
+            '13149': 'Forma',
+            '13150': 'Função',
+            '13151': 'Característica',
+            '13152': 'Especificação',
+            '13153': 'Modelo',
+            '13154': 'Versão',
+            '13155': 'Edição',
+            '13156': 'Série',
+            '13157': 'Coleção',
+            '13158': 'Linha',
+            '13159': 'Família',
+            '13160': 'Categoria',
+            '13161': 'Gênero',
+            '13162': 'Idade',
+            '13163': 'Ocasião',
+            '13164': 'Tecnologia',
+            '13165': 'Compatibilidade',
+            '13166': 'Certificação',
+            '13167': 'Origem',
+            '13168': 'Marca',
+            '13169': 'Fabricante',
+            '13170': 'Garantia',
+            '13171': 'Peso',
+            '13172': 'Dimensões',
+            '13173': 'Potência',
+            '13174': 'Voltagem',
+            '13175': 'Frequência',
+            '13176': 'Capacidade',
+            '13177': 'Velocidade',
+            '13178': 'Resolução',
+            '13179': 'Memória',
+            '13180': 'Processador',
+            '13181': 'Sistema Operacional',
+            '13182': 'Conectividade',
+            '13183': 'Bateria',
+            '13184': 'Display',
+            '13185': 'Câmera',
+            '13186': 'Áudio',
+            '13187': 'Sensor',
+            '13188': 'Interface',
+            '13189': 'Porta',
+            '13190': 'Cabo',
+            '13191': 'Adaptador',
+            '13192': 'Suporte',
+            '13193': 'Instrução',
+            '13194': 'Manual',
+            '13195': 'Embalagem',
+            '13196': 'Acessório',
+            '13197': 'Peça',
+            '13198': 'Componente',
+            '13199': 'Kit',
+            '13200': 'Conjunto',
+            
+            # Códigos específicos (2-4 dígitos)
+            '14': 'Tamanho',
+            '29': 'Cor',
+            '977': 'Tipo',
+            '10': 'Categoria',
+            '11': 'Subcategoria',
+            '12': 'Marca',
+            '13': 'Modelo',
+            '15': 'Cor',
+            '16': 'Material',
+            '17': 'Estilo',
+            '18': 'Padrão',
+            '19': 'Tipo',
+            '20': 'Forma',
+            '21': 'Função',
+            '22': 'Característica',
+            '23': 'Especificação',
+            '24': 'Versão',
+            '25': 'Edição',
+            '26': 'Série',
+            '27': 'Coleção',
+            '28': 'Linha',
+            '30': 'Família',
+            '31': 'Gênero',
+            '32': 'Idade',
+            '33': 'Ocasião',
+            '34': 'Tecnologia',
+            '35': 'Compatibilidade',
+            '36': 'Certificação',
+            '37': 'Origem',
+            '38': 'Fabricante',
+            '39': 'Garantia',
+            '40': 'Peso',
+            '41': 'Dimensões',
+            '42': 'Potência',
+            '43': 'Voltagem',
+            '44': 'Frequência',
+            '45': 'Capacidade',
+            '46': 'Velocidade',
+            '47': 'Resolução',
+            '48': 'Memória',
+            '49': 'Processador',
+            '50': 'Sistema',
+            
+            # Códigos longos específicos
+            '200003528': 'Categoria Específica',
+            '200003529': 'Subcategoria',
+            '200003530': 'Variante',
+            '200003531': 'Opção',
+            '200003532': 'Configuração',
+            '200003533': 'Versão',
+            '200003534': 'Edição',
+            '200003535': 'Série',
+            '200003536': 'Coleção',
+            '200003537': 'Linha',
+            '200003538': 'Família',
+            '200003539': 'Gênero',
+            '200003540': 'Idade',
+            '200003541': 'Ocasião',
+            '200003542': 'Tecnologia',
+            '200003543': 'Compatibilidade',
+            '200003544': 'Certificação',
+            '200003545': 'Origem',
+            '200003546': 'Marca',
+            '200003547': 'Fabricante',
+            '200003548': 'Garantia',
+            '200003549': 'Peso',
+            '200003550': 'Dimensões',
+        }
+        
+        # Traduções de valores comuns
+        value_translations = {
+            # Cores
+            'red': 'Vermelho',
+            'blue': 'Azul',
+            'green': 'Verde',
+            'yellow': 'Amarelo',
+            'black': 'Preto',
+            'white': 'Branco',
+            'pink': 'Rosa',
+            'purple': 'Roxo',
+            'orange': 'Laranja',
+            'brown': 'Marrom',
+            'gray': 'Cinza',
+            'grey': 'Cinza',
+            
+            # Tamanhos
+            'xs': 'Extra Pequeno',
+            's': 'Pequeno',
+            'm': 'Médio',
+            'l': 'Grande',
+            'xl': 'Extra Grande',
+            'xxl': 'Extra Extra Grande',
+            
+            # Materiais
+            'cotton': 'Algodão',
+            'polyester': 'Poliéster',
+            'wool': 'Lã',
+            'silk': 'Seda',
+            'leather': 'Couro',
+            'plastic': 'Plástico',
+            'metal': 'Metal',
+            'wood': 'Madeira',
+            'glass': 'Vidro',
+            'ceramic': 'Cerâmica',
+        }
+        
+        def translate_attribute_code(code):
+            """Traduzir código de atributo"""
+            return attribute_translations.get(str(code), f'Atributo {code}')
+        
+        def translate_attribute_value(value):
+            """Traduzir valor de atributo"""
+            value_lower = str(value).lower()
+            return value_translations.get(value_lower, str(value))
+        
+        def parse_attribute_string(attr_string):
+            """Parsear string de atributos complexa"""
+            if not attr_string:
+                return []
+            
+            # Padrões comuns: "29#Red;14#M" ou "13143:Red" ou "14"
+            attributes = []
+            
+            # Dividir por ponto e vírgula
+            parts = attr_string.split(';')
+            
+            for part in parts:
+                if '#' in part:
+                    # Formato: "29#Red"
+                    code, value = part.split('#', 1)
+                    attributes.append({
+                        'code': code.strip(),
+                        'value': value.strip(),
+                        'translated_code': translate_attribute_code(code.strip()),
+                        'translated_value': translate_attribute_value(value.strip())
+                    })
+                elif ':' in part:
+                    # Formato: "13143:Red"
+                    code, value = part.split(':', 1)
+                    attributes.append({
+                        'code': code.strip(),
+                        'value': value.strip(),
+                        'translated_code': translate_attribute_code(code.strip()),
+                        'translated_value': translate_attribute_value(value.strip())
+                    })
+                else:
+                    # Formato simples: "14"
+                    code = part.strip()
+                    if code:
+                        attributes.append({
+                            'code': code,
+                            'value': '',
+                            'translated_code': translate_attribute_code(code),
+                            'translated_value': ''
+                        })
+            
+            return attributes
+        
+        # Processar cada atributo
+        translated_attributes = []
+        
+        for attr_data in attributes_data:
+            if isinstance(attr_data, str):
+                # Se é uma string, tentar parsear
+                parsed = parse_attribute_string(attr_data)
+                translated_attributes.extend(parsed)
+            elif isinstance(attr_data, dict):
+                # Se é um objeto, processar diretamente
+                code = attr_data.get('code', '')
+                value = attr_data.get('value', '')
+                
+                translated_attributes.append({
+                    'code': str(code),
+                    'value': str(value),
+                    'translated_code': translate_attribute_code(code),
+                    'translated_value': translate_attribute_value(value),
+                    'original': attr_data
+                })
+        
+        return jsonify({
+            'success': True,
+            'translated_attributes': translated_attributes,
+            'total_attributes': len(translated_attributes),
+            'translation_map': {
+                'attribute_codes': len(attribute_translations),
+                'value_translations': len(value_translations)
+            }
+        })
+        
+    except Exception as e:
+        print(f'❌ Erro ao traduzir atributos: {e}')
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 if __name__ == '__main__':
     print(f'­ƒÜÇ Servidor rodando na porta {PORT}')
     print(f'APP_KEY: {"Ô£à" if APP_KEY else "ÔØî"} | APP_SECRET: {"Ô£à" if APP_SECRET else "ÔØî"} | REDIRECT_URI: {REDIRECT_URI}')

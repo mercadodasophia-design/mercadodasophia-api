@@ -835,7 +835,7 @@ def products():
                 
                 # Analisar estrutura dos dados
                 result = search_response.get('result', {})
-                print(f'­ƒöì AN├üLISE ESTRUTURA - BUSCA RESULT:')
+                print(f'­ƒöì AN├áLISE ESTRUTURA - BUSCA RESULT:')
                 print(f'  - Keys dispon├¡veis: {list(result.keys())}')
                 
                 # Extrair informa├º├Áes ├║teis para o frontend
@@ -1295,7 +1295,7 @@ def freight_calculation(product_id):
                 
                 # Analisar estrutura dos dados
                 result = freight_response.get('result', {})
-                print(f'­ƒöì AN├üLISE ESTRUTURA - FRETE RESULT:')
+                print(f'­ƒöì AN├áLISE ESTRUTURA - FRETE RESULT:')
                 print(f'  - Keys dispon├¡veis: {list(result.keys())}')
                 print(f'  - Success: {result.get("success", "N/A")}')
                 print(f'  - Error: {result.get("error_desc", "N/A")}')
@@ -1660,6 +1660,66 @@ def translate_attributes():
             '200003548': 'Garantia',
             '200003549': 'Peso',
             '200003550': 'Dimensões',
+            
+            # Códigos específicos mencionados pelo usuário
+            '200001438': 'Cor Específica',
+            '200001439': 'Tamanho Específico',
+            '200001440': 'Material Específico',
+            '200001441': 'Estilo Específico',
+            '200001442': 'Padrão Específico',
+            '200001443': 'Tipo Específico',
+            '200001444': 'Forma Específica',
+            '200001445': 'Função Específica',
+            '200001446': 'Característica Específica',
+            '200001447': 'Especificação Específica',
+            '200001448': 'Modelo Específico',
+            '200001449': 'Versão Específica',
+            '200001450': 'Edição Específica',
+            '200001451': 'Série Específica',
+            '200001452': 'Coleção Específica',
+            '200001453': 'Linha Específica',
+            '200001454': 'Família Específica',
+            '200001455': 'Categoria Específica',
+            '200001456': 'Gênero Específico',
+            '200001457': 'Idade Específica',
+            '200001458': 'Ocasião Específica',
+            '200001459': 'Tecnologia Específica',
+            '200001460': 'Compatibilidade Específica',
+            '200001461': 'Certificação Específica',
+            '200001462': 'Origem Específica',
+            '200001463': 'Marca Específica',
+            '200001464': 'Fabricante Específico',
+            '200001465': 'Garantia Específica',
+            '200001466': 'Peso Específico',
+            '200001467': 'Dimensões Específicas',
+            '200001468': 'Potência Específica',
+            '200001469': 'Voltagem Específica',
+            '200001470': 'Frequência Específica',
+            '200001471': 'Capacidade Específica',
+            '200001472': 'Velocidade Específica',
+            '200001473': 'Resolução Específica',
+            '200001474': 'Memória Específica',
+            '200001475': 'Processador Específico',
+            '200001476': 'Sistema Operacional Específico',
+            '200001477': 'Conectividade Específica',
+            '200001478': 'Bateria Específica',
+            '200001479': 'Display Específico',
+            '200001480': 'Câmera Específica',
+            '200001481': 'Áudio Específico',
+            '200001482': 'Sensor Específico',
+            '200001483': 'Interface Específica',
+            '200001484': 'Porta Específica',
+            '200001485': 'Cabo Específico',
+            '200001486': 'Adaptador Específico',
+            '200001487': 'Suporte Específico',
+            '200001488': 'Instrução Específica',
+            '200001489': 'Manual Específico',
+            '200001490': 'Embalagem Específica',
+            '200001491': 'Acessório Específico',
+            '200001492': 'Peça Específica',
+            '200001493': 'Componente Específico',
+            '200001494': 'Kit Específico',
+            '200001495': 'Conjunto Específico',
         }
         
         # Traduções de valores comuns
@@ -1713,7 +1773,7 @@ def translate_attributes():
             if not attr_string:
                 return []
             
-            # Padrões comuns: "29#Red;14#M" ou "13143:Red" ou "14"
+            # Padrões comuns: "29#Red;14#M" ou "13143:Red" ou "14" ou "14:200001438: verde"
             attributes = []
             
             # Dividir por ponto e vírgula
@@ -1730,14 +1790,51 @@ def translate_attributes():
                         'translated_value': translate_attribute_value(value.strip())
                     })
                 elif ':' in part:
-                    # Formato: "13143:Red"
-                    code, value = part.split(':', 1)
-                    attributes.append({
-                        'code': code.strip(),
-                        'value': value.strip(),
-                        'translated_code': translate_attribute_code(code.strip()),
-                        'translated_value': translate_attribute_value(value.strip())
-                    })
+                    # Contar quantos ':' existem
+                    colon_count = part.count(':')
+                    
+                    if colon_count == 1:
+                        # Formato: "13143:Red"
+                        code, value = part.split(':', 1)
+                        attributes.append({
+                            'code': code.strip(),
+                            'value': value.strip(),
+                            'translated_code': translate_attribute_code(code.strip()),
+                            'translated_value': translate_attribute_value(value.strip())
+                        })
+                    elif colon_count == 2:
+                        # Formato: "14:200001438: verde" - onde o valor já está em português
+                        parts_split = part.split(':', 2)
+                        if len(parts_split) == 3:
+                            code = parts_split[0].strip()
+                            sub_code = parts_split[1].strip()
+                            value = parts_split[2].strip()
+                            
+                            # Se o valor já está em português, não traduzir
+                            translated_value = value if any(pt_word in value.lower() for pt_word in ['verde', 'vermelho', 'azul', 'amarelo', 'preto', 'branco', 'rosa', 'roxo', 'laranja', 'marrom', 'cinza']) else translate_attribute_value(value)
+                            
+                            attributes.append({
+                                'code': code,
+                                'value': f"{sub_code}: {value}",
+                                'translated_code': translate_attribute_code(code),
+                                'translated_value': translated_value
+                            })
+                        else:
+                            # Fallback para formato não reconhecido
+                            attributes.append({
+                                'code': part.strip(),
+                                'value': '',
+                                'translated_code': translate_attribute_code(part.strip()),
+                                'translated_value': ''
+                            })
+                    else:
+                        # Formato não reconhecido, tratar como código simples
+                        attributes.append({
+                            'code': part.strip(),
+                            'value': '',
+                            'translated_code': translate_attribute_code(part.strip()),
+                            'translated_value': ''
+                        })
                 else:
                     # Formato simples: "14"
                     code = part.strip()

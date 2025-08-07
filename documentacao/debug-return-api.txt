@@ -1,0 +1,1073 @@
+poroduto na home
+{
+            "originalPrice": "11.03",
+            "originalPriceCurrency": "USD",
+            "salePrice": "8.82",
+            "discount": "20%",
+            "itemMainPic": "https://ae01.alicdn.com/kf/Sd0941085b37c457cb28f35611e8cf347G.jpg",
+            "title": "Telefone falso para telefone 16 15 pro 14 13 pro max plus 12 11 modelo manequim telefone celular não funcionando contador display tiro prop cópia",
+            "type": "search",
+            "score": "5.0",
+            "itemId": "1005008349104746",
+            "targetSalePrice": "52.39",
+            "cateId": "202192403,202228401,380230",
+            "targetOriginalPriceCurrency": "BRL",
+            "originMinPrice": "{\"thousandsChar\":\".\",\"shipToCountry\":\"BR\",\"decimalPointChar\":\",\",\"cent\":5239,\"currencySymbolPosition\":\"front\",\"currencySymbol\":\"R$\",\"showDecimal\":true,\"decimalStr\":\"39\",\"currencyCode\":\"BRL\",\"version\":\"V1\",\"formatPrice\":\"R$52,39\",\"integerStr\":\"52\"}",
+            "evaluateRate": "99.0",
+            "salePriceFormat": "R$52,39",
+            "orders": "292",
+            "targetOriginalPrice": "65.49",
+            "itemUrl": "//www.aliexpress.com/item/1005008349104746.html?skuId=12000044690481274&pdp_ext_f=%7B%22sku_id%22%3A%2212000044690481274%22%7D?appkey=517616",
+            "salePriceCurrency": "USD"
+          },
+          {
+            "originalPrice": "654.24",
+            "originalPriceCurrency": "CNY",
+            "salePrice": "235.53",
+            "discount": "64%",
+            "itemMainPic": "https://ae01.alicdn.com/kf/Se5b003f5ac68434ba9db161922cdf4e2Q.jpg",
+            "title": "Telefone fixo retrô com fio para casa/escritório/hotel, telefones antigos de cerâmica da china, decoração de moda antiga, telefone de mesa",
+            "type": "search",
+            "score": "4.8",
+            "itemId": "1005005688103974",
+            "targetSalePrice": "194.59",
+            "cateId": "7,200003782,100001202,200001017",
+            "targetOriginalPriceCurrency": "BRL",
+            "originMinPrice": "{\"thousandsChar\":\".\",\"shipToCountry\":\"BR\",\"decimalPointChar\":\",\",\"cent\":19459,\"currencySymbolPosition\":\"front\",\"currencySymbol\":\"R$\",\"showDecimal\":true,\"decimalStr\":\"59\",\"currencyCode\":\"BRL\",\"version\":\"V1\",\"formatPrice\":\"R$194,59\",\"integerStr\":\"194\"}",
+            "evaluateRate": "96.5",
+            "salePriceFormat": "R$194,59",
+            "orders": "278",
+            "targetOriginalPrice": "540.53",
+            "itemUrl": "//www.aliexpress.com/item/1005005688103974.html?skuId=12000034014358315&pdp_ext_f=%7B%22sku_id%22%3A%2212000034014358315%22%7D?appkey=517616",
+            "salePriceCurrency": "CNY"
+          }
+        ]
+      }
+    },
+    "request_id": "2101430017545000657327778"
+  }
+}
+
+produto no detalhes
+2025-08-06T17:10:09.105193652Z 📡 Resposta detalhes produto 1005009076092229: {"aliexpress_ds_product_get_response":{"result":{"ae_item_sku_info_dtos":{"ae_item_sku_info_d_t_o":[{"sku_attr":"14:496#12;977:200004182#No dolls no shoes","offer_sale_price":"17.24","sku_id":"12000047828279239","price_include_tax":false,"currency_code":"BRL","sku_price":"34.47","offer_bulk_sale_price":"17.24","sku_available_stock":0,"id":"14:496#12;977:200004182#No dolls no shoes","ae_sku_property_dtos":{"ae_sku_property_d_t_o":[{"sku_property_value":"ROXO","sku_image":"https://ae01.alicdn.com/...
+2025-08-06T17:10:09.105245183Z ✅ ESTRUTURA COMPLETA - DETALHES PRODUTO 1005009076092229:
+2025-08-06T17:10:09.105248573Z {
+2025-08-06T17:10:09.105251604Z   "aliexpress_ds_product_get_response": {
+2025-08-06T17:10:09.105253944Z     "result": {
+2025-08-06T17:10:09.105256994Z       "ae_item_sku_info_dtos": {
+2025-08-06T17:10:09.105259454Z         "ae_item_sku_info_d_t_o": [
+2025-08-06T17:10:09.105262004Z           {
+2025-08-06T17:10:09.105265274Z             "sku_attr": "14:496#12;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.105267654Z             "offer_sale_price": "17.24",
+2025-08-06T17:10:09.105269884Z             "sku_id": "12000047828279239",
+2025-08-06T17:10:09.105272074Z             "price_include_tax": false,
+2025-08-06T17:10:09.105274194Z             "currency_code": "BRL",
+2025-08-06T17:10:09.105276354Z             "sku_price": "34.47",
+2025-08-06T17:10:09.105278824Z             "offer_bulk_sale_price": "17.24",
+2025-08-06T17:10:09.105280934Z             "sku_available_stock": 0,
+2025-08-06T17:10:09.105283034Z             "id": "14:496#12;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.105285084Z             "ae_sku_property_dtos": {
+2025-08-06T17:10:09.105299095Z               "ae_sku_property_d_t_o": [
+2025-08-06T17:10:09.105302405Z                 {
+2025-08-06T17:10:09.105304715Z                   "sku_property_value": "ROXO",
+2025-08-06T17:10:09.105308125Z                   "sku_image": "https://ae01.alicdn.com/kf/S6c2476bd348942aeb3ed471244d9ca86W.jpg",
+2025-08-06T17:10:09.105311055Z                   "sku_property_name": "cor",
+2025-08-06T17:10:09.105313555Z                   "property_value_definition_name": "12",
+2025-08-06T17:10:09.105318995Z                   "property_value_id": 496,
+2025-08-06T17:10:09.105321775Z                   "sku_property_id": 14
+2025-08-06T17:10:09.105324655Z                 },
+2025-08-06T17:10:09.105327125Z                 {
+2025-08-06T17:10:09.105329415Z                   "sku_property_value": "M",
+2025-08-06T17:10:09.105332045Z                   "sku_property_name": "Tamanho",
+2025-08-06T17:10:09.105334746Z                   "property_value_definition_name": "No dolls no shoes",
+2025-08-06T17:10:09.105337626Z                   "property_value_id": 200004182,
+2025-08-06T17:10:09.105340206Z                   "sku_property_id": 977
+2025-08-06T17:10:09.105342466Z                 }
+2025-08-06T17:10:09.105344776Z               ]
+2025-08-06T17:10:09.105347406Z             }
+2025-08-06T17:10:09.105350096Z           },
+2025-08-06T17:10:09.105352566Z           {
+2025-08-06T17:10:09.105357566Z             "sku_attr": "14:173#11;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.105360396Z             "offer_sale_price": "16.50",
+2025-08-06T17:10:09.105363096Z             "sku_id": "12000047828279238",
+2025-08-06T17:10:09.105365936Z             "price_include_tax": false,
+2025-08-06T17:10:09.105368686Z             "currency_code": "BRL",
+2025-08-06T17:10:09.105371376Z             "sku_price": "33.01",
+2025-08-06T17:10:09.105374126Z             "offer_bulk_sale_price": "16.50",
+2025-08-06T17:10:09.105376976Z             "sku_available_stock": 7,
+2025-08-06T17:10:09.105379876Z             "id": "14:173#11;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.105382327Z             "ae_sku_property_dtos": {
+2025-08-06T17:10:09.105390317Z               "ae_sku_property_d_t_o": [
+2025-08-06T17:10:09.105392887Z                 {
+2025-08-06T17:10:09.105395137Z                   "sku_property_value": "Azul",
+2025-08-06T17:10:09.105397477Z                   "sku_image": "https://ae01.alicdn.com/kf/Sdb56c11c5ac141d596c170bac6ec66307.jpg",
+2025-08-06T17:10:09.105399957Z                   "sku_property_name": "cor",
+2025-08-06T17:10:09.105402707Z                   "property_value_definition_name": "11",
+2025-08-06T17:10:09.105405147Z                   "property_value_id": 173,
+2025-08-06T17:10:09.105407547Z                   "sku_property_id": 14
+2025-08-06T17:10:09.105409857Z                 },
+2025-08-06T17:10:09.105412177Z                 {
+2025-08-06T17:10:09.105414547Z                   "sku_property_value": "M",
+2025-08-06T17:10:09.105417167Z                   "sku_property_name": "Tamanho",
+2025-08-06T17:10:09.105419477Z                   "property_value_definition_name": "No dolls no shoes",
+2025-08-06T17:10:09.105421657Z                   "property_value_id": 200004182,
+2025-08-06T17:10:09.105423928Z                   "sku_property_id": 977
+2025-08-06T17:10:09.105426188Z                 }
+2025-08-06T17:10:09.105428548Z               ]
+2025-08-06T17:10:09.105430768Z             }
+2025-08-06T17:10:09.105433008Z           },
+2025-08-06T17:10:09.105435348Z           {
+2025-08-06T17:10:09.105437748Z             "sku_attr": "14:77940916#10;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.105439998Z             "offer_sale_price": "13.99",
+2025-08-06T17:10:09.105442568Z             "sku_id": "12000047828279237",
+2025-08-06T17:10:09.105444878Z             "price_include_tax": false,
+2025-08-06T17:10:09.105447238Z             "currency_code": "BRL",
+2025-08-06T17:10:09.105449558Z             "sku_price": "27.99",
+2025-08-06T17:10:09.105451768Z             "offer_bulk_sale_price": "13.99",
+2025-08-06T17:10:09.105453978Z             "sku_available_stock": 31,
+2025-08-06T17:10:09.105456388Z             "id": "14:77940916#10;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.105458658Z             "ae_sku_property_dtos": {
+2025-08-06T17:10:09.105461009Z               "ae_sku_property_d_t_o": [
+2025-08-06T17:10:09.105463269Z                 {
+2025-08-06T17:10:09.105465498Z                   "sku_property_value": "Floresta verde",
+2025-08-06T17:10:09.105467869Z                   "sku_image": "https://ae01.alicdn.com/kf/S78925d19e510429cbe6806038ae4ba84f.jpg",
+2025-08-06T17:10:09.105472389Z                   "sku_property_name": "cor",
+2025-08-06T17:10:09.105474799Z                   "property_value_definition_name": "10",
+2025-08-06T17:10:09.105477089Z                   "property_value_id": 77940916,
+2025-08-06T17:10:09.105479389Z                   "sku_property_id": 14
+2025-08-06T17:10:09.105481529Z                 },
+2025-08-06T17:10:09.105483889Z                 {
+2025-08-06T17:10:09.105497809Z                   "sku_property_value": "M",
+2025-08-06T17:10:09.105501129Z                   "sku_property_name": "Tamanho",
+2025-08-06T17:10:09.105504019Z                   "property_value_definition_name": "No dolls no shoes",
+2025-08-06T17:10:09.105506359Z                   "property_value_id": 200004182,
+2025-08-06T17:10:09.10550875Z                   "sku_property_id": 977
+2025-08-06T17:10:09.10551122Z                 }
+2025-08-06T17:10:09.10551348Z               ]
+2025-08-06T17:10:09.10551587Z             }
+2025-08-06T17:10:09.10551812Z           },
+2025-08-06T17:10:09.10552034Z           {
+2025-08-06T17:10:09.10552261Z             "sku_attr": "14:350852#9;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.10552945Z             "offer_sale_price": "17.20",
+2025-08-06T17:10:09.10553189Z             "sku_id": "12000047828279236",
+2025-08-06T17:10:09.1055343Z             "price_include_tax": false,
+2025-08-06T17:10:09.10553654Z             "currency_code": "BRL",
+2025-08-06T17:10:09.10553909Z             "sku_price": "34.40",
+2025-08-06T17:10:09.10554151Z             "offer_bulk_sale_price": "17.20",
+2025-08-06T17:10:09.10554383Z             "sku_available_stock": 18,
+2025-08-06T17:10:09.10554618Z             "id": "14:350852#9;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.105548551Z             "ae_sku_property_dtos": {
+2025-08-06T17:10:09.105550911Z               "ae_sku_property_d_t_o": [
+2025-08-06T17:10:09.105553201Z                 {
+2025-08-06T17:10:09.105555591Z                   "sku_property_value": "Laranja",
+2025-08-06T17:10:09.105557881Z                   "sku_image": "https://ae01.alicdn.com/kf/S5698bb8041404681805d9d8d82516d7at.jpg",
+2025-08-06T17:10:09.105560181Z                   "sku_property_name": "cor",
+2025-08-06T17:10:09.105562451Z                   "property_value_definition_name": "9",
+2025-08-06T17:10:09.105564761Z                   "property_value_id": 350852,
+2025-08-06T17:10:09.105567351Z                   "sku_property_id": 14
+2025-08-06T17:10:09.105569701Z                 },
+2025-08-06T17:10:09.105571921Z                 {
+2025-08-06T17:10:09.105574281Z                   "sku_property_value": "M",
+2025-08-06T17:10:09.105576691Z                   "sku_property_name": "Tamanho",
+2025-08-06T17:10:09.105579081Z                   "property_value_definition_name": "No dolls no shoes",
+2025-08-06T17:10:09.105581221Z                   "property_value_id": 200004182,
+2025-08-06T17:10:09.105583511Z                   "sku_property_id": 977
+2025-08-06T17:10:09.105585761Z                 }
+2025-08-06T17:10:09.105588101Z               ]
+2025-08-06T17:10:09.105590421Z             }
+2025-08-06T17:10:09.105592841Z           },
+2025-08-06T17:10:09.105595092Z           {
+2025-08-06T17:10:09.105597232Z             "sku_attr": "14:1254#8;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.105599642Z             "offer_sale_price": "20.99",
+2025-08-06T17:10:09.105601912Z             "sku_id": "12000047828279235",
+2025-08-06T17:10:09.105604112Z             "price_include_tax": false,
+2025-08-06T17:10:09.105606302Z             "currency_code": "BRL",
+2025-08-06T17:10:09.105608552Z             "sku_price": "41.93",
+2025-08-06T17:10:09.105610952Z             "offer_bulk_sale_price": "20.99",
+2025-08-06T17:10:09.105613412Z             "sku_available_stock": 30,
+2025-08-06T17:10:09.105615732Z             "id": "14:1254#8;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.105618132Z             "ae_sku_property_dtos": {
+2025-08-06T17:10:09.105620432Z               "ae_sku_property_d_t_o": [
+2025-08-06T17:10:09.105622712Z                 {
+2025-08-06T17:10:09.105625032Z                   "sku_property_value": "CÉU AZUL",
+2025-08-06T17:10:09.105627312Z                   "sku_image": "https://ae01.alicdn.com/kf/S7abc27b27d6043cfb107320a34e86396s.jpg",
+2025-08-06T17:10:09.105629493Z                   "sku_property_name": "cor",
+2025-08-06T17:10:09.105631813Z                   "property_value_definition_name": "8",
+2025-08-06T17:10:09.105634002Z                   "property_value_id": 1254,
+2025-08-06T17:10:09.105636233Z                   "sku_property_id": 14
+2025-08-06T17:10:09.105638553Z                 },
+2025-08-06T17:10:09.105640753Z                 {
+2025-08-06T17:10:09.105642983Z                   "sku_property_value": "M",
+2025-08-06T17:10:09.105645153Z                   "sku_property_name": "Tamanho",
+2025-08-06T17:10:09.105651523Z                   "property_value_definition_name": "No dolls no shoes",
+2025-08-06T17:10:09.105654093Z                   "property_value_id": 200004182,
+2025-08-06T17:10:09.105656463Z                   "sku_property_id": 977
+2025-08-06T17:10:09.105658663Z                 }
+2025-08-06T17:10:09.105660913Z               ]
+2025-08-06T17:10:09.105663143Z             }
+2025-08-06T17:10:09.105665413Z           },
+2025-08-06T17:10:09.105667723Z           {
+2025-08-06T17:10:09.105670083Z             "sku_attr": "14:366#7;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.105672483Z             "offer_sale_price": "17.25",
+2025-08-06T17:10:09.105674883Z             "sku_id": "12000047828279234",
+2025-08-06T17:10:09.105677123Z             "price_include_tax": false,
+2025-08-06T17:10:09.105679544Z             "currency_code": "BRL",
+2025-08-06T17:10:09.105681904Z             "sku_price": "34.49",
+2025-08-06T17:10:09.105684134Z             "offer_bulk_sale_price": "17.25",
+2025-08-06T17:10:09.105686404Z             "sku_available_stock": 10,
+2025-08-06T17:10:09.105688634Z             "id": "14:366#7;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.105690904Z             "ae_sku_property_dtos": {
+2025-08-06T17:10:09.105693274Z               "ae_sku_property_d_t_o": [
+2025-08-06T17:10:09.105695524Z                 {
+2025-08-06T17:10:09.105697874Z                   "sku_property_value": "YELLOW",
+2025-08-06T17:10:09.105700524Z                   "sku_image": "https://ae01.alicdn.com/kf/Sde0edb0b94ab417b8c0acba7eec587ddp.jpg",
+2025-08-06T17:10:09.105702754Z                   "sku_property_name": "cor",
+2025-08-06T17:10:09.105705014Z                   "property_value_definition_name": "7",
+2025-08-06T17:10:09.105707224Z                   "property_value_id": 366,
+2025-08-06T17:10:09.105709514Z                   "sku_property_id": 14
+2025-08-06T17:10:09.105712034Z                 },
+2025-08-06T17:10:09.105714255Z                 {
+2025-08-06T17:10:09.105716664Z                   "sku_property_value": "M",
+2025-08-06T17:10:09.105718864Z                   "sku_property_name": "Tamanho",
+2025-08-06T17:10:09.105721035Z                   "property_value_definition_name": "No dolls no shoes",
+2025-08-06T17:10:09.105723345Z                   "property_value_id": 200004182,
+2025-08-06T17:10:09.105725695Z                   "sku_property_id": 977
+2025-08-06T17:10:09.105727985Z                 }
+2025-08-06T17:10:09.105730495Z               ]
+2025-08-06T17:10:09.105732785Z             }
+2025-08-06T17:10:09.105735055Z           },
+2025-08-06T17:10:09.105737385Z           {
+2025-08-06T17:10:09.105739755Z             "sku_attr": "14:29#6;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.105742065Z             "offer_sale_price": "16.79",
+2025-08-06T17:10:09.105751585Z             "sku_id": "12000047828279233",
+2025-08-06T17:10:09.105754525Z             "price_include_tax": false,
+2025-08-06T17:10:09.105756896Z             "currency_code": "BRL",
+2025-08-06T17:10:09.105759116Z             "sku_price": "33.52",
+2025-08-06T17:10:09.105761445Z             "offer_bulk_sale_price": "16.79",
+2025-08-06T17:10:09.105763826Z             "sku_available_stock": 7,
+2025-08-06T17:10:09.105766146Z             "id": "14:29#6;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.105768366Z             "ae_sku_property_dtos": {
+2025-08-06T17:10:09.105770726Z               "ae_sku_property_d_t_o": [
+2025-08-06T17:10:09.105773096Z                 {
+2025-08-06T17:10:09.105775416Z                   "sku_property_value": "Branco",
+2025-08-06T17:10:09.105781796Z                   "sku_image": "https://ae01.alicdn.com/kf/Sb6e69feb73264850bf2bead0816ffb4bK.jpg",
+2025-08-06T17:10:09.105784226Z                   "sku_property_name": "cor",
+2025-08-06T17:10:09.105786596Z                   "property_value_definition_name": "6",
+2025-08-06T17:10:09.105789066Z                   "property_value_id": 29,
+2025-08-06T17:10:09.105791486Z                   "sku_property_id": 14
+2025-08-06T17:10:09.105793956Z                 },
+2025-08-06T17:10:09.105796236Z                 {
+2025-08-06T17:10:09.105798486Z                   "sku_property_value": "M",
+2025-08-06T17:10:09.105800786Z                   "sku_property_name": "Tamanho",
+2025-08-06T17:10:09.105802966Z                   "property_value_definition_name": "No dolls no shoes",
+2025-08-06T17:10:09.105805317Z                   "property_value_id": 200004182,
+2025-08-06T17:10:09.105807647Z                   "sku_property_id": 977
+2025-08-06T17:10:09.105809987Z                 }
+2025-08-06T17:10:09.105812367Z               ]
+2025-08-06T17:10:09.105814647Z             }
+2025-08-06T17:10:09.105816907Z           },
+2025-08-06T17:10:09.105819387Z           {
+2025-08-06T17:10:09.105821717Z             "sku_attr": "14:365458#5;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.105824187Z             "offer_sale_price": "15.89",
+2025-08-06T17:10:09.105826587Z             "sku_id": "12000047828279232",
+2025-08-06T17:10:09.105828937Z             "price_include_tax": false,
+2025-08-06T17:10:09.105831077Z             "currency_code": "BRL",
+2025-08-06T17:10:09.105833497Z             "sku_price": "31.78",
+2025-08-06T17:10:09.105835757Z             "offer_bulk_sale_price": "15.89",
+2025-08-06T17:10:09.105838107Z             "sku_available_stock": 10,
+2025-08-06T17:10:09.105840527Z             "id": "14:365458#5;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.105842867Z             "ae_sku_property_dtos": {
+2025-08-06T17:10:09.105845167Z               "ae_sku_property_d_t_o": [
+2025-08-06T17:10:09.105847498Z                 {
+2025-08-06T17:10:09.105849808Z                   "sku_property_value": "Marrom",
+2025-08-06T17:10:09.105852338Z                   "sku_image": "https://ae01.alicdn.com/kf/Sd6aa26b5da7f4451abf22f504640b220P.jpg",
+2025-08-06T17:10:09.105854558Z                   "sku_property_name": "cor",
+2025-08-06T17:10:09.105856838Z                   "property_value_definition_name": "5",
+2025-08-06T17:10:09.105859158Z                   "property_value_id": 365458,
+2025-08-06T17:10:09.105861558Z                   "sku_property_id": 14
+2025-08-06T17:10:09.105863958Z                 },
+2025-08-06T17:10:09.105866468Z                 {
+2025-08-06T17:10:09.105868758Z                   "sku_property_value": "M",
+2025-08-06T17:10:09.105871058Z                   "sku_property_name": "Tamanho",
+2025-08-06T17:10:09.105873438Z                   "property_value_definition_name": "No dolls no shoes",
+2025-08-06T17:10:09.105875908Z                   "property_value_id": 200004182,
+2025-08-06T17:10:09.105878368Z                   "sku_property_id": 977
+2025-08-06T17:10:09.105880728Z                 }
+2025-08-06T17:10:09.105883099Z               ]
+2025-08-06T17:10:09.105885488Z             }
+2025-08-06T17:10:09.105887888Z           },
+2025-08-06T17:10:09.105890239Z           {
+2025-08-06T17:10:09.105892619Z             "sku_attr": "14:100018786#20;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.105894989Z             "offer_sale_price": "15.41",
+2025-08-06T17:10:09.105897379Z             "sku_id": "12000047828279247",
+2025-08-06T17:10:09.105899579Z             "price_include_tax": false,
+2025-08-06T17:10:09.105905479Z             "currency_code": "BRL",
+2025-08-06T17:10:09.105907819Z             "sku_price": "30.82",
+2025-08-06T17:10:09.105910209Z             "offer_bulk_sale_price": "15.41",
+2025-08-06T17:10:09.105912599Z             "sku_available_stock": 18,
+2025-08-06T17:10:09.105915019Z             "id": "14:100018786#20;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.105917409Z             "ae_sku_property_dtos": {
+2025-08-06T17:10:09.105919679Z               "ae_sku_property_d_t_o": [
+2025-08-06T17:10:09.105921939Z                 {
+2025-08-06T17:10:09.1059242Z                   "sku_property_value": "Transparente",
+2025-08-06T17:10:09.1059265Z                   "sku_image": "https://ae01.alicdn.com/kf/S50a93422490444ecbfaac94dbb598f44l.jpg",
+2025-08-06T17:10:09.105928969Z                   "sku_property_name": "cor",
+2025-08-06T17:10:09.105931429Z                   "property_value_definition_name": "20",
+2025-08-06T17:10:09.10593394Z                   "property_value_id": 100018786,
+2025-08-06T17:10:09.10593638Z                   "sku_property_id": 14
+2025-08-06T17:10:09.10593856Z                 },
+2025-08-06T17:10:09.10594078Z                 {
+2025-08-06T17:10:09.10594309Z                   "sku_property_value": "M",
+2025-08-06T17:10:09.10594548Z                   "sku_property_name": "Tamanho",
+2025-08-06T17:10:09.105948Z                   "property_value_definition_name": "No dolls no shoes",
+2025-08-06T17:10:09.1059504Z                   "property_value_id": 200004182,
+2025-08-06T17:10:09.1059528Z                   "sku_property_id": 977
+2025-08-06T17:10:09.10595506Z                 }
+2025-08-06T17:10:09.10595941Z               ]
+2025-08-06T17:10:09.10596185Z             }
+2025-08-06T17:10:09.1059641Z           },
+2025-08-06T17:10:09.10596645Z           {
+2025-08-06T17:10:09.105968981Z             "sku_attr": "14:365016#19;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.105971561Z             "offer_sale_price": "16.21",
+2025-08-06T17:10:09.105973971Z             "sku_id": "12000047828279246",
+2025-08-06T17:10:09.105976231Z             "price_include_tax": false,
+2025-08-06T17:10:09.105978631Z             "currency_code": "BRL",
+2025-08-06T17:10:09.105980961Z             "sku_price": "32.42",
+2025-08-06T17:10:09.105983201Z             "offer_bulk_sale_price": "16.21",
+2025-08-06T17:10:09.105985641Z             "sku_available_stock": 18,
+2025-08-06T17:10:09.105987951Z             "id": "14:365016#19;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.105990201Z             "ae_sku_property_dtos": {
+2025-08-06T17:10:09.105992491Z               "ae_sku_property_d_t_o": [
+2025-08-06T17:10:09.105994861Z                 {
+2025-08-06T17:10:09.106004291Z                   "sku_property_value": "Violeta",
+2025-08-06T17:10:09.106007041Z                   "sku_image": "https://ae01.alicdn.com/kf/S0b285f344aaa44ab93920fca87eceee4o.jpg",
+2025-08-06T17:10:09.106009462Z                   "sku_property_name": "cor",
+2025-08-06T17:10:09.106011811Z                   "property_value_definition_name": "19",
+2025-08-06T17:10:09.106014302Z                   "property_value_id": 365016,
+2025-08-06T17:10:09.106016632Z                   "sku_property_id": 14
+2025-08-06T17:10:09.106019142Z                 },
+2025-08-06T17:10:09.106021512Z                 {
+2025-08-06T17:10:09.106023992Z                   "sku_property_value": "M",
+2025-08-06T17:10:09.106026302Z                   "sku_property_name": "Tamanho",
+2025-08-06T17:10:09.106028642Z                   "property_value_definition_name": "No dolls no shoes",
+2025-08-06T17:10:09.106031132Z                   "property_value_id": 200004182,
+2025-08-06T17:10:09.106037362Z                   "sku_property_id": 977
+2025-08-06T17:10:09.106039952Z                 }
+2025-08-06T17:10:09.106042292Z               ]
+2025-08-06T17:10:09.106044562Z             }
+2025-08-06T17:10:09.106046932Z           },
+2025-08-06T17:10:09.106049202Z           {
+2025-08-06T17:10:09.106051363Z             "sku_attr": "14:4873#18;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.106053712Z             "offer_sale_price": "19.21",
+2025-08-06T17:10:09.106055983Z             "sku_id": "12000047828279245",
+2025-08-06T17:10:09.106058623Z             "price_include_tax": false,
+2025-08-06T17:10:09.106060873Z             "currency_code": "BRL",
+2025-08-06T17:10:09.106063193Z             "sku_price": "38.42",
+2025-08-06T17:10:09.106065503Z             "offer_bulk_sale_price": "19.21",
+2025-08-06T17:10:09.106067783Z             "sku_available_stock": 14,
+2025-08-06T17:10:09.106070043Z             "id": "14:4873#18;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.106072393Z             "ae_sku_property_dtos": {
+2025-08-06T17:10:09.106074703Z               "ae_sku_property_d_t_o": [
+2025-08-06T17:10:09.106076973Z                 {
+2025-08-06T17:10:09.106079163Z                   "sku_property_value": "CHERRY",
+2025-08-06T17:10:09.106081413Z                   "sku_image": "https://ae01.alicdn.com/kf/S51e9feed9f014a9f930847fad3010af5i.jpg",
+2025-08-06T17:10:09.106083713Z                   "sku_property_name": "cor",
+2025-08-06T17:10:09.106085973Z                   "property_value_definition_name": "18",
+2025-08-06T17:10:09.106088263Z                   "property_value_id": 4873,
+2025-08-06T17:10:09.106090593Z                   "sku_property_id": 14
+2025-08-06T17:10:09.106092964Z                 },
+2025-08-06T17:10:09.106095284Z                 {
+2025-08-06T17:10:09.106097644Z                   "sku_property_value": "M",
+2025-08-06T17:10:09.106099993Z                   "sku_property_name": "Tamanho",
+2025-08-06T17:10:09.106102494Z                   "property_value_definition_name": "No dolls no shoes",
+2025-08-06T17:10:09.106104864Z                   "property_value_id": 200004182,
+2025-08-06T17:10:09.106107324Z                   "sku_property_id": 977
+2025-08-06T17:10:09.106109704Z                 }
+2025-08-06T17:10:09.106112024Z               ]
+2025-08-06T17:10:09.106114364Z             }
+2025-08-06T17:10:09.106116484Z           },
+2025-08-06T17:10:09.106118694Z           {
+2025-08-06T17:10:09.106121124Z             "sku_attr": "14:691#17;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.106123374Z             "offer_sale_price": "16.26",
+2025-08-06T17:10:09.106125684Z             "sku_id": "12000047828279244",
+2025-08-06T17:10:09.106128164Z             "price_include_tax": false,
+2025-08-06T17:10:09.106130504Z             "currency_code": "BRL",
+2025-08-06T17:10:09.106132834Z             "sku_price": "32.53",
+2025-08-06T17:10:09.106135074Z             "offer_bulk_sale_price": "16.26",
+2025-08-06T17:10:09.106137385Z             "sku_available_stock": 22,
+2025-08-06T17:10:09.106140005Z             "id": "14:691#17;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.106142205Z             "ae_sku_property_dtos": {
+2025-08-06T17:10:09.106144505Z               "ae_sku_property_d_t_o": [
+2025-08-06T17:10:09.106146885Z                 {
+2025-08-06T17:10:09.106149195Z                   "sku_property_value": "CINZA",
+2025-08-06T17:10:09.106151455Z                   "sku_image": "https://ae01.alicdn.com/kf/Sa2e89ea7a4014fceb143f2a2c53f92222.jpg",
+2025-08-06T17:10:09.106154715Z                   "sku_property_name": "cor",
+2025-08-06T17:10:09.106161755Z                   "property_value_definition_name": "17",
+2025-08-06T17:10:09.106164345Z                   "property_value_id": 691,
+2025-08-06T17:10:09.106166575Z                   "sku_property_id": 14
+2025-08-06T17:10:09.106168985Z                 },
+2025-08-06T17:10:09.106171315Z                 {
+2025-08-06T17:10:09.106173785Z                   "sku_property_value": "M",
+2025-08-06T17:10:09.106176125Z                   "sku_property_name": "Tamanho",
+2025-08-06T17:10:09.106178486Z                   "property_value_definition_name": "No dolls no shoes",
+2025-08-06T17:10:09.106180806Z                   "property_value_id": 200004182,
+2025-08-06T17:10:09.106183095Z                   "sku_property_id": 977
+2025-08-06T17:10:09.106185456Z                 }
+2025-08-06T17:10:09.106187756Z               ]
+2025-08-06T17:10:09.106190236Z             }
+2025-08-06T17:10:09.106192576Z           },
+2025-08-06T17:10:09.106194926Z           {
+2025-08-06T17:10:09.106220707Z             "sku_attr": "14:175#16;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.106223547Z             "offer_sale_price": "16.79",
+2025-08-06T17:10:09.106226036Z             "sku_id": "12000047828279243",
+2025-08-06T17:10:09.106228277Z             "price_include_tax": false,
+2025-08-06T17:10:09.106230677Z             "currency_code": "BRL",
+2025-08-06T17:10:09.106233087Z             "sku_price": "33.51",
+2025-08-06T17:10:09.106235417Z             "offer_bulk_sale_price": "16.79",
+2025-08-06T17:10:09.106237747Z             "sku_available_stock": 10,
+2025-08-06T17:10:09.106240017Z             "id": "14:175#16;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.106242377Z             "ae_sku_property_dtos": {
+2025-08-06T17:10:09.106244637Z               "ae_sku_property_d_t_o": [
+2025-08-06T17:10:09.106246857Z                 {
+2025-08-06T17:10:09.106249157Z                   "sku_property_value": "green",
+2025-08-06T17:10:09.106251667Z                   "sku_image": "https://ae01.alicdn.com/kf/S9e82338022f34ee086172df81b591f66y.jpg",
+2025-08-06T17:10:09.106254047Z                   "sku_property_name": "cor",
+2025-08-06T17:10:09.106256287Z                   "property_value_definition_name": "16",
+2025-08-06T17:10:09.106258597Z                   "property_value_id": 175,
+2025-08-06T17:10:09.106260997Z                   "sku_property_id": 14
+2025-08-06T17:10:09.106263217Z                 },
+2025-08-06T17:10:09.106265428Z                 {
+2025-08-06T17:10:09.106267617Z                   "sku_property_value": "M",
+2025-08-06T17:10:09.106279528Z                   "sku_property_name": "Tamanho",
+2025-08-06T17:10:09.106282348Z                   "property_value_definition_name": "No dolls no shoes",
+2025-08-06T17:10:09.106284608Z                   "property_value_id": 200004182,
+2025-08-06T17:10:09.106286868Z                   "sku_property_id": 977
+2025-08-06T17:10:09.106289188Z                 }
+2025-08-06T17:10:09.106291458Z               ]
+2025-08-06T17:10:09.106293698Z             }
+2025-08-06T17:10:09.106296068Z           },
+2025-08-06T17:10:09.106298318Z           {
+2025-08-06T17:10:09.106300748Z             "sku_attr": "14:100016350#15;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.106303009Z             "offer_sale_price": "19.62",
+2025-08-06T17:10:09.106305318Z             "sku_id": "12000047828279242",
+2025-08-06T17:10:09.106307609Z             "price_include_tax": false,
+2025-08-06T17:10:09.106309929Z             "currency_code": "BRL",
+2025-08-06T17:10:09.106312169Z             "sku_price": "39.24",
+2025-08-06T17:10:09.106314489Z             "offer_bulk_sale_price": "19.62",
+2025-08-06T17:10:09.106321459Z             "sku_available_stock": 0,
+2025-08-06T17:10:09.106323999Z             "id": "14:100016350#15;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.106326329Z             "ae_sku_property_dtos": {
+2025-08-06T17:10:09.106328659Z               "ae_sku_property_d_t_o": [
+2025-08-06T17:10:09.106330899Z                 {
+2025-08-06T17:10:09.106333199Z                   "sku_property_value": "Multicor",
+2025-08-06T17:10:09.106335499Z                   "sku_image": "https://ae01.alicdn.com/kf/S2b7b375767b043c6be7616672bd07ad70.jpg",
+2025-08-06T17:10:09.106337799Z                   "sku_property_name": "cor",
+2025-08-06T17:10:09.106340019Z                   "property_value_definition_name": "15",
+2025-08-06T17:10:09.106342309Z                   "property_value_id": 100016350,
+2025-08-06T17:10:09.106344699Z                   "sku_property_id": 14
+2025-08-06T17:10:09.10634707Z                 },
+2025-08-06T17:10:09.10634935Z                 {
+2025-08-06T17:10:09.10635167Z                   "sku_property_value": "M",
+2025-08-06T17:10:09.10635394Z                   "sku_property_name": "Tamanho",
+2025-08-06T17:10:09.10635635Z                   "property_value_definition_name": "No dolls no shoes",
+2025-08-06T17:10:09.10635871Z                   "property_value_id": 200004182,
+2025-08-06T17:10:09.10636102Z                   "sku_property_id": 977
+2025-08-06T17:10:09.10636327Z                 }
+2025-08-06T17:10:09.10636554Z               ]
+2025-08-06T17:10:09.1063679Z             }
+2025-08-06T17:10:09.10637011Z           },
+2025-08-06T17:10:09.10637238Z           {
+2025-08-06T17:10:09.10637477Z             "sku_attr": "14:350853#14;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.1063771Z             "offer_sale_price": "16.71",
+2025-08-06T17:10:09.10637951Z             "sku_id": "12000047828279241",
+2025-08-06T17:10:09.10638181Z             "price_include_tax": false,
+2025-08-06T17:10:09.10638411Z             "currency_code": "BRL",
+2025-08-06T17:10:09.10638642Z             "sku_price": "33.42",
+2025-08-06T17:10:09.10638866Z             "offer_bulk_sale_price": "16.71",
+2025-08-06T17:10:09.106390971Z             "sku_available_stock": 10,
+2025-08-06T17:10:09.106393331Z             "id": "14:350853#14;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.106395601Z             "ae_sku_property_dtos": {
+2025-08-06T17:10:09.106397781Z               "ae_sku_property_d_t_o": [
+2025-08-06T17:10:09.106400191Z                 {
+2025-08-06T17:10:09.106402491Z                   "sku_property_value": "Prateado",
+2025-08-06T17:10:09.106404891Z                   "sku_image": "https://ae01.alicdn.com/kf/Sf95533ba4c31412e81c7dd66a9ab22fbT.jpg",
+2025-08-06T17:10:09.106407231Z                   "sku_property_name": "cor",
+2025-08-06T17:10:09.106409631Z                   "property_value_definition_name": "14",
+2025-08-06T17:10:09.106411901Z                   "property_value_id": 350853,
+2025-08-06T17:10:09.106414161Z                   "sku_property_id": 14
+2025-08-06T17:10:09.106416461Z                 },
+2025-08-06T17:10:09.106418841Z                 {
+2025-08-06T17:10:09.106421151Z                   "sku_property_value": "M",
+2025-08-06T17:10:09.106425751Z                   "sku_property_name": "Tamanho",
+2025-08-06T17:10:09.106428261Z                   "property_value_definition_name": "No dolls no shoes",
+2025-08-06T17:10:09.106430672Z                   "property_value_id": 200004182,
+2025-08-06T17:10:09.106432892Z                   "sku_property_id": 977
+2025-08-06T17:10:09.106435221Z                 }
+2025-08-06T17:10:09.106441762Z               ]
+2025-08-06T17:10:09.106444392Z             }
+2025-08-06T17:10:09.106446772Z           },
+2025-08-06T17:10:09.106449162Z           {
+2025-08-06T17:10:09.106451612Z             "sku_attr": "14:1560#13;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.106454032Z             "offer_sale_price": "16.00",
+2025-08-06T17:10:09.106456482Z             "sku_id": "12000047828279240",
+2025-08-06T17:10:09.106458812Z             "price_include_tax": false,
+2025-08-06T17:10:09.106461222Z             "currency_code": "BRL",
+2025-08-06T17:10:09.106463522Z             "sku_price": "32.00",
+2025-08-06T17:10:09.106465932Z             "offer_bulk_sale_price": "16.00",
+2025-08-06T17:10:09.106468382Z             "sku_available_stock": 10,
+2025-08-06T17:10:09.106470813Z             "id": "14:1560#13;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.106473082Z             "ae_sku_property_dtos": {
+2025-08-06T17:10:09.106475373Z               "ae_sku_property_d_t_o": [
+2025-08-06T17:10:09.106477573Z                 {
+2025-08-06T17:10:09.106479853Z                   "sku_property_value": "Granada",
+2025-08-06T17:10:09.106482253Z                   "sku_image": "https://ae01.alicdn.com/kf/S9a8489ab3a624d27aba5b081941d7b97B.jpg",
+2025-08-06T17:10:09.106485343Z                   "sku_property_name": "cor",
+2025-08-06T17:10:09.106487733Z                   "property_value_definition_name": "13",
+2025-08-06T17:10:09.106489913Z                   "property_value_id": 1560,
+2025-08-06T17:10:09.106492313Z                   "sku_property_id": 14
+2025-08-06T17:10:09.106494863Z                 },
+2025-08-06T17:10:09.106497253Z                 {
+2025-08-06T17:10:09.106499513Z                   "sku_property_value": "M",
+2025-08-06T17:10:09.106501913Z                   "sku_property_name": "Tamanho",
+2025-08-06T17:10:09.106504253Z                   "property_value_definition_name": "No dolls no shoes",
+2025-08-06T17:10:09.106506603Z                   "property_value_id": 200004182,
+2025-08-06T17:10:09.106508843Z                   "sku_property_id": 977
+2025-08-06T17:10:09.106511003Z                 }
+2025-08-06T17:10:09.106513343Z               ]
+2025-08-06T17:10:09.106515803Z             }
+2025-08-06T17:10:09.106518074Z           },
+2025-08-06T17:10:09.106520544Z           {
+2025-08-06T17:10:09.106522934Z             "sku_attr": "14:200006154#28;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.106525204Z             "offer_sale_price": "15.61",
+2025-08-06T17:10:09.106534154Z             "sku_id": "12000047828279255",
+2025-08-06T17:10:09.106536784Z             "price_include_tax": false,
+2025-08-06T17:10:09.106539204Z             "currency_code": "BRL",
+2025-08-06T17:10:09.106541574Z             "sku_price": "31.21",
+2025-08-06T17:10:09.106543814Z             "offer_bulk_sale_price": "15.61",
+2025-08-06T17:10:09.106546124Z             "sku_available_stock": 7,
+2025-08-06T17:10:09.106548514Z             "id": "14:200006154#28;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.106551064Z             "ae_sku_property_dtos": {
+2025-08-06T17:10:09.106553564Z               "ae_sku_property_d_t_o": [
+2025-08-06T17:10:09.106555924Z                 {
+2025-08-06T17:10:09.106558435Z                   "sku_property_value": "Cáqui escuro",
+2025-08-06T17:10:09.106560964Z                   "sku_image": "https://ae01.alicdn.com/kf/S8aad501c58b64b1cb1ada6472ea0ec13i.jpg",
+2025-08-06T17:10:09.106563335Z                   "sku_property_name": "cor",
+2025-08-06T17:10:09.106565785Z                   "property_value_definition_name": "28",
+2025-08-06T17:10:09.106568015Z                   "property_value_id": 200006154,
+2025-08-06T17:10:09.106577035Z                   "sku_property_id": 14
+2025-08-06T17:10:09.106579485Z                 },
+2025-08-06T17:10:09.106582005Z                 {
+2025-08-06T17:10:09.106584395Z                   "sku_property_value": "M",
+2025-08-06T17:10:09.106586765Z                   "sku_property_name": "Tamanho",
+2025-08-06T17:10:09.106589095Z                   "property_value_definition_name": "No dolls no shoes",
+2025-08-06T17:10:09.106591455Z                   "property_value_id": 200004182,
+2025-08-06T17:10:09.106593855Z                   "sku_property_id": 977
+2025-08-06T17:10:09.106596236Z                 }
+2025-08-06T17:10:09.106598685Z               ]
+2025-08-06T17:10:09.106601156Z             }
+2025-08-06T17:10:09.106603605Z           },
+2025-08-06T17:10:09.106605866Z           {
+2025-08-06T17:10:09.106608006Z             "sku_attr": "14:200004889#27;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.106610186Z             "offer_sale_price": "14.69",
+2025-08-06T17:10:09.106612506Z             "sku_id": "12000047828279254",
+2025-08-06T17:10:09.106614876Z             "price_include_tax": false,
+2025-08-06T17:10:09.106617206Z             "currency_code": "BRL",
+2025-08-06T17:10:09.106619526Z             "sku_price": "29.33",
+2025-08-06T17:10:09.106621806Z             "offer_bulk_sale_price": "14.69",
+2025-08-06T17:10:09.106624126Z             "sku_available_stock": 29,
+2025-08-06T17:10:09.106626586Z             "id": "14:200004889#27;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.106628926Z             "ae_sku_property_dtos": {
+2025-08-06T17:10:09.106631136Z               "ae_sku_property_d_t_o": [
+2025-08-06T17:10:09.106633366Z                 {
+2025-08-06T17:10:09.106635656Z                   "sku_property_value": "Verde exército",
+2025-08-06T17:10:09.106638046Z                   "sku_image": "https://ae01.alicdn.com/kf/S2fb979d3b1894b998f48eac39c548c85j.jpg",
+2025-08-06T17:10:09.106640326Z                   "sku_property_name": "cor",
+2025-08-06T17:10:09.106642606Z                   "property_value_definition_name": "27",
+2025-08-06T17:10:09.106644906Z                   "property_value_id": 200004889,
+2025-08-06T17:10:09.106647307Z                   "sku_property_id": 14
+2025-08-06T17:10:09.106649877Z                 },
+2025-08-06T17:10:09.106652427Z                 {
+2025-08-06T17:10:09.106654937Z                   "sku_property_value": "M",
+2025-08-06T17:10:09.106657537Z                   "sku_property_name": "Tamanho",
+2025-08-06T17:10:09.106660007Z                   "property_value_definition_name": "No dolls no shoes",
+2025-08-06T17:10:09.106662577Z                   "property_value_id": 200004182,
+2025-08-06T17:10:09.106665057Z                   "sku_property_id": 977
+2025-08-06T17:10:09.106667417Z                 }
+2025-08-06T17:10:09.106669627Z               ]
+2025-08-06T17:10:09.106672147Z             }
+2025-08-06T17:10:09.106674617Z           },
+2025-08-06T17:10:09.106677307Z           {
+2025-08-06T17:10:09.106679778Z             "sku_attr": "14:200006153#26;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.106682327Z             "offer_sale_price": "14.09",
+2025-08-06T17:10:09.106685147Z             "sku_id": "12000047828279253",
+2025-08-06T17:10:09.106687848Z             "price_include_tax": false,
+2025-08-06T17:10:09.106690668Z             "currency_code": "BRL",
+2025-08-06T17:10:09.106693278Z             "sku_price": "28.18",
+2025-08-06T17:10:09.106695658Z             "offer_bulk_sale_price": "14.09",
+2025-08-06T17:10:09.106710708Z             "sku_available_stock": 4,
+2025-08-06T17:10:09.106719258Z             "id": "14:200006153#26;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.106722199Z             "ae_sku_property_dtos": {
+2025-08-06T17:10:09.106724859Z               "ae_sku_property_d_t_o": [
+2025-08-06T17:10:09.106727628Z                 {
+2025-08-06T17:10:09.106730269Z                   "sku_property_value": "Luz amarela",
+2025-08-06T17:10:09.106732869Z                   "sku_image": "https://ae01.alicdn.com/kf/Sef4e74a385e0424d8b1a0e5554c63211s.jpg",
+2025-08-06T17:10:09.106735499Z                   "sku_property_name": "cor",
+2025-08-06T17:10:09.106738159Z                   "property_value_definition_name": "26",
+2025-08-06T17:10:09.106740679Z                   "property_value_id": 200006153,
+2025-08-06T17:10:09.106743249Z                   "sku_property_id": 14
+2025-08-06T17:10:09.106746039Z                 },
+2025-08-06T17:10:09.106748599Z                 {
+2025-08-06T17:10:09.106751029Z                   "sku_property_value": "M",
+2025-08-06T17:10:09.106753359Z                   "sku_property_name": "Tamanho",
+2025-08-06T17:10:09.106756449Z                   "property_value_definition_name": "No dolls no shoes",
+2025-08-06T17:10:09.106759029Z                   "property_value_id": 200004182,
+2025-08-06T17:10:09.106761519Z                   "sku_property_id": 977
+2025-08-06T17:10:09.10676414Z                 }
+2025-08-06T17:10:09.106766989Z               ]
+2025-08-06T17:10:09.10676966Z             }
+2025-08-06T17:10:09.10677213Z           },
+2025-08-06T17:10:09.10677444Z           {
+2025-08-06T17:10:09.10677691Z             "sku_attr": "14:200004870#25;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.10677951Z             "offer_sale_price": "16.15",
+2025-08-06T17:10:09.10678198Z             "sku_id": "12000047828279252",
+2025-08-06T17:10:09.1067845Z             "price_include_tax": false,
+2025-08-06T17:10:09.10678696Z             "currency_code": "BRL",
+2025-08-06T17:10:09.10678941Z             "sku_price": "32.29",
+2025-08-06T17:10:09.10679192Z             "offer_bulk_sale_price": "16.15",
+2025-08-06T17:10:09.10679433Z             "sku_available_stock": 16,
+2025-08-06T17:10:09.10679693Z             "id": "14:200004870#25;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.10679941Z             "ae_sku_property_dtos": {
+2025-08-06T17:10:09.106811401Z               "ae_sku_property_d_t_o": [
+2025-08-06T17:10:09.106814441Z                 {
+2025-08-06T17:10:09.106817321Z                   "sku_property_value": "Azul profundo",
+2025-08-06T17:10:09.106820441Z                   "sku_image": "https://ae01.alicdn.com/kf/Sa506b80976bd470ca07d7215d70b44047.jpg",
+2025-08-06T17:10:09.106823031Z                   "sku_property_name": "cor",
+2025-08-06T17:10:09.106825511Z                   "property_value_definition_name": "25",
+2025-08-06T17:10:09.106827841Z                   "property_value_id": 200004870,
+2025-08-06T17:10:09.106830351Z                   "sku_property_id": 14
+2025-08-06T17:10:09.106833031Z                 },
+2025-08-06T17:10:09.106835941Z                 {
+2025-08-06T17:10:09.106838821Z                   "sku_property_value": "M",
+2025-08-06T17:10:09.106841531Z                   "sku_property_name": "Tamanho",
+2025-08-06T17:10:09.106844471Z                   "property_value_definition_name": "No dolls no shoes",
+2025-08-06T17:10:09.106847091Z                   "property_value_id": 200004182,
+2025-08-06T17:10:09.106849522Z                   "sku_property_id": 977
+2025-08-06T17:10:09.106852511Z                 }
+2025-08-06T17:10:09.106855231Z               ]
+2025-08-06T17:10:09.106858212Z             }
+2025-08-06T17:10:09.106860892Z           },
+2025-08-06T17:10:09.106868982Z           {
+2025-08-06T17:10:09.106872092Z             "sku_attr": "14:200006152#24;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.106875102Z             "offer_sale_price": "13.89",
+2025-08-06T17:10:09.106878062Z             "sku_id": "12000047828279251",
+2025-08-06T17:10:09.106880812Z             "price_include_tax": false,
+2025-08-06T17:10:09.106883572Z             "currency_code": "BRL",
+2025-08-06T17:10:09.106885982Z             "sku_price": "27.72",
+2025-08-06T17:10:09.106888622Z             "offer_bulk_sale_price": "13.89",
+2025-08-06T17:10:09.106891343Z             "sku_available_stock": 34,
+2025-08-06T17:10:09.106894003Z             "id": "14:200006152#24;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.106896672Z             "ae_sku_property_dtos": {
+2025-08-06T17:10:09.106899283Z               "ae_sku_property_d_t_o": [
+2025-08-06T17:10:09.106901983Z                 {
+2025-08-06T17:10:09.106904353Z                   "sku_property_value": "Verde claro",
+2025-08-06T17:10:09.106906813Z                   "sku_image": "https://ae01.alicdn.com/kf/S17a342c0a1da406c95a114049763e02eq.jpg",
+2025-08-06T17:10:09.106909203Z                   "sku_property_name": "cor",
+2025-08-06T17:10:09.106911493Z                   "property_value_definition_name": "24",
+2025-08-06T17:10:09.106913673Z                   "property_value_id": 200006152,
+2025-08-06T17:10:09.106915943Z                   "sku_property_id": 14
+2025-08-06T17:10:09.106918343Z                 },
+2025-08-06T17:10:09.106920613Z                 {
+2025-08-06T17:10:09.106922853Z                   "sku_property_value": "M",
+2025-08-06T17:10:09.106925123Z                   "sku_property_name": "Tamanho",
+2025-08-06T17:10:09.106927433Z                   "property_value_definition_name": "No dolls no shoes",
+2025-08-06T17:10:09.106930133Z                   "property_value_id": 200004182,
+2025-08-06T17:10:09.106932424Z                   "sku_property_id": 977
+2025-08-06T17:10:09.106934873Z                 }
+2025-08-06T17:10:09.106937344Z               ]
+2025-08-06T17:10:09.106939644Z             }
+2025-08-06T17:10:09.106942004Z           },
+2025-08-06T17:10:09.106944314Z           {
+2025-08-06T17:10:09.106946664Z             "sku_attr": "14:200002984#23;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.106948924Z             "offer_sale_price": "16.29",
+2025-08-06T17:10:09.106951134Z             "sku_id": "12000047828279250",
+2025-08-06T17:10:09.106953754Z             "price_include_tax": false,
+2025-08-06T17:10:09.106956334Z             "currency_code": "BRL",
+2025-08-06T17:10:09.106958984Z             "sku_price": "32.59",
+2025-08-06T17:10:09.106961564Z             "offer_bulk_sale_price": "16.29",
+2025-08-06T17:10:09.106964184Z             "sku_available_stock": 0,
+2025-08-06T17:10:09.106966754Z             "id": "14:200002984#23;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.106969434Z             "ae_sku_property_dtos": {
+2025-08-06T17:10:09.106972004Z               "ae_sku_property_d_t_o": [
+2025-08-06T17:10:09.106974554Z                 {
+2025-08-06T17:10:09.106977105Z                   "sku_property_value": "Borgonha",
+2025-08-06T17:10:09.106979754Z                   "sku_image": "https://ae01.alicdn.com/kf/S3529e8f52a4d4952b59a8c60ea64b0a2o.jpg",
+2025-08-06T17:10:09.106982185Z                   "sku_property_name": "cor",
+2025-08-06T17:10:09.106984975Z                   "property_value_definition_name": "23",
+2025-08-06T17:10:09.106989235Z                   "property_value_id": 200002984,
+2025-08-06T17:10:09.106991885Z                   "sku_property_id": 14
+2025-08-06T17:10:09.106999865Z                 },
+2025-08-06T17:10:09.107002425Z                 {
+2025-08-06T17:10:09.107004915Z                   "sku_property_value": "M",
+2025-08-06T17:10:09.107007495Z                   "sku_property_name": "Tamanho",
+2025-08-06T17:10:09.107010055Z                   "property_value_definition_name": "No dolls no shoes",
+2025-08-06T17:10:09.107012725Z                   "property_value_id": 200004182,
+2025-08-06T17:10:09.107015235Z                   "sku_property_id": 977
+2025-08-06T17:10:09.107017735Z                 }
+2025-08-06T17:10:09.107020275Z               ]
+2025-08-06T17:10:09.107022675Z             }
+2025-08-06T17:10:09.107025256Z           },
+2025-08-06T17:10:09.107027696Z           {
+2025-08-06T17:10:09.107030186Z             "sku_attr": "14:200006151#22;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.107032716Z             "offer_sale_price": "15.79",
+2025-08-06T17:10:09.107035066Z             "sku_id": "12000047828279249",
+2025-08-06T17:10:09.107037646Z             "price_include_tax": false,
+2025-08-06T17:10:09.107040116Z             "currency_code": "BRL",
+2025-08-06T17:10:09.107042686Z             "sku_price": "31.58",
+2025-08-06T17:10:09.107045386Z             "offer_bulk_sale_price": "15.79",
+2025-08-06T17:10:09.107049216Z             "sku_available_stock": 19,
+2025-08-06T17:10:09.107051696Z             "id": "14:200006151#22;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.107054316Z             "ae_sku_property_dtos": {
+2025-08-06T17:10:09.107056696Z               "ae_sku_property_d_t_o": [
+2025-08-06T17:10:09.107059287Z                 {
+2025-08-06T17:10:09.107061867Z                   "sku_property_value": "Cinza claro",
+2025-08-06T17:10:09.107064436Z                   "sku_image": "https://ae01.alicdn.com/kf/Sba4a8cfcbe6d47379e018ee8df00fb0dj.jpg",
+2025-08-06T17:10:09.107066977Z                   "sku_property_name": "cor",
+2025-08-06T17:10:09.107069517Z                   "property_value_definition_name": "22",
+2025-08-06T17:10:09.107071907Z                   "property_value_id": 200006151,
+2025-08-06T17:10:09.107084387Z                   "sku_property_id": 14
+2025-08-06T17:10:09.107087367Z                 },
+2025-08-06T17:10:09.107089917Z                 {
+2025-08-06T17:10:09.107092567Z                   "sku_property_value": "M",
+2025-08-06T17:10:09.107095167Z                   "sku_property_name": "Tamanho",
+2025-08-06T17:10:09.107097677Z                   "property_value_definition_name": "No dolls no shoes",
+2025-08-06T17:10:09.107100268Z                   "property_value_id": 200004182,
+2025-08-06T17:10:09.107102768Z                   "sku_property_id": 977
+2025-08-06T17:10:09.107105437Z                 }
+2025-08-06T17:10:09.107108128Z               ]
+2025-08-06T17:10:09.107110898Z             }
+2025-08-06T17:10:09.107113478Z           },
+2025-08-06T17:10:09.107116098Z           {
+2025-08-06T17:10:09.107118908Z             "sku_attr": "14:200000195#21;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.107121718Z             "offer_sale_price": "16.59",
+2025-08-06T17:10:09.107124428Z             "sku_id": "12000047828279248",
+2025-08-06T17:10:09.107127128Z             "price_include_tax": false,
+2025-08-06T17:10:09.107129598Z             "currency_code": "BRL",
+2025-08-06T17:10:09.107132128Z             "sku_price": "33.12",
+2025-08-06T17:10:09.107134708Z             "offer_bulk_sale_price": "16.59",
+2025-08-06T17:10:09.107137448Z             "sku_available_stock": 1,
+2025-08-06T17:10:09.10718407Z             "id": "14:200000195#21;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.107239641Z             "ae_sku_property_dtos": {
+2025-08-06T17:10:09.107245721Z               "ae_sku_property_d_t_o": [
+2025-08-06T17:10:09.107248611Z                 {
+2025-08-06T17:10:09.107251191Z                   "sku_property_value": "Chocolate",
+2025-08-06T17:10:09.107253801Z                   "sku_image": "https://ae01.alicdn.com/kf/Sfa10a7f72f7047e1b2bacc4a2bcf27e4e.jpg",
+2025-08-06T17:10:09.107256181Z                   "sku_property_name": "cor",
+2025-08-06T17:10:09.107258691Z                   "property_value_definition_name": "21",
+2025-08-06T17:10:09.107261361Z                   "property_value_id": 200000195,
+2025-08-06T17:10:09.107263721Z                   "sku_property_id": 14
+2025-08-06T17:10:09.107266151Z                 },
+2025-08-06T17:10:09.107268352Z                 {
+2025-08-06T17:10:09.107270832Z                   "sku_property_value": "M",
+2025-08-06T17:10:09.107273372Z                   "sku_property_name": "Tamanho",
+2025-08-06T17:10:09.107275802Z                   "property_value_definition_name": "No dolls no shoes",
+2025-08-06T17:10:09.107278302Z                   "property_value_id": 200004182,
+2025-08-06T17:10:09.107280842Z                   "sku_property_id": 977
+2025-08-06T17:10:09.107283392Z                 }
+2025-08-06T17:10:09.107286162Z               ]
+2025-08-06T17:10:09.107290092Z             }
+2025-08-06T17:10:09.107292932Z           },
+2025-08-06T17:10:09.107295322Z           {
+2025-08-06T17:10:09.107297972Z             "sku_attr": "14:200006156#30;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.107300472Z             "offer_sale_price": "14.16",
+2025-08-06T17:10:09.107303152Z             "sku_id": "12000047828279257",
+2025-08-06T17:10:09.107305812Z             "price_include_tax": false,
+2025-08-06T17:10:09.107308402Z             "currency_code": "BRL",
+2025-08-06T17:10:09.107311362Z             "sku_price": "28.32",
+2025-08-06T17:10:09.107313773Z             "offer_bulk_sale_price": "14.16",
+2025-08-06T17:10:09.107316253Z             "sku_available_stock": 17,
+2025-08-06T17:10:09.107318793Z             "id": "14:200006156#30;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.107321413Z             "ae_sku_property_dtos": {
+2025-08-06T17:10:09.107323813Z               "ae_sku_property_d_t_o": [
+2025-08-06T17:10:09.107326483Z                 {
+2025-08-06T17:10:09.107329143Z                   "sku_property_value": "vinho",
+2025-08-06T17:10:09.107331833Z                   "sku_image": "https://ae01.alicdn.com/kf/S6e595ea18ab346c1a4011b8e75ad2b91g.jpg",
+2025-08-06T17:10:09.107334383Z                   "sku_property_name": "cor",
+2025-08-06T17:10:09.107337273Z                   "property_value_definition_name": "30",
+2025-08-06T17:10:09.107339813Z                   "property_value_id": 200006156,
+2025-08-06T17:10:09.107342443Z                   "sku_property_id": 14
+2025-08-06T17:10:09.107344763Z                 },
+2025-08-06T17:10:09.107347463Z                 {
+2025-08-06T17:10:09.107350013Z                   "sku_property_value": "M",
+2025-08-06T17:10:09.107352683Z                   "sku_property_name": "Tamanho",
+2025-08-06T17:10:09.107355543Z                   "property_value_definition_name": "No dolls no shoes",
+2025-08-06T17:10:09.107358324Z                   "property_value_id": 200004182,
+2025-08-06T17:10:09.107361164Z                   "sku_property_id": 977
+2025-08-06T17:10:09.107364044Z                 }
+2025-08-06T17:10:09.107366484Z               ]
+2025-08-06T17:10:09.107369064Z             }
+2025-08-06T17:10:09.107371594Z           },
+2025-08-06T17:10:09.107374154Z           {
+2025-08-06T17:10:09.107376914Z             "sku_attr": "14:200006155#29;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.107385274Z             "offer_sale_price": "14.20",
+2025-08-06T17:10:09.107387604Z             "sku_id": "12000047828279256",
+2025-08-06T17:10:09.107389834Z             "price_include_tax": false,
+2025-08-06T17:10:09.107392335Z             "currency_code": "BRL",
+2025-08-06T17:10:09.107394964Z             "sku_price": "28.39",
+2025-08-06T17:10:09.107397475Z             "offer_bulk_sale_price": "14.20",
+2025-08-06T17:10:09.107400135Z             "sku_available_stock": 27,
+2025-08-06T17:10:09.107403085Z             "id": "14:200006155#29;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.107405945Z             "ae_sku_property_dtos": {
+2025-08-06T17:10:09.107408835Z               "ae_sku_property_d_t_o": [
+2025-08-06T17:10:09.107411485Z                 {
+2025-08-06T17:10:09.107414405Z                   "sku_property_value": "CINZA-ESCURO",
+2025-08-06T17:10:09.107417035Z                   "sku_image": "https://ae01.alicdn.com/kf/S00d8a4cb14c54655b12a8ee96c04734a8.jpg",
+2025-08-06T17:10:09.107419865Z                   "sku_property_name": "cor",
+2025-08-06T17:10:09.107422655Z                   "property_value_definition_name": "29",
+2025-08-06T17:10:09.107425385Z                   "property_value_id": 200006155,
+2025-08-06T17:10:09.107428375Z                   "sku_property_id": 14
+2025-08-06T17:10:09.107439456Z                 },
+2025-08-06T17:10:09.107442496Z                 {
+2025-08-06T17:10:09.107445646Z                   "sku_property_value": "M",
+2025-08-06T17:10:09.107448386Z                   "sku_property_name": "Tamanho",
+2025-08-06T17:10:09.107451146Z                   "property_value_definition_name": "No dolls no shoes",
+2025-08-06T17:10:09.107453936Z                   "property_value_id": 200004182,
+2025-08-06T17:10:09.107456746Z                   "sku_property_id": 977
+2025-08-06T17:10:09.107459276Z                 }
+2025-08-06T17:10:09.107462156Z               ]
+2025-08-06T17:10:09.107464866Z             }
+2025-08-06T17:10:09.107488757Z           },
+2025-08-06T17:10:09.107492577Z           {
+2025-08-06T17:10:09.107495427Z             "sku_attr": "14:350850#4;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.107505507Z             "offer_sale_price": "15.89",
+2025-08-06T17:10:09.107508677Z             "sku_id": "12000047828279231",
+2025-08-06T17:10:09.107511577Z             "price_include_tax": false,
+2025-08-06T17:10:09.107514627Z             "currency_code": "BRL",
+2025-08-06T17:10:09.107517557Z             "sku_price": "31.78",
+2025-08-06T17:10:09.107520267Z             "offer_bulk_sale_price": "15.89",
+2025-08-06T17:10:09.107522958Z             "sku_available_stock": 16,
+2025-08-06T17:10:09.107525778Z             "id": "14:350850#4;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.107528508Z             "ae_sku_property_dtos": {
+2025-08-06T17:10:09.107531618Z               "ae_sku_property_d_t_o": [
+2025-08-06T17:10:09.107534618Z                 {
+2025-08-06T17:10:09.107537368Z                   "sku_property_value": "Dourado",
+2025-08-06T17:10:09.107540288Z                   "sku_image": "https://ae01.alicdn.com/kf/Se7e03cbe1c2c4199904365244ed1dcaf3.jpg",
+2025-08-06T17:10:09.107543188Z                   "sku_property_name": "cor",
+2025-08-06T17:10:09.107545958Z                   "property_value_definition_name": "4",
+2025-08-06T17:10:09.107548388Z                   "property_value_id": 350850,
+2025-08-06T17:10:09.107550708Z                   "sku_property_id": 14
+2025-08-06T17:10:09.107553068Z                 },
+2025-08-06T17:10:09.107555728Z                 {
+2025-08-06T17:10:09.107564099Z                   "sku_property_value": "M",
+2025-08-06T17:10:09.107566888Z                   "sku_property_name": "Tamanho",
+2025-08-06T17:10:09.107569739Z                   "property_value_definition_name": "No dolls no shoes",
+2025-08-06T17:10:09.107572399Z                   "property_value_id": 200004182,
+2025-08-06T17:10:09.107575049Z                   "sku_property_id": 977
+2025-08-06T17:10:09.107577669Z                 }
+2025-08-06T17:10:09.107580189Z               ]
+2025-08-06T17:10:09.107582879Z             }
+2025-08-06T17:10:09.107585379Z           },
+2025-08-06T17:10:09.107588159Z           {
+2025-08-06T17:10:09.107590939Z             "sku_attr": "14:1052#3;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.107594239Z             "offer_sale_price": "16.16",
+2025-08-06T17:10:09.107596829Z             "sku_id": "12000047828279230",
+2025-08-06T17:10:09.107598489Z             "price_include_tax": false,
+2025-08-06T17:10:09.107600209Z             "currency_code": "BRL",
+2025-08-06T17:10:09.107601969Z             "sku_price": "32.32",
+2025-08-06T17:10:09.107603689Z             "offer_bulk_sale_price": "16.16",
+2025-08-06T17:10:09.107605349Z             "sku_available_stock": 3,
+2025-08-06T17:10:09.10760716Z             "id": "14:1052#3;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.10760884Z             "ae_sku_property_dtos": {
+2025-08-06T17:10:09.10761063Z               "ae_sku_property_d_t_o": [
+2025-08-06T17:10:09.10761231Z                 {
+2025-08-06T17:10:09.107614Z                   "sku_property_value": "Rosa",
+2025-08-06T17:10:09.10761572Z                   "sku_image": "https://ae01.alicdn.com/kf/S81adfd49385a460389080190ad033954A.jpg",
+2025-08-06T17:10:09.1076174Z                   "sku_property_name": "cor",
+2025-08-06T17:10:09.10761907Z                   "property_value_definition_name": "3",
+2025-08-06T17:10:09.10762075Z                   "property_value_id": 1052,
+2025-08-06T17:10:09.10762241Z                   "sku_property_id": 14
+2025-08-06T17:10:09.10762408Z                 },
+2025-08-06T17:10:09.10762574Z                 {
+2025-08-06T17:10:09.1076274Z                   "sku_property_value": "M",
+2025-08-06T17:10:09.10762915Z                   "sku_property_name": "Tamanho",
+2025-08-06T17:10:09.10763091Z                   "property_value_definition_name": "No dolls no shoes",
+2025-08-06T17:10:09.10763258Z                   "property_value_id": 200004182,
+2025-08-06T17:10:09.10763424Z                   "sku_property_id": 977
+2025-08-06T17:10:09.10763596Z                 }
+2025-08-06T17:10:09.10763762Z               ]
+2025-08-06T17:10:09.10763933Z             }
+2025-08-06T17:10:09.107641Z           },
+2025-08-06T17:10:09.10764271Z           {
+2025-08-06T17:10:09.107644441Z             "sku_attr": "14:193#2;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.107646141Z             "offer_sale_price": "16.18",
+2025-08-06T17:10:09.107647821Z             "sku_id": "12000047828279229",
+2025-08-06T17:10:09.10764949Z             "price_include_tax": false,
+2025-08-06T17:10:09.10765117Z             "currency_code": "BRL",
+2025-08-06T17:10:09.107652841Z             "sku_price": "32.37",
+2025-08-06T17:10:09.107654491Z             "offer_bulk_sale_price": "16.18",
+2025-08-06T17:10:09.107656201Z             "sku_available_stock": 20,
+2025-08-06T17:10:09.107657911Z             "id": "14:193#2;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.107659571Z             "ae_sku_property_dtos": {
+2025-08-06T17:10:09.107661231Z               "ae_sku_property_d_t_o": [
+2025-08-06T17:10:09.107662951Z                 {
+2025-08-06T17:10:09.107668031Z                   "sku_property_value": "Preto",
+2025-08-06T17:10:09.107669811Z                   "sku_image": "https://ae01.alicdn.com/kf/Se1651e28107646d790b002002ce266dbR.jpg",
+2025-08-06T17:10:09.107671461Z                   "sku_property_name": "cor",
+2025-08-06T17:10:09.107673141Z                   "property_value_definition_name": "2",
+2025-08-06T17:10:09.107674801Z                   "property_value_id": 193,
+2025-08-06T17:10:09.107676441Z                   "sku_property_id": 14
+2025-08-06T17:10:09.107678311Z                 },
+2025-08-06T17:10:09.107680001Z                 {
+2025-08-06T17:10:09.107681661Z                   "sku_property_value": "M",
+2025-08-06T17:10:09.107683331Z                   "sku_property_name": "Tamanho",
+2025-08-06T17:10:09.107685151Z                   "property_value_definition_name": "No dolls no shoes",
+2025-08-06T17:10:09.107686862Z                   "property_value_id": 200004182,
+2025-08-06T17:10:09.107688522Z                   "sku_property_id": 977
+2025-08-06T17:10:09.107690171Z                 }
+2025-08-06T17:10:09.107691862Z               ]
+2025-08-06T17:10:09.107693522Z             }
+2025-08-06T17:10:09.107695192Z           },
+2025-08-06T17:10:09.107696822Z           {
+2025-08-06T17:10:09.107698542Z             "sku_attr": "14:10#1;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.107700222Z             "offer_sale_price": "16.89",
+2025-08-06T17:10:09.107701872Z             "sku_id": "12000047828279228",
+2025-08-06T17:10:09.107703512Z             "price_include_tax": false,
+2025-08-06T17:10:09.107705192Z             "currency_code": "BRL",
+2025-08-06T17:10:09.107706852Z             "sku_price": "33.72",
+2025-08-06T17:10:09.107708472Z             "offer_bulk_sale_price": "16.89",
+2025-08-06T17:10:09.107710112Z             "sku_available_stock": 21,
+2025-08-06T17:10:09.107711812Z             "id": "14:10#1;977:200004182#No dolls no shoes",
+2025-08-06T17:10:09.107713482Z             "ae_sku_property_dtos": {
+2025-08-06T17:10:09.107715112Z               "ae_sku_property_d_t_o": [
+2025-08-06T17:10:09.107716772Z                 {
+2025-08-06T17:10:09.107726922Z                   "sku_property_value": "Vermelho",
+2025-08-06T17:10:09.107731672Z                   "sku_image": "https://ae01.alicdn.com/kf/S7c688f536e704322a7a912ebd7c8c8b90.jpg",
+2025-08-06T17:10:09.107733583Z                   "sku_property_name": "cor",
+2025-08-06T17:10:09.107735243Z                   "property_value_definition_name": "1",
+2025-08-06T17:10:09.107736973Z                   "property_value_id": 10,
+2025-08-06T17:10:09.107738653Z                   "sku_property_id": 14
+2025-08-06T17:10:09.107741773Z                 },
+2025-08-06T17:10:09.107743493Z                 {
+2025-08-06T17:10:09.107745173Z                   "sku_property_value": "M",
+2025-08-06T17:10:09.107747893Z                   "sku_property_name": "Tamanho",
+2025-08-06T17:10:09.107749613Z                   "property_value_definition_name": "No dolls no shoes",
+2025-08-06T17:10:09.107751293Z                   "property_value_id": 200004182,
+2025-08-06T17:10:09.107752983Z                   "sku_property_id": 977
+2025-08-06T17:10:09.107754633Z                 }
+2025-08-06T17:10:09.107756333Z               ]
+2025-08-06T17:10:09.107758013Z             }
+2025-08-06T17:10:09.107759683Z           }
+2025-08-06T17:10:09.107761343Z         ]
+2025-08-06T17:10:09.107762993Z       },
+2025-08-06T17:10:09.107764733Z       "ae_multimedia_info_dto": {
+2025-08-06T17:10:09.107767863Z         "image_urls": "https://ae01.alicdn.com/kf/S7efb273139434375bb6d98b309819553M.jpg;https://ae01.alicdn.com/kf/S15928af12da84c888bf55f4544bd55e1N.jpg;https://ae01.alicdn.com/kf/S3c599d9b48fc4ed29241e425320a68c6T.jpg;https://ae01.alicdn.com/kf/S7952fe09e5aa484083ba3d8146059d03D.jpg;https://ae01.alicdn.com/kf/S4bd37f89b6894efea52b3375551b0e16M.jpg;https://ae01.alicdn.com/kf/S075b26b108224114bbb08d1c9b67fa97p.jpg"
+2025-08-06T17:10:09.107772544Z       },
+2025-08-06T17:10:09.107774453Z       "package_info_dto": {
+2025-08-06T17:10:09.107776164Z         "package_width": 14,
+2025-08-06T17:10:09.107777844Z         "package_height": 2,
+2025-08-06T17:10:09.107779504Z         "package_length": 15,
+2025-08-06T17:10:09.107781194Z         "gross_weight": "0.016",
+2025-08-06T17:10:09.107782864Z         "package_type": false,
+2025-08-06T17:10:09.107784564Z         "product_unit": 100000015
+2025-08-06T17:10:09.107786274Z       },
+2025-08-06T17:10:09.107788044Z       "logistics_info_dto": {
+2025-08-06T17:10:09.107789704Z         "delivery_time": 7,
+2025-08-06T17:10:09.107791354Z         "ship_to_country": "BR"
+2025-08-06T17:10:09.107792994Z       },
+2025-08-06T17:10:09.107794684Z       "product_id_converter_result": {
+2025-08-06T17:10:09.107796394Z         "main_product_id": 1005009076092229,
+2025-08-06T17:10:09.107798174Z         "sub_product_id": "{\"US\":3256808889777477}"
+2025-08-06T17:10:09.107799844Z       },
+2025-08-06T17:10:09.107801544Z       "ae_item_base_info_dto": {
+2025-08-06T17:10:09.107804304Z         "mobile_detail": "{\"version\":\"2.0.0\",\"moduleList\":[{\"type\":\"image\",\"data\":{\"url\":\"https://ae01.alicdn.com/kf/S7efb273139434375bb6d98b309819553M.jpg\",\"style\":{\"width\":800,\"height\":800}}},{\"type\":\"image\",\"data\":{\"url\":\"https://ae01.alicdn.com/kf/S15928af12da84c888bf55f4544bd55e1N.jpg\",\"style\":{\"width\":800,\"height\":800}}},{\"type\":\"image\",\"data\":{\"url\":\"https://ae01.alicdn.com/kf/S3c599d9b48fc4ed29241e425320a68c6T.jpg\",\"style\":{\"width\":800,\"height\":800}}},{\"type\":\"image\",\"data\":{\"url\":\"https://ae01.alicdn.com/kf/S7952fe09e5aa484083ba3d8146059d03D.jpg\",\"style\":{\"width\":800,\"height\":800}}},{\"type\":\"image\",\"data\":{\"url\":\"https://ae01.alicdn.com/kf/S4bd37f89b6894efea52b3375551b0e16M.jpg\",\"style\":{\"width\":800,\"height\":800}}},{\"type\":\"image\",\"data\":{\"url\":\"https://ae01.alicdn.com/kf/S075b26b108224114bbb08d1c9b67fa97p.jpg\",\"style\":{\"width\":800,\"height\":800}}}]}",
+2025-08-06T17:10:09.107806514Z         "subject": "Labubu acessórios roupas designer adequado para v1 v2 v3 labubu pingentes bonito personalidade moda presente de aniversário",
+2025-08-06T17:10:09.107808224Z         "evaluation_count": "689",
+2025-08-06T17:10:09.107809884Z         "sales_count": "5000+",
+2025-08-06T17:10:09.107811614Z         "product_status_type": "onSelling",
+2025-08-06T17:10:09.107813345Z         "avg_evaluation_rating": "4.8",
+2025-08-06T17:10:09.107815034Z         "currency_code": "CNY",
+2025-08-06T17:10:09.107816694Z         "category_id": 202194204,
+2025-08-06T17:10:09.107818414Z         "product_id": 1005009076092229,
+2025-08-06T17:10:09.107823575Z         "detail": "<div class=\"detailmodule_html\"><div class=\"detail-desc-decorate-richtext\"><div id=\"offer-template-0\">\n <img src=\"https://ae01.alicdn.com/kf/S7efb273139434375bb6d98b309819553M.jpg\" slate-data-type=\"image\" />\n <img src=\"https://ae01.alicdn.com/kf/S15928af12da84c888bf55f4544bd55e1N.jpg\" slate-data-type=\"image\" />\n <img src=\"https://ae01.alicdn.com/kf/S3c599d9b48fc4ed29241e425320a68c6T.jpg\" slate-data-type=\"image\" />\n <img src=\"https://ae01.alicdn.com/kf/S7952fe09e5aa484083ba3d8146059d03D.jpg\" slate-data-type=\"image\" />\n <img src=\"https://ae01.alicdn.com/kf/S4bd37f89b6894efea52b3375551b0e16M.jpg\" slate-data-type=\"image\" />\n <img src=\"https://ae01.alicdn.com/kf/S075b26b108224114bbb08d1c9b67fa97p.jpg\" slate-data-type=\"image\" />\n</div><div style=\"width:790px\"></div><br /></div></div>\r\n"
+2025-08-06T17:10:09.107827955Z       },
+2025-08-06T17:10:09.107829785Z       "has_whole_sale": false,
+2025-08-06T17:10:09.107831645Z       "ae_item_properties": {
+2025-08-06T17:10:09.107833385Z         "ae_item_property": [
+2025-08-06T17:10:09.107835065Z           {
+2025-08-06T17:10:09.107836745Z             "attr_name_id": 249398369,
+2025-08-06T17:10:09.107845545Z             "attr_value_id": 385160229,
+2025-08-06T17:10:09.107847495Z             "attr_name": "Recomendar A Idade",
+2025-08-06T17:10:09.107849215Z             "attr_value": "14 + y"
+2025-08-06T17:10:09.107850915Z           },
+2025-08-06T17:10:09.107852645Z           {
+2025-08-06T17:10:09.107854346Z             "attr_name_id": 400000603,
+2025-08-06T17:10:09.107855986Z             "attr_value_id": 23399591357,
+2025-08-06T17:10:09.107857655Z             "attr_name": "Químico Hign-em causa",
+2025-08-06T17:10:09.107859335Z             "attr_value": "Nenhum"
+2025-08-06T17:10:09.107860986Z           },
+2025-08-06T17:10:09.107862646Z           {
+2025-08-06T17:10:09.107864366Z             "attr_name_id": 10,
+2025-08-06T17:10:09.107866096Z             "attr_value_id": 443,
+2025-08-06T17:10:09.107867756Z             "attr_name": "Material",
+2025-08-06T17:10:09.107869406Z             "attr_value": "Cloth"
+2025-08-06T17:10:09.107871066Z           },
+2025-08-06T17:10:09.107872716Z           {
+2025-08-06T17:10:09.107874356Z             "attr_name_id": 219,
+2025-08-06T17:10:09.107877246Z             "attr_value_id": 100015190,
+2025-08-06T17:10:09.107879026Z             "attr_name": "Origem",
+2025-08-06T17:10:09.107880766Z             "attr_value": "Guangdong"
+2025-08-06T17:10:09.107882466Z           },
+2025-08-06T17:10:09.107884136Z           {
+2025-08-06T17:10:09.107885806Z             "attr_name_id": 200000137,
+2025-08-06T17:10:09.107887506Z             "attr_value_id": 200003240,
+2025-08-06T17:10:09.107889146Z             "attr_name": "Tipo de Item",
+2025-08-06T17:10:09.107890796Z             "attr_value": "Bonecas"
+2025-08-06T17:10:09.107892466Z           },
+2025-08-06T17:10:09.107894166Z           {
+2025-08-06T17:10:09.107895847Z             "attr_name_id": -1,
+2025-08-06T17:10:09.107897716Z             "attr_name": "Choice",
+2025-08-06T17:10:09.107899387Z             "attr_value": "yes"
+2025-08-06T17:10:09.107901116Z           }
+2025-08-06T17:10:09.107902787Z         ]
+2025-08-06T17:10:09.107904437Z       },
+2025-08-06T17:10:09.107906127Z       "ae_store_info": {
+2025-08-06T17:10:09.107907867Z         "store_id": 1103596614,
+2025-08-06T17:10:09.107909557Z         "shipping_speed_rating": "4.7",
+2025-08-06T17:10:09.107911227Z         "communication_rating": "4.7",
+2025-08-06T17:10:09.107912907Z         "store_name": "There Are Shops For Everything Store",
+2025-08-06T17:10:09.107914587Z         "store_country_code": "CN",
+2025-08-06T17:10:09.107916287Z         "item_as_described_rating": "4.6"
+2025-08-06T17:10:09.107917997Z       }
+2025-08-06T17:10:09.107919707Z     },
+2025-08-06T17:10:09.107921417Z     "rsp_code": 200,
+2025-08-06T17:10:09.107923147Z     "rsp_msg": "Call succeeds",
+2025-08-06T17:10:09.107924817Z     "request_id": "2101171d17545002087694261"
+2025-08-06T17:10:09.107926497Z   }
+2025-08-06T17:10:09.107928207Z }
+2025-08-06T17:10:09.107929907Z 🔍 ANÁLISE ESTRUTURA - RESULT:
+2025-08-06T17:10:09.107931677Z   - Keys disponíveis: []
+2025-08-06T17:10:09.107933377Z 📊 DADOS PROCESSADOS PARA FRONTEND:
+2025-08-06T17:10:09.107935077Z   - Imagens encontradas: 0
+2025-08-06T17:10:09.107939348Z   - Variações encontradas: 0
+2025-08-06T17:10:09.107941077Z   - Título: ...
+2025-08-06T17:10:09.107943317Z 127.0.0.1 - - [06/Aug/2025:17:10:09 +0000] "GET /api/aliexpress/product/1005009076092229 HTTP/1.1" 200 218 "-" "Dart/3.8 (dart:io)"
+2025-08-06T17:10:12.408140839Z Ô£à SKU ID encontrado: 12000047828279239
+2025-08-06T17:10:12.40816064Z Ô£à Resposta frete produto 1005009076092229 (sku: 12000047828279239): {"aliexpress_logistics_buyer_freight_calculate_response":{"result":{"error_desc":"queryShippingOptionForItem return not reachable","success":false},"request_id":"2101340917545002118278946"}}...
+2025-08-06T17:10:12.40816444Z ­ƒôè ESTRUTURA COMPLETA - FRETE PRODUTO 1005009076092229:
+2025-08-06T17:10:12.40816758Z {
+2025-08-06T17:10:12.40817042Z   "aliexpress_logistics_buyer_freight_calculate_response": {
+2025-08-06T17:10:12.40817353Z     "result": {
+2025-08-06T17:10:12.40817702Z       "error_desc": "queryShippingOptionForItem return not reachable",
+2025-08-06T17:10:12.40818038Z       "success": false
+2025-08-06T17:10:12.40818312Z     },
+2025-08-06T17:10:12.40818589Z     "request_id": "2101340917545002118278946"
+2025-08-06T17:10:12.40818868Z   }
+2025-08-06T17:10:12.40819146Z }
+2025-08-06T17:10:12.408194191Z ­ƒöì AN├üLISE ESTRUTURA - FRETE RESULT:
+2025-08-06T17:10:12.408219101Z   - Keys dispon├¡veis: ['error_desc', 'success']
+2025-08-06T17:10:12.408226491Z   - Success: False
+2025-08-06T17:10:12.408231172Z   - Error: queryShippingOptionForItem return not reachable
+2025-08-06T17:10:12.408235901Z ­ƒôï DADOS DE FRETE PROCESSADOS:
+2025-08-06T17:10:12.408239642Z   - Sucesso: False
+2025-08-06T17:10:12.408242912Z   - Op├º├Áes de frete: 0
+2025-08-06T17:10:12.408245722Z   - Erro: queryShippingOptionForItem return not reachable
+2025-08-06T17:10:12.408249152Z 127.0.0.1 - - [06/Aug/2025:17:10:12 +0000] "GET /api/aliexpress/freight/1005009076092229 HTTP/1.1" 200 367 "-" "Dart/3.8 (dart:io)"

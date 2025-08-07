@@ -812,7 +812,7 @@ def products():
             "countryCode": "BR",  # ­ƒæê obrigat├│rio para Brasil
             "currency": "BRL",    # ­ƒæê obrigat├│rio para Brasil
             "local": "pt_BR",     # ­ƒæê obrigat├│rio para Brasil
-            "pageSize": "20",     # Tamanho da p├ígina
+            "pageSize": "400",    # Tamanho da p├ígina (aumentado para 100)
             "pageIndex": "1",     # ├ìndice da p├ígina
             "sortBy": "orders,desc"  # Ordenar por popularidade
         }
@@ -941,10 +941,10 @@ def tokens_status():
 
 @app.route('/api/aliexpress/product/<product_id>')
 def product_details(product_id):
-    """Buscar detalhes completos de um produto"""
+    """Buscar detalhes completos de um produto usando aliexpress.ds.product.get"""
     tokens = load_tokens()
     if not tokens or not tokens.get('access_token'):
-        return jsonify({'success': False, 'message': 'Token n├úo encontrado. Fa├ºa autoriza├º├úo primeiro.'}), 401
+        return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
     try:
         # Parâmetros para a API conforme documentação
         params = {
@@ -1034,6 +1034,101 @@ def product_details(product_id):
 
     except Exception as e:
         print(f'❌ Erro ao buscar detalhes do produto {product_id}: {e}')
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/aliexpress/product/wholesale/<product_id>')
+def product_wholesale_details(product_id):
+    """Buscar detalhes completos de um produto usando aliexpress.ds.product.wholesale.get"""
+    tokens = load_tokens()
+    if not tokens or not tokens.get('access_token'):
+        return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
+    try:
+        # Parâmetros para a API conforme documentação
+        params = {
+            "method": "aliexpress.ds.product.wholesale.get",
+            "app_key": APP_KEY,
+            "timestamp": int(time.time() * 1000),
+            "sign_method": "md5",
+            "format": "json",
+            "v": "2.0",
+            "access_token": tokens['access_token'],
+            "product_id": product_id,
+            "ship_to_country": "BR",   # obrigatório para Brasil
+            "target_currency": "BRL",  # obrigatório para Brasil
+            "target_language": "pt",   # obrigatório para Brasil
+            "remove_personal_benefit": "false"
+        }
+        
+        # Gerar assinatura
+        params["sign"] = generate_api_signature(params, APP_SECRET)
+        
+        # Fazer requisição HTTP direta para /sync
+        response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
+        print(f'📡 Resposta wholesale produto {product_id}: {response.text[:500]}...')
+
+        if response.status_code == 200:
+            data = response.json()
+            print(f'✅ ESTRUTURA COMPLETA - WHOLESALE PRODUTO {product_id}:')
+            print(json.dumps(data, indent=2, ensure_ascii=False))
+            
+            # Verificar se há dados na resposta
+            if 'aliexpress_ds_product_wholesale_get_response' in data:
+                product_response = data['aliexpress_ds_product_wholesale_get_response']
+                result = product_response.get('result', {})
+                print(f'🔍 ANÁLISE ESTRUTURA - RESULT:')
+                print(f'  - Keys disponíveis: {list(result.keys())}')
+            else:
+                print(f'❌ ESTRUTURA INESPERADA: {list(data.keys())}')
+                return jsonify({'success': False, 'error': data}), 400
+            
+            # Extrair informações úteis para o frontend
+            processed_data = {
+                'basic_info': {
+                    'product_id': product_id,
+                    'title': result.get('ae_item_base_info_dto', {}).get('subject', ''),
+                    'description': result.get('ae_item_base_info_dto', {}).get('detail', ''),
+                    'main_image': result.get('ae_multimedia_info_dto', {}).get('image_urls', '').split(';')[0] if result.get('ae_multimedia_info_dto', {}).get('image_urls') else '',
+                },
+                'pricing': {
+                    'min_price': '',
+                    'max_price': '',
+                    'currency': 'BRL',
+                },
+                'images': [],
+                'variations': [],
+                'raw_data': result  # Dados completos para análise
+            }
+            
+            # Extrair galeria de imagens
+            if 'ae_multimedia_info_dto' in result:
+                multimedia_info = result['ae_multimedia_info_dto']
+                if 'image_urls' in multimedia_info:
+                    image_urls = multimedia_info['image_urls']
+                    if image_urls:
+                        processed_data['images'] = image_urls.split(';')
+            
+            # Extrair variações/SKUs (estrutura diferente no wholesale)
+            if 'ae_item_sku_info_dtos' in result:
+                skus = result['ae_item_sku_info_dtos']
+                processed_data['variations'] = skus if isinstance(skus, list) else [skus]
+            
+            print(f'📊 DADOS PROCESSADOS PARA FRONTEND (WHOLESALE):')
+            print(f'  - Imagens encontradas: {len(processed_data["images"])}')
+            print(f'  - Variações encontradas: {len(processed_data["variations"])}')
+            print(f'  - Título: {processed_data["basic_info"]["title"][:50]}...')
+            
+            return jsonify({'success': True, 'data': processed_data})
+        
+        # Caso a API retorne erro ou não seja 200
+        try:
+            data = response.json()
+            print(f'❌ ESTRUTURA INESPERADA: {list(data.keys())}')
+            return jsonify({'success': False, 'error': data}), 400
+        except:
+            return jsonify({'success': False, 'error': response.text}), response.status_code
+
+    except Exception as e:
+        print(f'❌ Erro ao buscar detalhes wholesale do produto {product_id}: {e}')
         return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/api/aliexpress/freight/<product_id>')
@@ -1240,6 +1335,192 @@ def freight_calculation(product_id):
 
     except Exception as e:
         print(f'ÔØî Erro ao calcular frete do produto {product_id}: {e}')
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/aliexpress/sku-attributes/<category_id>')
+def sku_attributes(category_id):
+    """Consultar atributos SKU de uma categoria específica"""
+    tokens = load_tokens()
+    if not tokens or not tokens.get('access_token'):
+        return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
+    
+    try:
+        # Parâmetros para a consulta de atributos SKU
+        params = {
+            "method": "aliexpress.solution.sku.attribute.query",
+            "app_key": APP_KEY,
+            "timestamp": int(time.time() * 1000),
+            "sign_method": "md5",
+            "format": "json",
+            "v": "2.0",
+            "access_token": tokens['access_token'],
+            "query_sku_attribute_info_request": json.dumps({
+                "aliexpress_category_id": category_id
+            })
+        }
+        
+        params["sign"] = generate_api_signature(params, APP_SECRET)
+        
+        print(f'🔍 Consultando atributos SKU para categoria: {category_id}')
+        response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
+        
+        print(f'📡 Resposta atributos SKU categoria {category_id}: {response.text[:500]}...')
+        
+        if response.status_code == 200:
+            data = response.json()
+            print(f'✅ ESTRUTURA COMPLETA - ATRIBUTOS SKU CATEGORIA {category_id}:')
+            print(json.dumps(data, indent=2, ensure_ascii=False))
+            
+            if 'aliexpress_solution_sku_attribute_query_response' in data:
+                result = data['aliexpress_solution_sku_attribute_query_response'].get('result', {})
+                
+                # Processar dados para o frontend
+                processed_data = {
+                    'category_id': category_id,
+                    'sku_attributes': [],
+                    'common_attributes': [],
+                    'raw_data': result
+                }
+                
+                # Processar atributos SKU
+                if 'supporting_sku_attribute_list' in result:
+                    sku_attributes = result['supporting_sku_attribute_list']
+                    if isinstance(sku_attributes, list):
+                        processed_data['sku_attributes'] = sku_attributes
+                    else:
+                        processed_data['sku_attributes'] = [sku_attributes]
+                
+                # Processar atributos comuns
+                if 'supporting_common_attribute_list' in result:
+                    common_attributes = result['supporting_common_attribute_list']
+                    if isinstance(common_attributes, list):
+                        processed_data['common_attributes'] = common_attributes
+                    else:
+                        processed_data['common_attributes'] = [common_attributes]
+                
+                print(f'📊 DADOS PROCESSADOS PARA FRONTEND:')
+                print(f'  - Atributos SKU encontrados: {len(processed_data["sku_attributes"])}')
+                print(f'  - Atributos comuns encontrados: {len(processed_data["common_attributes"])}')
+                
+                return jsonify({'success': True, 'data': processed_data})
+            else:
+                print(f'❌ ESTRUTURA INESPERADA: {list(data.keys())}')
+                return jsonify({'success': False, 'error': data}), 400
+        else:
+            try:
+                data = response.json()
+                print(f'❌ Erro na API: {data}')
+                return jsonify({'success': False, 'error': data}), response.status_code
+            except:
+                return jsonify({'success': False, 'error': response.text}), response.status_code
+                
+    except Exception as e:
+        print(f'❌ Erro ao consultar atributos SKU da categoria {category_id}: {e}')
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/aliexpress/sku-attributes-batch', methods=['POST'])
+def sku_attributes_batch():
+    """Consultar atributos SKU de múltiplas categorias"""
+    tokens = load_tokens()
+    if not tokens or not tokens.get('access_token'):
+        return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
+    
+    try:
+        data = request.get_json()
+        category_ids = data.get('category_ids', [])
+        
+        if not category_ids:
+            return jsonify({'success': False, 'message': 'Lista de categorias não fornecida'}), 400
+        
+        results = {}
+        
+        for category_id in category_ids:
+            try:
+                # Parâmetros para a consulta de atributos SKU
+                params = {
+                    "method": "aliexpress.solution.sku.attribute.query",
+                    "app_key": APP_KEY,
+                    "timestamp": int(time.time() * 1000),
+                    "sign_method": "md5",
+                    "format": "json",
+                    "v": "2.0",
+                    "access_token": tokens['access_token'],
+                    "query_sku_attribute_info_request": json.dumps({
+                        "aliexpress_category_id": str(category_id)
+                    })
+                }
+                
+                params["sign"] = generate_api_signature(params, APP_SECRET)
+                
+                print(f'🔍 Consultando atributos SKU para categoria: {category_id}')
+                response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    
+                    if 'aliexpress_solution_sku_attribute_query_response' in data:
+                        result = data['aliexpress_solution_sku_attribute_query_response'].get('result', {})
+                        
+                        # Processar dados
+                        processed_data = {
+                            'category_id': str(category_id),
+                            'sku_attributes': [],
+                            'common_attributes': [],
+                            'raw_data': result
+                        }
+                        
+                        # Processar atributos SKU
+                        if 'supporting_sku_attribute_list' in result:
+                            sku_attributes = result['supporting_sku_attribute_list']
+                            if isinstance(sku_attributes, list):
+                                processed_data['sku_attributes'] = sku_attributes
+                            else:
+                                processed_data['sku_attributes'] = [sku_attributes]
+                        
+                        # Processar atributos comuns
+                        if 'supporting_common_attribute_list' in result:
+                            common_attributes = result['supporting_common_attribute_list']
+                            if isinstance(common_attributes, list):
+                                processed_data['common_attributes'] = common_attributes
+                            else:
+                                processed_data['common_attributes'] = [common_attributes]
+                        
+                        results[str(category_id)] = {
+                            'success': True,
+                            'data': processed_data
+                        }
+                        
+                        print(f'✅ Categoria {category_id}: {len(processed_data["sku_attributes"])} atributos SKU, {len(processed_data["common_attributes"])} atributos comuns')
+                    else:
+                        results[str(category_id)] = {
+                            'success': False,
+                            'error': 'Estrutura de resposta inesperada'
+                        }
+                else:
+                    results[str(category_id)] = {
+                        'success': False,
+                        'error': f'HTTP {response.status_code}'
+                    }
+                
+                # Rate limiting
+                time.sleep(0.5)
+                
+            except Exception as e:
+                print(f'❌ Erro ao consultar categoria {category_id}: {e}')
+                results[str(category_id)] = {
+                    'success': False,
+                    'error': str(e)
+                }
+        
+        return jsonify({
+            'success': True,
+            'results': results,
+            'total_categories': len(category_ids),
+            'successful_categories': len([r for r in results.values() if r['success']])
+        })
+        
+    except Exception as e:
+        print(f'❌ Erro no processamento em lote: {e}')
         return jsonify({'success': False, 'message': str(e)}), 500
 
 if __name__ == '__main__':

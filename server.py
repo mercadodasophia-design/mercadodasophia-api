@@ -2385,6 +2385,88 @@ def create_order():
             'message': f'Erro ao criar pedido: {str(e)}'
         }), 500
 
+@app.route('/api/aliexpress/product/<product_id>/skus', methods=['GET'])
+def get_product_skus(product_id):
+    """Endpoint para buscar SKUs disponíveis de um produto"""
+    try:
+        tokens = load_tokens()
+        if not tokens or not tokens.get('access_token'):
+            return jsonify({
+                'success': False,
+                'message': 'Token não encontrado. Faça autorização primeiro.'
+            }), 401
+        
+        # Parâmetros para buscar SKUs
+        params = {
+            "method": "aliexpress.ds.product.get",
+            "app_key": APP_KEY,
+            "timestamp": int(time.time() * 1000),
+            "sign_method": "md5",
+            "format": "json",
+            "v": "2.0",
+            "access_token": tokens['access_token'],
+            "product_id": product_id
+        }
+        
+        # Gerar assinatura
+        params["sign"] = generate_api_signature(params, APP_SECRET)
+        
+        print(f'🔍 Buscando SKUs para produto {product_id}')
+        
+        # Fazer requisição
+        response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
+        
+        if response.status_code == 200:
+            data = response.json()
+            
+            if 'aliexpress_ds_product_get_response' in data:
+                product_response = data['aliexpress_ds_product_get_response']
+                result = product_response.get('result', {})
+                
+                if result.get('success') == 'true':
+                    product_info = result.get('product_info', {})
+                    sku_props = product_info.get('sku_props', [])
+                    
+                    skus = []
+                    for sku in sku_props:
+                        skus.append({
+                            'sku_id': sku.get('sku_id'),
+                            'sku_attr': sku.get('sku_attr'),
+                            'price': sku.get('price'),
+                            'stock': sku.get('stock'),
+                            'properties': sku.get('properties', [])
+                        })
+                    
+                    return jsonify({
+                        'success': True,
+                        'product_id': product_id,
+                        'skus': skus,
+                        'total_skus': len(skus)
+                    })
+                else:
+                    error_msg = result.get('error_msg', 'Erro desconhecido')
+                    return jsonify({
+                        'success': False,
+                        'message': f'Erro ao buscar SKUs: {error_msg}'
+                    }), 400
+            else:
+                return jsonify({
+                    'success': False,
+                    'message': 'Resposta inesperada da API'
+                }), 500
+        else:
+            return jsonify({
+                'success': False,
+                'message': f'Erro HTTP {response.status_code}: {response.text}'
+            }), 500
+            
+    except Exception as e:
+        print(f'❌ Erro ao buscar SKUs: {e}')
+        return jsonify({
+            'success': False,
+            'message': f'Erro ao buscar SKUs: {str(e)}'
+        }), 500
+
 if __name__ == '__main__':
     print(f'­ƒÜÇ Servidor rodando na porta {PORT}')
     print(f'APP_KEY: {"Ô£à" if APP_KEY else "ÔØî"} | APP_SECRET: {"Ô£à" if APP_SECRET else "ÔØî"} | REDIRECT_URI: {REDIRECT_URI}')

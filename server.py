@@ -2169,6 +2169,62 @@ def debug_tokens():
             'tokens': None
         })
 
+@app.route('/debug/freight', methods=['GET'])
+def debug_freight():
+    """Endpoint para debug detalhado da API de frete"""
+    try:
+        tokens = load_tokens()
+        if not tokens:
+            return jsonify({
+                'success': False,
+                'message': 'Nenhum token encontrado'
+            })
+        
+        # Testar API de frete com parâmetros fixos
+        test_params = {
+            "method": "aliexpress.ds.freight.query",
+            "app_key": APP_KEY,
+            "timestamp": int(time.time() * 1000),
+            "sign_method": "md5",
+            "format": "json",
+            "v": "2.0",
+            "access_token": tokens['access_token'],
+            "queryDeliveryReq": {
+                "productId": "3256802900954148",
+                "quantity": "1",
+                "shipToCountry": "BR",
+                "provinceCode": "SP",
+                "cityCode": "SAO",
+                "language": "pt_BR",
+                "currency": "BRL",
+                "locale": "pt_BR"
+            }
+        }
+        
+        # Gerar assinatura
+        test_params['sign'] = generate_api_signature(test_params, APP_SECRET)
+        
+        print(f"🔍 Debug frete - Parâmetros: {json.dumps(test_params, indent=2)}")
+        
+        response = requests.get('https://api-sg.aliexpress.com/sync', params=test_params)
+        
+        return jsonify({
+            'success': True,
+            'request_params': test_params,
+            'response': {
+                'status_code': response.status_code,
+                'headers': dict(response.headers),
+                'content': response.text
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Erro no debug: {str(e)}',
+            'traceback': str(e)
+        })
+
 if __name__ == '__main__':
     print(f'­ƒÜÇ Servidor rodando na porta {PORT}')
     print(f'APP_KEY: {"Ô£à" if APP_KEY else "ÔØî"} | APP_SECRET: {"Ô£à" if APP_SECRET else "ÔØî"} | REDIRECT_URI: {REDIRECT_URI}')

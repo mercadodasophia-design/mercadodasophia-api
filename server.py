@@ -2042,54 +2042,80 @@ def calculate_real_shipping_quotes(product_id, destination_cep, items):
         
         # Fazer requisição para API de frete
         response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
-        print(f'🚚 Resposta API frete: {response.text[:500]}...')
+        print(f'🚚 Status Code: {response.status_code}')
+        print(f'🚚 Headers: {dict(response.headers)}')
+        print(f'🚚 Resposta completa: {response.text}')
         
         if response.status_code == 200:
-            data = response.json()
-            
-            if 'aliexpress_ds_freight_query_response' in data:
-                freight_response = data['aliexpress_ds_freight_query_response']
-                result = freight_response.get('result', {})
+            try:
+                data = response.json()
+                print(f'🚚 Dados JSON: {json.dumps(data, indent=2)}')
                 
-                if result.get('success') == 'true':
-                    delivery_options = result.get('delivery_options', [])
+                if 'aliexpress_ds_freight_query_response' in data:
+                    freight_response = data['aliexpress_ds_freight_query_response']
+                    result = freight_response.get('result', {})
                     
-                    quotes = []
-                    for option in delivery_options:
-                        # Converter centavos para reais
-                        shipping_fee_cent = float(option.get('shipping_fee_cent', 0))
-                        shipping_fee = shipping_fee_cent / 100
+                    if result.get('success') == 'true':
+                        delivery_options = result.get('delivery_options', [])
                         
-                        quotes.append({
-                            'service_code': option.get('code', 'UNKNOWN'),
-                            'service_name': option.get('company', 'AliExpress'),
-                            'carrier': option.get('company', 'AliExpress'),
-                            'price': round(shipping_fee, 2),
-                            'currency': option.get('shipping_fee_currency', 'BRL'),
-                            'estimated_days': int(option.get('min_delivery_days', 30)),
-                            'max_delivery_days': int(option.get('max_delivery_days', 60)),
-                            'tracking_available': option.get('tracking', 'false') == 'true',
-                            'free_shipping': option.get('free_shipping', 'false') == 'true',
-                            'origin_cep': STORE_ORIGIN_CEP,
-                            'destination_cep': destination_cep,
-                            'notes': f'Frete real AliExpress - {option.get("estimated_delivery_time", "N/A")}'
-                        })
-                    
-                    print(f'✅ Frete real calculado: {len(quotes)} opções')
-                    return quotes
+                        quotes = []
+                        for option in delivery_options:
+                            # Converter centavos para reais
+                            shipping_fee_cent = float(option.get('shipping_fee_cent', 0))
+                            shipping_fee = shipping_fee_cent / 100
+                            
+                            quotes.append({
+                                'service_code': option.get('code', 'UNKNOWN'),
+                                'service_name': option.get('company', 'AliExpress'),
+                                'carrier': option.get('company', 'AliExpress'),
+                                'price': round(shipping_fee, 2),
+                                'currency': option.get('shipping_fee_currency', 'BRL'),
+                                'estimated_days': int(option.get('min_delivery_days', 30)),
+                                'max_delivery_days': int(option.get('max_delivery_days', 60)),
+                                'tracking_available': option.get('tracking', 'false') == 'true',
+                                'free_shipping': option.get('free_shipping', 'false') == 'true',
+                                'origin_cep': STORE_ORIGIN_CEP,
+                                'destination_cep': destination_cep,
+                                'notes': f'Frete real AliExpress - {option.get("estimated_delivery_time", "N/A")}'
+                            })
+                        
+                        print(f'✅ Frete real calculado: {len(quotes)} opções')
+                        return quotes
+                    else:
+                        error_msg = result.get('msg', 'Erro desconhecido na API de frete')
+                        print(f'❌ Erro API frete: {error_msg}')
+                        raise Exception(f'Erro na API de frete: {error_msg}')
                 else:
-                    error_msg = result.get('msg', 'Erro desconhecido na API de frete')
-                    print(f'❌ Erro API frete: {error_msg}')
-                    raise Exception(f'Erro na API de frete: {error_msg}')
-            else:
-                print(f'❌ Estrutura inesperada: {list(data.keys())}')
-                raise Exception('Resposta inesperada da API de frete')
+                    print(f'❌ Estrutura inesperada. Keys disponíveis: {list(data.keys())}')
+                    print(f'❌ Conteúdo completo: {json.dumps(data, indent=2)}')
+                    raise Exception('Resposta inesperada da API de frete')
+            except json.JSONDecodeError as e:
+                print(f'❌ Erro ao decodificar JSON: {e}')
+                print(f'❌ Resposta raw: {response.text}')
+                raise Exception(f'Erro ao decodificar resposta JSON: {e}')
         else:
+            print(f'❌ Erro HTTP {response.status_code}')
+            print(f'❌ Resposta de erro: {response.text}')
             raise Exception(f'Erro HTTP {response.status_code}: {response.text}')
             
     except Exception as e:
         print(f'❌ Erro ao calcular frete real: {e}')
         raise e
+
+@app.route('/test', methods=['GET'])
+def test_endpoint():
+    """Endpoint simples para testar se o servidor está funcionando"""
+    return jsonify({
+        'success': True,
+        'message': 'Servidor funcionando!',
+        'timestamp': int(time.time()),
+        'env_vars': {
+            'APP_KEY': APP_KEY,
+            'STORE_ORIGIN_CEP': STORE_ORIGIN_CEP,
+            'INBOUND_LEAD_TIME_DAYS': os.getenv('INBOUND_LEAD_TIME_DAYS', '12'),
+            'STORE_HANDLING_DAYS': os.getenv('STORE_HANDLING_DAYS', '2')
+        }
+    })
 
 if __name__ == '__main__':
     print(f'­ƒÜÇ Servidor rodando na porta {PORT}')

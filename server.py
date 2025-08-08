@@ -2311,8 +2311,8 @@ def create_aliexpress_order(order_data):
                 "cpf": "07248629359",  # CPF válido fornecido pelo usuário
                 "full_name": address_data.get('contact_person', 'francisco adonay ferreira do nascimento'),
                 "locale": "pt_BR",
-                "mobile_no": address_data.get('phone', '+5585997640050'),
-                "phone_country": "+55",
+                "mobile_no": address_data.get('phone', '+5585997640050').replace('+55', '').replace('+', ''),
+                "phone_country": "55",
                 "province": address_data.get('province', 'Ceara'),
                 "zip": address_data.get('zip', STORE_ORIGIN_CEP.replace('-', ''))
             }
@@ -2327,8 +2327,8 @@ def create_aliexpress_order(order_data):
                 "cpf": "07248629359",  # CPF válido fornecido pelo usuário
                 "full_name": "francisco adonay ferreira do nascimento",
                 "locale": "pt_BR",
-                "mobile_no": "+5585997640050",
-                "phone_country": "+55",
+                "mobile_no": "85997640050",
+                "phone_country": "55",
                 "province": "Ceara",
                 "zip": STORE_ORIGIN_CEP.replace('-', '')
             }

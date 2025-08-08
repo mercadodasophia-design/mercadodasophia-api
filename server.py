@@ -2263,7 +2263,7 @@ def create_aliexpress_order(order_data):
             "address2": STORE_ADDRESS_LINE2,
             "city": STORE_CITY or "Fortaleza",
             "contact_person": STORE_CONSIGNEE_NAME,
-            "mobile_no": "5585997640050",  # Telefone fixo com 11 dígitos
+            "mobile_no": "85997640050",  # Celular brasileiro com 11 dígitos
             "phone_country": "+55",
             "full_name": STORE_CONSIGNEE_NAME,
             "province": STORE_STATE or "CE",

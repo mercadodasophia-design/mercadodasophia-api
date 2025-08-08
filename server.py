@@ -2460,6 +2460,96 @@ def create_order():
             'message': f'Erro ao criar pedido: {str(e)}'
         }), 500
 
+def get_aliexpress_order_status(order_id):
+    """Busca status de um pedido no AliExpress usando aliexpress.ds.order.get"""
+    tokens = load_tokens()
+    if not tokens or not tokens.get('access_token'):
+        raise Exception('Token não encontrado. Faça autorização primeiro.')
+    
+    try:
+        # Parâmetros da API
+        params = {
+            "method": "aliexpress.ds.order.get",
+            "app_key": APP_KEY,
+            "timestamp": int(time.time() * 1000),
+            "sign_method": "md5",
+            "format": "json",
+            "v": "2.0",
+            "access_token": tokens['access_token'],
+            "order_id": str(order_id)
+        }
+        
+        # Gerar assinatura
+        params["sign"] = generate_api_signature(params, APP_SECRET)
+        
+        print(f'📋 Buscando status do pedido AliExpress: {order_id}')
+        print(f'📋 Parâmetros: {json.dumps(params, indent=2)}')
+        
+        # Fazer requisição
+        response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
+        print(f'📋 Status Code: {response.status_code}')
+        print(f'📋 Resposta: {response.text}')
+        
+        if response.status_code == 200:
+            data = response.json()
+            
+            if 'aliexpress_ds_order_get_response' in data:
+                order_response = data['aliexpress_ds_order_get_response']
+                result = order_response.get('result', {})
+                
+                if result.get('is_success') == True or result.get('is_success') == 'true':
+                    order_info = result.get('order_info', {})
+                    
+                    # Extrair informações do pedido
+                    order_status = {
+                        'order_id': str(order_id),
+                        'status': order_info.get('order_status', 'UNKNOWN'),
+                        'status_desc': order_info.get('order_status_desc', 'Status desconhecido'),
+                        'created_time': order_info.get('gmt_create', ''),
+                        'modified_time': order_info.get('gmt_modified', ''),
+                        'total_amount': order_info.get('total_amount', ''),
+                        'currency': order_info.get('currency', 'USD'),
+                        'logistics_status': order_info.get('logistics_status', ''),
+                        'logistics_tracking_no': order_info.get('logistics_tracking_no', ''),
+                        'buyer_info': order_info.get('buyer_info', {}),
+                        'product_list': order_info.get('product_list', [])
+                    }
+                    
+                    print(f'✅ Status do pedido obtido: {order_status["status"]}')
+                    
+                    return {
+                        'success': True,
+                        'order_status': order_status,
+                        'message': f'Status do pedido: {order_status["status_desc"]}'
+                    }
+                else:
+                    error_code = result.get('error_code', 'UNKNOWN_ERROR')
+                    error_msg = result.get('error_msg', 'Erro desconhecido')
+                    print(f'❌ Erro ao buscar status: {error_code} - {error_msg}')
+                    raise Exception(f'Erro ao buscar status: {error_code} - {error_msg}')
+            else:
+                print(f'❌ Estrutura inesperada da resposta: {list(data.keys())}')
+                raise Exception('Resposta inesperada da API de status de pedidos')
+        else:
+            print(f'❌ Erro HTTP {response.status_code}: {response.text}')
+            raise Exception(f'Erro HTTP {response.status_code}: {response.text}')
+            
+    except Exception as e:
+        print(f'❌ Erro ao buscar status do pedido: {e}')
+        raise e
+
+@app.route('/api/aliexpress/orders/<order_id>/status', methods=['GET'])
+def get_order_status(order_id):
+    """Endpoint para buscar status de um pedido"""
+    try:
+        result = get_aliexpress_order_status(order_id)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Erro ao buscar status do pedido: {str(e)}'
+        }), 500
+
 @app.route('/api/aliexpress/product/<product_id>/skus', methods=['GET'])
 def get_product_skus(product_id):
     """Endpoint para buscar SKUs disponíveis de um produto"""

@@ -2056,7 +2056,7 @@ def calculate_real_shipping_quotes(product_id, destination_cep, items):
                     freight_response = data['aliexpress_ds_freight_query_response']
                     result = freight_response.get('result', {})
                     
-                    if result.get('success') == 'true':
+                    if result.get('success') == 'true' or result.get('msg') == 'Call succeeds':
                         delivery_options = result.get('delivery_options', [])
                         
                         quotes = []

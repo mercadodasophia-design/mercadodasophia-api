@@ -2267,7 +2267,7 @@ def create_aliexpress_order(order_data):
             "phone_country": "+55",
             "cpf": "07248629359",  # CPF válido fornecido pelo usuário
             "full_name": "francisco adonay ferreira do nascimento",
-            "province": STORE_STATE or "CE",
+            "province": "CE",  # Código do estado Ceará
             "locale": "pt_BR"
         }
         

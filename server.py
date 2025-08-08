@@ -2250,7 +2250,7 @@ def create_aliexpress_order(order_data):
             product_items.append({
                 "product_id": item['product_id'],
                 "product_count": str(item['quantity']),
-                "sku_attr": item.get('sku_attr', '14:70221'),  # SKU padrão
+                "sku_attr": item.get('sku_attr', ''),  # SKU vazio para usar padrão do produto
                 "logistics_service_name": "CAINIAO_FULFILLMENT_STD",  # Serviço padrão
                 "order_memo": item.get('memo', 'Pedido da Loja da Sophia')
             })

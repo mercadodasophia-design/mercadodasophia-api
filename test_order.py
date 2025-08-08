@@ -5,14 +5,14 @@ import json
 def test_order_creation():
     url = "https://mercadodasophia-api.onrender.com/api/aliexpress/orders/create"
     
-    # Dados do pedido de teste
+    # Dados do pedido de teste com SKU mais simples
     data = {
         "customer_id": "CUSTOMER_001",
         "items": [
             {
                 "product_id": "3256802900954148",
                 "quantity": 1,
-                "sku_attr": "14:70221",
+                "sku_attr": "",  # SKU vazio para usar o padrão
                 "memo": "Pedido de teste da Loja da Sophia"
             }
         ]

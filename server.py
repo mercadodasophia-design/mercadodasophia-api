@@ -2057,10 +2057,19 @@ def calculate_real_shipping_quotes(product_id, destination_cep, items):
                     result = freight_response.get('result', {})
                     
                     if result.get('success') == 'true' or result.get('msg') == 'Call succeeds':
-                        delivery_options = result.get('delivery_options', [])
+                        delivery_options = result.get('delivery_options', {})
+                        
+                        # Verificar se delivery_options é um objeto com delivery_option_d_t_o
+                        if isinstance(delivery_options, dict) and 'delivery_option_d_t_o' in delivery_options:
+                            options_list = delivery_options['delivery_option_d_t_o']
+                        elif isinstance(delivery_options, list):
+                            options_list = delivery_options
+                        else:
+                            print(f'❌ Formato inesperado de delivery_options: {type(delivery_options)}')
+                            options_list = []
                         
                         quotes = []
-                        for option in delivery_options:
+                        for option in options_list:
                             # Converter centavos para reais
                             shipping_fee_cent = float(option.get('shipping_fee_cent', 0))
                             shipping_fee = shipping_fee_cent / 100

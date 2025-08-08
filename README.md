@@ -45,6 +45,21 @@ APP_KEY=517616
 APP_SECRET=TTqNmTMs5Q0QiPbulDNenhXr2My18nN4
 REDIRECT_URI=https://mercadodasophia-api.onrender.com/api/aliexpress/oauth-callback
 PORT=10000
+RENDER_EXTERNAL_URL=https://SEU_SERVICO.onrender.com
+
+# Endereço da LOJA (pedido AE vai para este endereço)
+STORE_CONSIGNEE_NAME=ana cristina silva lima
+STORE_PHONE=+5585997640050
+STORE_ORIGIN_CEP=61771-880
+STORE_ADDRESS_LINE1=numero 280, bloco 03 ap 202
+STORE_ADDRESS_LINE2=
+STORE_CITY=
+STORE_STATE=
+STORE_COUNTRY=BR
+
+# Lead time e manuseio (prazo mostrado ao cliente = inbound + manuseio + trânsito)
+INBOUND_LEAD_TIME_DAYS=12
+STORE_HANDLING_DAYS=2
 ```
 
 ### Credenciais AliExpress

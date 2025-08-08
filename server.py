@@ -9,7 +9,9 @@ import time
 import urllib.parse
 from flask import Flask, request, jsonify
 import iop
+from dotenv import load_dotenv
 
+load_dotenv()  # Carrega variáveis do arquivo .env, se existir
 app = Flask(__name__)
 
 # ===================== CONFIGURA├º├ÁES =====================

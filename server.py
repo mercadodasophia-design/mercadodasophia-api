@@ -11,6 +11,9 @@ from flask import Flask, request, jsonify
 import iop
 from dotenv import load_dotenv
 
+# Importar integração Mercado Pago
+from mercadopago_integration import mercadopago
+
 load_dotenv()  # Carrega variáveis do arquivo .env, se existir
 app = Flask(__name__)
 
@@ -2645,7 +2648,384 @@ def get_product_skus(product_id):
             'message': f'Erro ao buscar SKUs: {str(e)}'
         }), 500
 
+# ============================================================================
+# MERCADO PAGO PAYMENT ENDPOINTS
+# ============================================================================
+
+@app.route('/api/payment/mp/create-preference', methods=['POST'])
+def create_mp_preference():
+    """Criar preferência de pagamento no Mercado Pago"""
+    try:
+        data = request.get_json()
+        
+        # Validar dados obrigatórios
+        required_fields = ['order_id', 'total_amount']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({
+                    'success': False,
+                    'message': f'Campo obrigatório não fornecido: {field}'
+                }), 400
+        
+        # Criar preferência no Mercado Pago
+        result = mercadopago.create_preference(data)
+        
+        if result['success']:
+            return jsonify({
+                'success': True,
+                'preference_id': result['preference_id'],
+                'init_point': result['init_point'],
+                'sandbox_init_point': result.get('sandbox_init_point'),
+                'message': 'Preferência Mercado Pago criada com sucesso'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': f'Erro ao criar preferência: {result["error"]}'
+            }), 500
+            
+    except Exception as e:
+        print(f'❌ Erro ao criar preferência: {e}')
+        return jsonify({
+            'success': False,
+            'message': f'Erro interno: {str(e)}'
+        }), 500
+
+@app.route('/api/payment/mp/payment/<payment_id>', methods=['GET'])
+def get_mp_payment(payment_id):
+    """Obter informações de um pagamento"""
+    try:
+        result = mercadopago.get_payment_info(payment_id)
+        
+        if result['success']:
+            return jsonify({
+                'success': True,
+                'payment_data': result['payment_data']
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': f'Erro ao obter pagamento: {result["error"]}'
+            }), 500
+            
+    except Exception as e:
+        print(f'❌ Erro ao obter pagamento: {e}')
+        return jsonify({
+            'success': False,
+            'message': f'Erro interno: {str(e)}'
+        }), 500
+
+@app.route('/api/payment/mp/refund/<payment_id>', methods=['POST'])
+def refund_mp_payment(payment_id):
+    """Estornar pagamento Mercado Pago"""
+    try:
+        data = request.get_json() or {}
+        amount = data.get('amount')
+        reason = data.get('reason', 'Refund requested')
+        
+        # Estornar pagamento
+        result = mercadopago.refund_payment(payment_id, amount, reason)
+        
+        if result['success']:
+            return jsonify({
+                'success': True,
+                'refund_id': result['refund_id'],
+                'status': result['status'],
+                'message': 'Estorno realizado com sucesso'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': f'Erro ao estornar: {result["error"]}'
+            }), 500
+            
+    except Exception as e:
+        print(f'❌ Erro ao estornar: {e}')
+        return jsonify({
+            'success': False,
+            'message': f'Erro interno: {str(e)}'
+        }), 500
+
+@app.route('/api/payment/mp/preference/<preference_id>', methods=['GET'])
+def get_mp_preference(preference_id):
+    """Obter detalhes de uma preferência"""
+    try:
+        result = mercadopago.get_preference(preference_id)
+        
+        if result['success']:
+            return jsonify({
+                'success': True,
+                'preference_data': result['preference_data']
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': f'Erro ao obter preferência: {result["error"]}'
+            }), 500
+            
+    except Exception as e:
+        print(f'❌ Erro ao obter preferência: {e}')
+        return jsonify({
+            'success': False,
+            'message': f'Erro interno: {str(e)}'
+        }), 500
+
+@app.route('/api/payment/mp/webhook', methods=['POST'])
+def mp_webhook():
+    """Webhook do Mercado Pago para notificações de pagamento"""
+    try:
+        data = request.get_json()
+        
+        print(f'📡 Webhook Mercado Pago recebido: {json.dumps(data, indent=2)}')
+        
+        # Verificar tipo de notificação
+        if data.get('type') == 'payment':
+            payment_id = data.get('data', {}).get('id')
+            
+            if payment_id:
+                # Obter informações do pagamento
+                payment_result = mercadopago.get_payment_info(payment_id)
+                
+                if payment_result['success']:
+                    payment_data = payment_result['payment_data']
+                    status = payment_data.get('status')
+                    external_reference = payment_data.get('external_reference')
+                    
+                    print(f'💰 Pagamento {payment_id} - Status: {status} - Referência: {external_reference}')
+                    
+                    # Se pagamento aprovado, criar pedido no AliExpress
+                    if status == 'approved':
+                        print(f'✅ Pagamento aprovado! Criando pedido AliExpress...')
+                        
+                        # Aqui você pode integrar com AliExpress
+                        # create_aliexpress_order(...)
+                        
+                        return jsonify({
+                            'success': True,
+                            'message': 'Webhook processado com sucesso'
+                        })
+                    else:
+                        print(f'⚠️ Pagamento não aprovado: {status}')
+                        return jsonify({
+                            'success': True,
+                            'message': f'Pagamento não aprovado: {status}'
+                        })
+                else:
+                    print(f'❌ Erro ao obter pagamento: {payment_result["error"]}')
+                    return jsonify({
+                        'success': False,
+                        'message': 'Erro ao obter pagamento'
+                    }), 500
+        
+        return jsonify({
+            'success': True,
+            'message': 'Webhook recebido'
+        })
+        
+    except Exception as e:
+        print(f'❌ Erro no webhook: {e}')
+        return jsonify({
+            'success': False,
+            'message': f'Erro no webhook: {str(e)}'
+        }), 500
+
+@app.route('/api/payment/mp/success')
+def mp_success():
+    """Callback de sucesso do Mercado Pago"""
+    try:
+        payment_id = request.args.get('payment_id')
+        preference_id = request.args.get('preference_id')
+        
+        print(f'✅ Sucesso Mercado Pago - Payment ID: {payment_id}, Preference ID: {preference_id}')
+        
+        return jsonify({
+            'success': True,
+            'message': 'Pagamento aprovado com sucesso!',
+            'payment_id': payment_id,
+            'preference_id': preference_id
+        })
+        
+    except Exception as e:
+        print(f'❌ Erro no sucesso: {e}')
+        return jsonify({
+            'success': False,
+            'message': f'Erro no sucesso: {str(e)}'
+        }), 500
+
+@app.route('/api/payment/mp/failure')
+def mp_failure():
+    """Callback de falha do Mercado Pago"""
+    try:
+        payment_id = request.args.get('payment_id')
+        preference_id = request.args.get('preference_id')
+        
+        print(f'❌ Falha Mercado Pago - Payment ID: {payment_id}, Preference ID: {preference_id}')
+        
+        return jsonify({
+            'success': False,
+            'message': 'Pagamento falhou',
+            'payment_id': payment_id,
+            'preference_id': preference_id
+        })
+        
+    except Exception as e:
+        print(f'❌ Erro na falha: {e}')
+        return jsonify({
+            'success': False,
+            'message': f'Erro na falha: {str(e)}'
+        }), 500
+
+@app.route('/api/payment/mp/pending')
+def mp_pending():
+    """Callback de pendente do Mercado Pago"""
+    try:
+        payment_id = request.args.get('payment_id')
+        preference_id = request.args.get('preference_id')
+        
+        print(f'⏳ Pendente Mercado Pago - Payment ID: {payment_id}, Preference ID: {preference_id}')
+        
+        return jsonify({
+            'success': True,
+            'message': 'Pagamento pendente',
+            'payment_id': payment_id,
+            'preference_id': preference_id
+        })
+        
+    except Exception as e:
+        print(f'❌ Erro no pendente: {e}')
+        return jsonify({
+            'success': False,
+            'message': f'Erro no pendente: {str(e)}'
+        }), 500
+
+# ============================================================================
+# INTEGRATED PAYMENT FLOW
+# ============================================================================
+
+@app.route('/api/payment/process', methods=['POST'])
+def process_payment():
+    """Processar pagamento completo (Mercado Pago + AliExpress)"""
+    try:
+        data = request.get_json()
+        
+        # Validar dados
+        required_fields = ['order_id', 'total_amount', 'items', 'customer_info']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({
+                    'success': False,
+                    'message': f'Campo obrigatório não fornecido: {field}'
+                }), 400
+        
+        # 1. Criar preferência Mercado Pago
+        mp_data = {
+            'order_id': data['order_id'],
+            'total_amount': data['total_amount'],
+            'payer': data.get('customer_info', {})
+        }
+        
+        mp_result = mercadopago.create_preference(mp_data)
+        
+        if not mp_result['success']:
+            return jsonify({
+                'success': False,
+                'message': f'Erro ao criar preferência Mercado Pago: {mp_result["error"]}'
+            }), 500
+        
+        # 2. Retornar URL de pagamento
+        return jsonify({
+            'success': True,
+            'preference_id': mp_result['preference_id'],
+            'init_point': mp_result['init_point'],
+            'sandbox_init_point': mp_result.get('sandbox_init_point'),
+            'message': 'Preferência Mercado Pago criada. Redirecione o usuário para a URL de pagamento.'
+        })
+        
+    except Exception as e:
+        print(f'❌ Erro ao processar pagamento: {e}')
+        return jsonify({
+            'success': False,
+            'message': f'Erro interno: {str(e)}'
+        }), 500
+
+@app.route('/api/payment/complete/<payment_id>', methods=['POST'])
+def complete_payment(payment_id):
+    """Completar pagamento após aprovação (verificar + criar pedido AliExpress)"""
+    try:
+        data = request.get_json()
+        
+        # 1. Verificar status do pagamento
+        payment_result = mercadopago.get_payment_info(payment_id)
+        
+        if not payment_result['success']:
+            return jsonify({
+                'success': False,
+                'message': f'Erro ao verificar pagamento: {payment_result["error"]}'
+            }), 500
+        
+        payment_data = payment_result['payment_data']
+        status = payment_data.get('status')
+        
+        if status != 'approved':
+            return jsonify({
+                'success': False,
+                'message': f'Pagamento não aprovado. Status: {status}'
+            }), 400
+        
+        # 2. Criar pedido no AliExpress
+        aliexpress_data = {
+            'customer_id': data.get('customer_id', 'MP_CUSTOMER'),
+            'items': data['items'],
+            'address': data.get('address', {})
+        }
+        
+        aliexpress_result = create_aliexpress_order(aliexpress_data)
+        
+        if not aliexpress_result['success']:
+            # Se falhar no AliExpress, estornar Mercado Pago
+            refund_result = mercadopago.refund_payment(
+                payment_id,
+                reason="Falha na criação do pedido AliExpress"
+            )
+            
+            return jsonify({
+                'success': False,
+                'message': f'Erro ao criar pedido AliExpress: {aliexpress_result["error"]}. Pagamento estornado.',
+                'refunded': refund_result['success']
+            }), 500
+        
+        # 3. Sucesso completo
+        return jsonify({
+            'success': True,
+            'mp_payment_id': payment_id,
+            'aliexpress_order_id': aliexpress_result['order_id'],
+            'message': 'Pagamento processado e pedido criado com sucesso!'
+        })
+        
+    except Exception as e:
+        print(f'❌ Erro ao completar pagamento: {e}')
+        return jsonify({
+            'success': False,
+            'message': f'Erro interno: {str(e)}'
+        }), 500
+
+@app.route('/api/payment/mp/debug', methods=['GET'])
+def debug_mp():
+    """Debug do Mercado Pago"""
+    try:
+        sdk_info = mercadopago.get_sdk_info()
+        return jsonify({
+            'success': True,
+            'sdk_info': sdk_info,
+            'message': 'Informações do SDK Mercado Pago'
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Erro ao obter informações do SDK: {str(e)}'
+        }), 500
+
 if __name__ == '__main__':
-    print(f'­ƒÜÇ Servidor rodando na porta {PORT}')
-    print(f'APP_KEY: {"Ô£à" if APP_KEY else "ÔØî"} | APP_SECRET: {"Ô£à" if APP_SECRET else "ÔØî"} | REDIRECT_URI: {REDIRECT_URI}')
+    print(f'🚀 Servidor rodando na porta {PORT}')
+    print(f'APP_KEY: {"✅" if APP_KEY else "❌"} | APP_SECRET: {"✅" if APP_SECRET else "❌"} | REDIRECT_URI: {REDIRECT_URI}')
     app.run(host='0.0.0.0', port=PORT, debug=False) 

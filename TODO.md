@@ -34,18 +34,17 @@
 - [x] Telefone: `85997640050` ✅
 - [x] Endereço: Fortaleza, CE ✅
 
+### 📋 **Tracking de Pedidos**
+- [x] API implementada `/api/aliexpress/orders/<order_id>/tracking` ✅
+- [x] Integração com `aliexpress.ds.order.tracking.get` ✅
+- [x] Parsing da resposta estruturada ✅
+- [x] **Testado com pedido fake** - Funciona, mas precisa de pedido real com pagamento ✅
+
 ---
 
 ## 🚫 **PENDENTE**
 
-### 📋 **1. RASTREAMENTO DE PEDIDOS**
-- [ ] API para buscar status de pedidos
-- [ ] Endpoint `/api/aliexpress/orders/<order_id>/status`
-- [ ] Integração com `aliexpress.ds.order.get`
-- [ ] Histórico de status (criado, processando, enviado, entregue)
-- [ ] Webhook para atualizações automáticas
-
-### 💰 **2. GATEWAY DE PAGAMENTO**
+### 💰 **1. GATEWAY DE PAGAMENTO** (Prioridade Alta)
 - [ ] Integração com Mercado Pago
 - [ ] Integração com PagSeguro
 - [ ] Integração com PayPal
@@ -53,21 +52,21 @@
 - [ ] Webhook para confirmação de pagamento
 - [ ] Refund/estorno automático
 
-### 📱 **3. INTEGRAÇÃO FLUTTER**
+### 📱 **2. INTEGRAÇÃO FLUTTER** (Prioridade Média)
 - [ ] Conectar app Flutter com API Python
 - [ ] Tela de criação de pedidos
 - [ ] Tela de acompanhamento de pedidos
 - [ ] Tela de pagamento
 - [ ] Notificações push de status
 
-### 🔄 **4. SINCRONIZAÇÃO**
+### 🔄 **3. SINCRONIZAÇÃO** (Prioridade Baixa)
 - [ ] Sincronizar estoque AliExpress → Loja
 - [ ] Sincronizar preços AliExpress → Loja
 - [ ] Atualização automática de produtos
 - [ ] Webhook para mudanças de estoque
 - [ ] Cache de produtos para performance
 
-### 🎯 **5. FUNCIONALIDADES AVANÇADAS**
+### 🎯 **4. FUNCIONALIDADES AVANÇADAS**
 - [ ] Múltiplos fornecedores AliExpress
 - [ ] Filtros por categoria/preço
 - [ ] Sistema de avaliações
@@ -125,16 +124,7 @@
 
 ## 🎯 **PRÓXIMOS PASSOS RECOMENDADOS**
 
-### **1. RASTREAMENTO (Prioridade Alta)**
-```python
-# Implementar endpoint de tracking
-@app.route('/api/aliexpress/orders/<order_id>/status')
-def get_order_status(order_id):
-    # Integrar com aliexpress.ds.order.get
-    pass
-```
-
-### **2. PAGAMENTO (Prioridade Alta)**
+### **1. PAGAMENTO (Prioridade Alta)**
 ```python
 # Integrar Mercado Pago
 @app.route('/api/payment/process', methods=['POST'])
@@ -143,7 +133,7 @@ def process_payment():
     pass
 ```
 
-### **3. FLUTTER (Prioridade Média)**
+### **2. FLUTTER (Prioridade Média)**
 ```dart
 // Conectar Flutter com API
 class AliExpressService {
@@ -151,6 +141,12 @@ class AliExpressService {
     # Chamar API Python
   }
 }
+```
+
+### **3. PEDIDO REAL (Para testar tracking)**
+```python
+# Criar pedido com pagamento real
+# Testar tracking com pedido processado
 ```
 
 ---
@@ -166,5 +162,5 @@ class AliExpressService {
 
 ---
 
-**Status Atual: 40% Concluído** 🚀
-**Próximo Milestone: Tracking de Pedidos** 📋
+**Status Atual: 50% Concluído** 🚀
+**Próximo Milestone: Gateway de Pagamento** 💰

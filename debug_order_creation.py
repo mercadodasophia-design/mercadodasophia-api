@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Teste para criação de pedidos AliExpress
+Debug da criação de pedidos AliExpress
 """
 
 import requests
@@ -9,17 +9,17 @@ import json
 # URL da API
 API_URL = "https://mercadodasophia-api.onrender.com"
 
-def test_create_order():
-    """Testa a criação de um pedido"""
+def debug_order_creation():
+    """Debug da criação de pedidos"""
     
     # Dados do pedido com endereço completo
     order_data = {
         "customer_id": "TEST_CUSTOMER_001",
         "items": [
             {
-                "product_id": "1005007720304124",  # itemId válido encontrado
+                "product_id": "1005007720304124",
                 "quantity": 1,
-                "sku_attr": "",  # SKU padrão
+                "sku_attr": "",
                 "memo": "Teste de criação de pedido"
             }
         ],
@@ -35,7 +35,7 @@ def test_create_order():
         }
     }
     
-    print("🛒 Testando criação de pedido AliExpress...")
+    print("🛒 Debugando criação de pedido AliExpress...")
     print(f"📦 Dados do pedido: {json.dumps(order_data, indent=2)}")
     
     try:
@@ -48,18 +48,20 @@ def test_create_order():
         )
         
         print(f"📡 Status Code: {response.status_code}")
-        print(f"📡 Resposta: {response.text}")
+        print(f"📡 Headers: {dict(response.headers)}")
+        print(f"📡 Resposta completa: {response.text}")
         
         if response.status_code == 200:
-            result = response.json()
-            print("✅ Pedido criado com sucesso!")
-            print(f"🆔 Order ID: {result.get('order_id')}")
-            print(f"🆔 Out Order ID: {result.get('out_order_id')}")
+            try:
+                result = response.json()
+                print(f"📡 JSON parseado: {json.dumps(result, indent=2)}")
+            except:
+                print("❌ Não foi possível fazer parse do JSON")
         else:
-            print("❌ Erro ao criar pedido")
+            print("❌ Erro HTTP")
             
     except Exception as e:
         print(f"❌ Erro na requisição: {e}")
 
 if __name__ == "__main__":
-    test_create_order()
+    debug_order_creation()

@@ -2255,20 +2255,38 @@ def create_aliexpress_order(order_data):
                 "order_memo": item.get('memo', 'Pedido da Loja da Sophia')
             })
         
-        # Endereço da loja (consignee) - formato correto para AliExpress
-        logistics_address = {
-            "zip": STORE_ORIGIN_CEP.replace('-', ''),
-            "country": "BR",
-            "province": "Ceara",  # Nome do estado sem acentos
-            "city": "Fortaleza",
-            "district": "Centro",  # Bairro
-            "detail_address": "Rua Teste, 123 - Bloco 03, Apto 202",
-            "contact_person": "francisco adonay ferreira do nascimento",
-            "phone": "+5585997640050",  # Telefone com DDI +55
-            "cpf": "07248629359",  # CPF válido fornecido pelo usuário
-            "full_name": "francisco adonay ferreira do nascimento",
-            "locale": "pt_BR"
-        }
+        # Usar endereço do payload ou endereço padrão da loja
+        if 'address' in order_data:
+            # Endereço fornecido no payload
+            address_data = order_data['address']
+            logistics_address = {
+                "zip": address_data.get('zip', STORE_ORIGIN_CEP.replace('-', '')),
+                "country": address_data.get('country', 'BR'),
+                "province": address_data.get('province', 'Ceara'),
+                "city": address_data.get('city', 'Fortaleza'),
+                "district": address_data.get('district', 'Centro'),
+                "detail_address": address_data.get('detail_address', 'Rua Teste, 123 - Bloco 03, Apto 202'),
+                "contact_person": address_data.get('contact_person', 'francisco adonay ferreira do nascimento'),
+                "phone": address_data.get('phone', '+5585997640050'),
+                "cpf": "07248629359",  # CPF válido fornecido pelo usuário
+                "full_name": address_data.get('contact_person', 'francisco adonay ferreira do nascimento'),
+                "locale": "pt_BR"
+            }
+        else:
+            # Endereço padrão da loja
+            logistics_address = {
+                "zip": STORE_ORIGIN_CEP.replace('-', ''),
+                "country": "BR",
+                "province": "Ceara",  # Nome do estado sem acentos
+                "city": "Fortaleza",
+                "district": "Centro",  # Bairro
+                "detail_address": "Rua Teste, 123 - Bloco 03, Apto 202",
+                "contact_person": "francisco adonay ferreira do nascimento",
+                "phone": "+5585997640050",  # Telefone com DDI +55
+                "cpf": "07248629359",  # CPF válido fornecido pelo usuário
+                "full_name": "francisco adonay ferreira do nascimento",
+                "locale": "pt_BR"
+            }
         
         # Parâmetros da API
         param_place_order_request = {

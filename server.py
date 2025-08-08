@@ -2022,7 +2022,7 @@ def calculate_real_shipping_quotes(product_id, destination_cep, items):
             "format": "json",
             "v": "2.0",
             "access_token": tokens['access_token'],
-            "queryDeliveryReq": json.dumps({
+            "queryDeliveryReq": {
                 "productId": product_id,
                 "quantity": str(sum(item.get('quantity', 1) for item in items)),
                 "shipToCountry": "BR",
@@ -2031,7 +2031,7 @@ def calculate_real_shipping_quotes(product_id, destination_cep, items):
                 "language": "pt_BR",
                 "currency": "BRL",
                 "locale": "pt_BR"
-            })
+            }
         }
         
         # Gerar assinatura

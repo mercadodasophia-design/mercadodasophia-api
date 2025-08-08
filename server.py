@@ -2323,11 +2323,19 @@ def create_aliexpress_order(order_data):
         params["sign"] = generate_api_signature(params, APP_SECRET)
         
         print(f'🛒 Criando pedido AliExpress: {json.dumps(params, indent=2)}')
+        print(f'🛒 Logistics Address: {json.dumps(logistics_address, indent=2)}')
         
         # Fazer requisição
         response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
         print(f'🛒 Status Code: {response.status_code}')
         print(f'🛒 Resposta: {response.text}')
+        
+        # Log da resposta completa para debug
+        try:
+            response_data = response.json()
+            print(f'🛒 Resposta JSON: {json.dumps(response_data, indent=2)}')
+        except:
+            print(f'🛒 Resposta não é JSON válido: {response.text}')
         
         if response.status_code == 200:
             data = response.json()

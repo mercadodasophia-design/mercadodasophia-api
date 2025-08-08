@@ -2389,13 +2389,17 @@ def create_aliexpress_order(order_data):
                 order_response = data['aliexpress_ds_order_create_response']
                 result = order_response.get('result', {})
                 
-                if result.get('is_success') == 'true':
-                    order_id = result.get('order_id')
+                if result.get('is_success') == True or result.get('is_success') == 'true':
+                    # Extrair order_id do order_list
+                    order_list = result.get('order_list', {})
+                    order_numbers = order_list.get('number', [])
+                    order_id = order_numbers[0] if order_numbers else None
+                    
                     print(f'✅ Pedido criado com sucesso! ID: {order_id}')
                     
                     return {
                         'success': True,
-                        'order_id': order_id,
+                        'order_id': str(order_id),
                         'out_order_id': param_place_order_request['out_order_id'],
                         'message': 'Pedido criado com sucesso no AliExpress',
                         'fulfillment': {

@@ -2265,6 +2265,7 @@ def create_aliexpress_order(order_data):
             "contact_person": STORE_CONSIGNEE_NAME,
             "mobile_no": "85997640050",  # Celular brasileiro com 11 dígitos
             "phone_country": "+55",
+            "cpf": "07248629359",  # CPF válido para teste
             "full_name": STORE_CONSIGNEE_NAME,
             "province": STORE_STATE or "CE",
             "locale": "pt_BR",

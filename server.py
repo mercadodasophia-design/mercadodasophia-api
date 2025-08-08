@@ -2117,6 +2117,58 @@ def test_endpoint():
         }
     })
 
+@app.route('/debug/tokens', methods=['GET'])
+def debug_tokens():
+    """Endpoint para debug dos tokens"""
+    try:
+        tokens = load_tokens()
+        if not tokens:
+            return jsonify({
+                'success': False,
+                'message': 'Nenhum token encontrado',
+                'tokens': None
+            })
+        
+        # Testar se o token ainda é válido
+        test_params = {
+            "method": "aliexpress.ds.freight.query",
+            "app_key": APP_KEY,
+            "timestamp": int(time.time() * 1000),
+            "sign_method": "md5",
+            "format": "json",
+            "v": "2.0",
+            "access_token": tokens['access_token'],
+            "product_id": "3256802900954148",
+            "destination_cep": "01001-000"
+        }
+        
+        # Gerar assinatura
+        test_params['sign'] = generate_signature(test_params, APP_SECRET)
+        
+        print(f"🔍 Testando tokens com params: {test_params}")
+        
+        response = requests.get('https://api-sg.aliexpress.com/sync', params=test_params)
+        
+        return jsonify({
+            'success': True,
+            'tokens': {
+                'access_token': tokens.get('access_token', 'N/A')[:20] + '...',
+                'refresh_token': tokens.get('refresh_token', 'N/A')[:20] + '...',
+                'expires_at': tokens.get('expires_at', 'N/A')
+            },
+            'test_response': {
+                'status_code': response.status_code,
+                'content': response.text[:500] + '...' if len(response.text) > 500 else response.text
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Erro ao verificar tokens: {str(e)}',
+            'tokens': None
+        })
+
 if __name__ == '__main__':
     print(f'­ƒÜÇ Servidor rodando na porta {PORT}')
     print(f'APP_KEY: {"Ô£à" if APP_KEY else "ÔØî"} | APP_SECRET: {"Ô£à" if APP_SECRET else "ÔØî"} | REDIRECT_URI: {REDIRECT_URI}')

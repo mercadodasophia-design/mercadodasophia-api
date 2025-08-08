@@ -114,24 +114,25 @@ def shipping_quote():
         
         destination_cep = data.get('destination_cep')
         items = data.get('items', [])
+        product_id = data.get('product_id')  # Novo campo obrigatório
         
         print(f'📦 CEP destino: {destination_cep}')
         print(f'📦 Items: {items}')
-        print(f'📦 Tipo items: {type(items)}')
-        print(f'📦 Len items: {len(items) if isinstance(items, list) else "N/A"}')
+        print(f'📦 Product ID: {product_id}')
         
-        if not destination_cep or not isinstance(items, list) or len(items) == 0:
-            error_msg = f'Parâmetros inválidos: destination_cep={destination_cep}, items={items}'
+        if not destination_cep or not isinstance(items, list) or len(items) == 0 or not product_id:
+            error_msg = f'Parâmetros inválidos: destination_cep={destination_cep}, items={items}, product_id={product_id}'
             print(f'❌ {error_msg}')
             return jsonify({'success': False, 'message': error_msg}), 400
 
-        quotes = calculate_own_shipping_quotes(destination_cep, items)
-        print(f'✅ Cotações calculadas: {quotes}')
+        # Usar API real do AliExpress
+        quotes = calculate_real_shipping_quotes(product_id, destination_cep, items)
+        print(f'✅ Cotações reais calculadas: {quotes}')
         
         return jsonify({'success': True, 'data': quotes, 'fulfillment': {
-            'mode': 'own_warehouse',
-            'inbound_lead_time_days': int(os.getenv('INBOUND_LEAD_TIME_DAYS', '12')),
-            'handling_days': int(os.getenv('STORE_HANDLING_DAYS', '2')),
+            'mode': 'aliexpress_direct',
+            'source': 'aliexpress_api',
+            'notes': 'Frete calculado via API oficial do AliExpress'
         }})
     except Exception as e:
         print(f'❌ Erro ao calcular frete: {e}')
@@ -2003,6 +2004,92 @@ def translate_attributes():
     except Exception as e:
         print(f'❌ Erro ao traduzir atributos: {e}')
         return jsonify({'success': False, 'message': str(e)}), 500
+
+# ===================== FRETE REAL (API ALIEXPRESS) =====================
+def calculate_real_shipping_quotes(product_id, destination_cep, items):
+    """Calcula cotações de frete usando API real do AliExpress"""
+    tokens = load_tokens()
+    if not tokens or not tokens.get('access_token'):
+        raise Exception('Token não encontrado. Faça autorização primeiro.')
+    
+    try:
+        # Parâmetros para a API de frete conforme documentação oficial
+        params = {
+            "method": "aliexpress.ds.freight.query",
+            "app_key": APP_KEY,
+            "timestamp": int(time.time() * 1000),
+            "sign_method": "md5",
+            "format": "json",
+            "v": "2.0",
+            "access_token": tokens['access_token'],
+            "queryDeliveryReq": json.dumps({
+                "productId": product_id,
+                "quantity": str(sum(item.get('quantity', 1) for item in items)),
+                "shipToCountry": "BR",
+                "provinceCode": "SP",  # São Paulo como padrão
+                "cityCode": "SAO",     # São Paulo como padrão
+                "language": "pt_BR",
+                "currency": "BRL",
+                "locale": "pt_BR"
+            })
+        }
+        
+        # Gerar assinatura
+        params["sign"] = generate_api_signature(params, APP_SECRET)
+        
+        print(f'🚚 Calculando frete real para produto {product_id}')
+        print(f'🚚 Parâmetros: {params}')
+        
+        # Fazer requisição para API de frete
+        response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
+        print(f'🚚 Resposta API frete: {response.text[:500]}...')
+        
+        if response.status_code == 200:
+            data = response.json()
+            
+            if 'aliexpress_ds_freight_query_response' in data:
+                freight_response = data['aliexpress_ds_freight_query_response']
+                result = freight_response.get('result', {})
+                
+                if result.get('success') == 'true':
+                    delivery_options = result.get('delivery_options', [])
+                    
+                    quotes = []
+                    for option in delivery_options:
+                        # Converter centavos para reais
+                        shipping_fee_cent = float(option.get('shipping_fee_cent', 0))
+                        shipping_fee = shipping_fee_cent / 100
+                        
+                        quotes.append({
+                            'service_code': option.get('code', 'UNKNOWN'),
+                            'service_name': option.get('company', 'AliExpress'),
+                            'carrier': option.get('company', 'AliExpress'),
+                            'price': round(shipping_fee, 2),
+                            'currency': option.get('shipping_fee_currency', 'BRL'),
+                            'estimated_days': int(option.get('min_delivery_days', 30)),
+                            'max_delivery_days': int(option.get('max_delivery_days', 60)),
+                            'tracking_available': option.get('tracking', 'false') == 'true',
+                            'free_shipping': option.get('free_shipping', 'false') == 'true',
+                            'origin_cep': STORE_ORIGIN_CEP,
+                            'destination_cep': destination_cep,
+                            'notes': f'Frete real AliExpress - {option.get("estimated_delivery_time", "N/A")}'
+                        })
+                    
+                    print(f'✅ Frete real calculado: {len(quotes)} opções')
+                    return quotes
+                else:
+                    error_msg = result.get('msg', 'Erro desconhecido na API de frete')
+                    print(f'❌ Erro API frete: {error_msg}')
+                    raise Exception(f'Erro na API de frete: {error_msg}')
+            else:
+                print(f'❌ Estrutura inesperada: {list(data.keys())}')
+                raise Exception('Resposta inesperada da API de frete')
+        else:
+            raise Exception(f'Erro HTTP {response.status_code}: {response.text}')
+            
+    except Exception as e:
+        print(f'❌ Erro ao calcular frete real: {e}')
+        raise e
 
 if __name__ == '__main__':
     print(f'­ƒÜÇ Servidor rodando na porta {PORT}')

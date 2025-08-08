@@ -2255,19 +2255,18 @@ def create_aliexpress_order(order_data):
                 "order_memo": item.get('memo', 'Pedido da Loja da Sophia')
             })
         
-        # Endereço da loja (consignee)
+        # Endereço da loja (consignee) - formato correto para AliExpress
         logistics_address = {
             "zip": STORE_ORIGIN_CEP.replace('-', ''),
-            "country": STORE_COUNTRY,
-            "address": STORE_ADDRESS_LINE1 or "Rua Teste, 123",
-            "address2": STORE_ADDRESS_LINE2 or "Bloco 03, Apto 202",
-            "city": STORE_CITY or "Fortaleza",
+            "country": "BR",
+            "province": "Ceara",  # Nome do estado sem acentos
+            "city": "Fortaleza",
+            "district": "Centro",  # Bairro
+            "detail_address": "Rua Teste, 123 - Bloco 03, Apto 202",
             "contact_person": "francisco adonay ferreira do nascimento",
-            "mobile_no": "85997640050",  # Celular brasileiro com 11 dígitos
-            "phone_country": "+55",
+            "phone": "+5585997640050",  # Telefone com DDI +55
             "cpf": "07248629359",  # CPF válido fornecido pelo usuário
             "full_name": "francisco adonay ferreira do nascimento",
-            "province": "BR-CE",  # Código ISO do estado
             "locale": "pt_BR"
         }
         

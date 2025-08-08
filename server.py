@@ -2264,6 +2264,7 @@ def create_aliexpress_order(order_data):
             "city": STORE_CITY or "Fortaleza",
             "contact_person": STORE_CONSIGNEE_NAME,
             "mobile_no": "5585997640050",  # Telefone fixo com 11 dígitos
+            "phone_country": "+55",
             "full_name": STORE_CONSIGNEE_NAME,
             "province": STORE_STATE or "CE",
             "locale": "pt_BR",

@@ -2334,7 +2334,7 @@ def create_aliexpress_order(order_data):
         # Parâmetros da API
         param_place_order_request = {
             "product_items": product_items,
-            "address": logistics_address,  # Campo correto é 'address'
+            "logistics_address": logistics_address,  # Campo correto é 'logistics_address'
             "out_order_id": f"ORDER_{int(time.time())}_{order_data.get('customer_id', 'CUSTOMER')}"
         }
         

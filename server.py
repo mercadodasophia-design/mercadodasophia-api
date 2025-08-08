@@ -2259,8 +2259,8 @@ def create_aliexpress_order(order_data):
         logistics_address = {
             "zip": STORE_ORIGIN_CEP.replace('-', ''),
             "country": STORE_COUNTRY,
-            "address": STORE_ADDRESS_LINE1,
-            "address2": STORE_ADDRESS_LINE2,
+            "address": STORE_ADDRESS_LINE1 or "Rua Teste, 123",
+            "address2": STORE_ADDRESS_LINE2 or "Bloco 03, Apto 202",
             "city": STORE_CITY or "Fortaleza",
             "contact_person": "francisco adonay ferreira do nascimento",
             "mobile_no": "85997640050",  # Celular brasileiro com 11 dígitos
@@ -2268,8 +2268,7 @@ def create_aliexpress_order(order_data):
             "cpf": "07248629359",  # CPF válido fornecido pelo usuário
             "full_name": "francisco adonay ferreira do nascimento",
             "province": STORE_STATE or "CE",
-            "locale": "pt_BR",
-            "phone_country": "+55"
+            "locale": "pt_BR"
         }
         
         # Parâmetros da API

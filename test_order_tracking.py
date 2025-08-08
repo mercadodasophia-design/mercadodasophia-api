@@ -21,7 +21,7 @@ def test_order_tracking():
     try:
         # Fazer requisição
         response = requests.get(
-            f"{API_URL}/api/aliexpress/orders/{order_id}/status",
+            f"{API_URL}/api/aliexpress/orders/{order_id}/tracking",
             timeout=30
         )
         
@@ -31,17 +31,27 @@ def test_order_tracking():
         if response.status_code == 200:
             result = response.json()
             if result.get('success'):
-                order_status = result.get('order_status', {})
-                print("✅ Status do pedido obtido com sucesso!")
-                print(f"📦 Status: {order_status.get('status', 'N/A')}")
-                print(f"📝 Descrição: {order_status.get('status_desc', 'N/A')}")
-                print(f"💰 Valor: {order_status.get('total_amount', 'N/A')} {order_status.get('currency', 'USD')}")
-                print(f"🚚 Status Logística: {order_status.get('logistics_status', 'N/A')}")
-                print(f"📦 Tracking: {order_status.get('logistics_tracking_no', 'N/A')}")
-                print(f"📅 Criado: {order_status.get('created_time', 'N/A')}")
-                print(f"📅 Modificado: {order_status.get('modified_time', 'N/A')}")
+                tracking_info = result.get('tracking_info', {})
+                print("✅ Tracking do pedido obtido com sucesso!")
+                print(f"📦 Order ID: {tracking_info.get('order_id', 'N/A')}")
+                
+                tracking_details = tracking_info.get('tracking_details', [])
+                print(f"📦 Pacotes encontrados: {len(tracking_details)}")
+                
+                for i, package in enumerate(tracking_details):
+                    print(f"\n📦 Pacote {i+1}:")
+                    print(f"   🚚 Transportadora: {package.get('carrier_name', 'N/A')}")
+                    print(f"   📦 Número de rastreio: {package.get('mail_no', 'N/A')}")
+                    print(f"   📅 ETA: {package.get('eta_time', 'N/A')}")
+                    
+                    events = package.get('tracking_events', [])
+                    print(f"   📋 Eventos de tracking: {len(events)}")
+                    
+                    for event in events:
+                        print(f"      📅 {event.get('timestamp', 'N/A')} - {event.get('name', 'N/A')}")
+                        print(f"      📝 {event.get('description', 'N/A')}")
             else:
-                print("❌ Erro ao obter status do pedido")
+                print("❌ Erro ao obter tracking do pedido")
         else:
             print("❌ Erro HTTP")
             

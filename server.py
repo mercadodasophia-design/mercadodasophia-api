@@ -2460,8 +2460,8 @@ def create_order():
             'message': f'Erro ao criar pedido: {str(e)}'
         }), 500
 
-def get_aliexpress_order_status(order_id):
-    """Busca status de um pedido no AliExpress usando aliexpress.ds.order.get"""
+def get_aliexpress_order_tracking(order_id):
+    """Busca tracking de um pedido no AliExpress usando aliexpress.ds.order.tracking.get"""
     tokens = load_tokens()
     if not tokens or not tokens.get('access_token'):
         raise Exception('Token não encontrado. Faça autorização primeiro.')
@@ -2469,20 +2469,21 @@ def get_aliexpress_order_status(order_id):
     try:
         # Parâmetros da API
         params = {
-            "method": "aliexpress.ds.order.get",
+            "method": "aliexpress.ds.order.tracking.get",
             "app_key": APP_KEY,
             "timestamp": int(time.time() * 1000),
             "sign_method": "md5",
             "format": "json",
             "v": "2.0",
             "access_token": tokens['access_token'],
-            "order_id": str(order_id)
+            "ae_order_id": str(order_id),
+            "language": "en_US"
         }
         
         # Gerar assinatura
         params["sign"] = generate_api_signature(params, APP_SECRET)
         
-        print(f'📋 Buscando status do pedido AliExpress: {order_id}')
+        print(f'📋 Buscando tracking do pedido AliExpress: {order_id}')
         print(f'📋 Parâmetros: {json.dumps(params, indent=2)}')
         
         # Fazer requisição
@@ -2493,43 +2494,55 @@ def get_aliexpress_order_status(order_id):
         if response.status_code == 200:
             data = response.json()
             
-            if 'aliexpress_ds_order_get_response' in data:
-                order_response = data['aliexpress_ds_order_get_response']
-                result = order_response.get('result', {})
+            if 'result' in data:
+                result = data['result']
                 
-                if result.get('is_success') == True or result.get('is_success') == 'true':
-                    order_info = result.get('order_info', {})
+                if result.get('ret') == 'true':
+                    tracking_data = result.get('data', {})
+                    tracking_list = tracking_data.get('tracking_detail_line_list', [])
                     
-                    # Extrair informações do pedido
-                    order_status = {
+                    # Extrair informações de tracking
+                    tracking_info = {
                         'order_id': str(order_id),
-                        'status': order_info.get('order_status', 'UNKNOWN'),
-                        'status_desc': order_info.get('order_status_desc', 'Status desconhecido'),
-                        'created_time': order_info.get('gmt_create', ''),
-                        'modified_time': order_info.get('gmt_modified', ''),
-                        'total_amount': order_info.get('total_amount', ''),
-                        'currency': order_info.get('currency', 'USD'),
-                        'logistics_status': order_info.get('logistics_status', ''),
-                        'logistics_tracking_no': order_info.get('logistics_tracking_no', ''),
-                        'buyer_info': order_info.get('buyer_info', {}),
-                        'product_list': order_info.get('product_list', [])
+                        'tracking_details': []
                     }
                     
-                    print(f'✅ Status do pedido obtido: {order_status["status"]}')
+                    for tracking in tracking_list:
+                        package_info = {
+                            'carrier_name': tracking.get('carrier_name', ''),
+                            'mail_no': tracking.get('mail_no', ''),
+                            'eta_time': tracking.get('eta_time_stamps', ''),
+                            'package_items': tracking.get('package_item_list', []),
+                            'tracking_events': []
+                        }
+                        
+                        # Extrair eventos de tracking
+                        detail_node_list = tracking.get('detail_node_list', [])
+                        for event in detail_node_list:
+                            tracking_event = {
+                                'timestamp': event.get('time_stamp', ''),
+                                'description': event.get('tracking_detail_desc', ''),
+                                'name': event.get('tracking_name', '')
+                            }
+                            package_info['tracking_events'].append(tracking_event)
+                        
+                        tracking_info['tracking_details'].append(package_info)
+                    
+                    print(f'✅ Tracking do pedido obtido: {len(tracking_info["tracking_details"])} pacotes')
                     
                     return {
                         'success': True,
-                        'order_status': order_status,
-                        'message': f'Status do pedido: {order_status["status_desc"]}'
+                        'tracking_info': tracking_info,
+                        'message': f'Tracking encontrado: {len(tracking_info["tracking_details"])} pacotes'
                     }
                 else:
-                    error_code = result.get('error_code', 'UNKNOWN_ERROR')
-                    error_msg = result.get('error_msg', 'Erro desconhecido')
-                    print(f'❌ Erro ao buscar status: {error_code} - {error_msg}')
-                    raise Exception(f'Erro ao buscar status: {error_code} - {error_msg}')
+                    error_code = result.get('code', 'UNKNOWN_ERROR')
+                    error_msg = result.get('msg', 'Erro desconhecido')
+                    print(f'❌ Erro ao buscar tracking: {error_code} - {error_msg}')
+                    raise Exception(f'Erro ao buscar tracking: {error_code} - {error_msg}')
             else:
                 print(f'❌ Estrutura inesperada da resposta: {list(data.keys())}')
-                raise Exception('Resposta inesperada da API de status de pedidos')
+                raise Exception('Resposta inesperada da API de tracking')
         else:
             print(f'❌ Erro HTTP {response.status_code}: {response.text}')
             raise Exception(f'Erro HTTP {response.status_code}: {response.text}')
@@ -2538,16 +2551,16 @@ def get_aliexpress_order_status(order_id):
         print(f'❌ Erro ao buscar status do pedido: {e}')
         raise e
 
-@app.route('/api/aliexpress/orders/<order_id>/status', methods=['GET'])
-def get_order_status(order_id):
-    """Endpoint para buscar status de um pedido"""
+@app.route('/api/aliexpress/orders/<order_id>/tracking', methods=['GET'])
+def get_order_tracking(order_id):
+    """Endpoint para buscar tracking de um pedido"""
     try:
-        result = get_aliexpress_order_status(order_id)
+        result = get_aliexpress_order_tracking(order_id)
         return jsonify(result)
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Erro ao buscar status do pedido: {str(e)}'
+            'message': f'Erro ao buscar tracking do pedido: {str(e)}'
         }), 500
 
 @app.route('/api/aliexpress/product/<product_id>/skus', methods=['GET'])

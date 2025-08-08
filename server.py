@@ -108,13 +108,26 @@ def calculate_own_shipping_quotes(destination_cep, items):
 @app.route('/shipping/quote', methods=['POST'])
 def shipping_quote():
     try:
+        print(f'📦 Recebendo requisição de frete: {request.get_data()}')
         data = request.get_json(silent=True) or {}
+        print(f'📦 Dados recebidos: {data}')
+        
         destination_cep = data.get('destination_cep')
         items = data.get('items', [])
+        
+        print(f'📦 CEP destino: {destination_cep}')
+        print(f'📦 Items: {items}')
+        print(f'📦 Tipo items: {type(items)}')
+        print(f'📦 Len items: {len(items) if isinstance(items, list) else "N/A"}')
+        
         if not destination_cep or not isinstance(items, list) or len(items) == 0:
-            return jsonify({'success': False, 'message': 'Parâmetros inválidos'}), 400
+            error_msg = f'Parâmetros inválidos: destination_cep={destination_cep}, items={items}'
+            print(f'❌ {error_msg}')
+            return jsonify({'success': False, 'message': error_msg}), 400
 
         quotes = calculate_own_shipping_quotes(destination_cep, items)
+        print(f'✅ Cotações calculadas: {quotes}')
+        
         return jsonify({'success': True, 'data': quotes, 'fulfillment': {
             'mode': 'own_warehouse',
             'inbound_lead_time_days': int(os.getenv('INBOUND_LEAD_TIME_DAYS', '12')),

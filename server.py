@@ -2303,32 +2303,34 @@ def create_aliexpress_order(order_data):
             # Endereço fornecido no payload
             address_data = order_data['address']
             logistics_address = {
-                "zip": address_data.get('zip', STORE_ORIGIN_CEP.replace('-', '')),
-                "country": address_data.get('country', 'BR'),
-                "province": address_data.get('province', 'Ceara'),
+                "address": address_data.get('detail_address', 'Rua Teste, 123 - Bloco 03, Apto 202'),
+                "address2": "",
                 "city": address_data.get('city', 'Fortaleza'),
-                "district": address_data.get('district', 'Centro'),
-                "detail_address": address_data.get('detail_address', 'Rua Teste, 123 - Bloco 03, Apto 202'),
                 "contact_person": address_data.get('contact_person', 'francisco adonay ferreira do nascimento'),
-                "phone": address_data.get('phone', '+5585997640050'),
+                "country": address_data.get('country', 'BR'),
                 "cpf": "07248629359",  # CPF válido fornecido pelo usuário
                 "full_name": address_data.get('contact_person', 'francisco adonay ferreira do nascimento'),
-                "locale": "pt_BR"
+                "locale": "pt_BR",
+                "mobile_no": address_data.get('phone', '+5585997640050'),
+                "phone_country": "+55",
+                "province": address_data.get('province', 'Ceara'),
+                "zip": address_data.get('zip', STORE_ORIGIN_CEP.replace('-', ''))
             }
         else:
             # Endereço padrão da loja
             logistics_address = {
-                "zip": STORE_ORIGIN_CEP.replace('-', ''),
-                "country": "BR",
-                "province": "Ceara",  # Nome do estado sem acentos
+                "address": "Rua Teste, 123 - Bloco 03, Apto 202",
+                "address2": "",
                 "city": "Fortaleza",
-                "district": "Centro",  # Bairro
-                "detail_address": "Rua Teste, 123 - Bloco 03, Apto 202",
                 "contact_person": "francisco adonay ferreira do nascimento",
-                "phone": "+5585997640050",  # Telefone com DDI +55
+                "country": "BR",
                 "cpf": "07248629359",  # CPF válido fornecido pelo usuário
                 "full_name": "francisco adonay ferreira do nascimento",
-                "locale": "pt_BR"
+                "locale": "pt_BR",
+                "mobile_no": "+5585997640050",
+                "phone_country": "+55",
+                "province": "Ceara",
+                "zip": STORE_ORIGIN_CEP.replace('-', '')
             }
         
         # Parâmetros da API

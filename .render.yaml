@@ -14,6 +14,26 @@ services:
         value: https://mercadodasophia-api.onrender.com/api/aliexpress/oauth-callback
       - key: PORT
         value: 10000
+      - key: STORE_ORIGIN_CEP
+        value: 61771-880
+      - key: STORE_HANDLING_DAYS
+        value: 2
+      - key: INBOUND_LEAD_TIME_DAYS
+        value: 12
+      - key: STORE_CONSIGNEE_NAME
+        value: ana cristina silva lima
+      - key: STORE_PHONE
+        value: +5585997640050
+      - key: STORE_ADDRESS_LINE1
+        value: numero 280, bloco 03 ap 202
+      - key: STORE_ADDRESS_LINE2
+        value: 
+      - key: STORE_CITY
+        value: 
+      - key: STORE_STATE
+        value: 
+      - key: STORE_COUNTRY
+        value: BR
       - key: PYTHON_VERSION
         value: 3.11.7 
  

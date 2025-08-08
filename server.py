@@ -21,6 +21,16 @@ REDIRECT_URI = "https://mercadodasophia-api.onrender.com/api/aliexpress/oauth-ca
 
 TOKENS_FILE = 'tokens.json'
 
+# Endereço da LOJA para criação de pedidos no AliExpress (consignee)
+STORE_CONSIGNEE_NAME = os.getenv('STORE_CONSIGNEE_NAME', 'ana cristina silva lima')
+STORE_PHONE = os.getenv('STORE_PHONE', '+5585997640050')
+STORE_ORIGIN_CEP = os.getenv('STORE_ORIGIN_CEP', '61771-880')
+STORE_ADDRESS_LINE1 = os.getenv('STORE_ADDRESS_LINE1', 'numero 280, bloco 03 ap 202')
+STORE_ADDRESS_LINE2 = os.getenv('STORE_ADDRESS_LINE2', '')
+STORE_CITY = os.getenv('STORE_CITY', '')
+STORE_STATE = os.getenv('STORE_STATE', '')
+STORE_COUNTRY = os.getenv('STORE_COUNTRY', 'BR')
+
 # ===================== FUN├º├ÁES AUXILIARES =====================
 def save_tokens(tokens):
     with open(TOKENS_FILE, 'w') as f:
@@ -103,7 +113,11 @@ def shipping_quote():
             return jsonify({'success': False, 'message': 'Parâmetros inválidos'}), 400
 
         quotes = calculate_own_shipping_quotes(destination_cep, items)
-        return jsonify({'success': True, 'data': quotes})
+        return jsonify({'success': True, 'data': quotes, 'fulfillment': {
+            'mode': 'own_warehouse',
+            'inbound_lead_time_days': int(os.getenv('INBOUND_LEAD_TIME_DAYS', '12')),
+            'handling_days': int(os.getenv('STORE_HANDLING_DAYS', '2')),
+        }})
     except Exception as e:
         print(f'❌ Erro ao calcular frete: {e}')
         return jsonify({'success': False, 'message': str(e)}), 500
@@ -356,6 +370,23 @@ def create_test_page():
                         <h3>2. Status dos Tokens</h3>
                         <p>Verifica se h├í tokens salvos no servidor</p>
                         <a href="''' + base_url + '''/api/aliexpress/tokens/status" target="_blank" class="btn btn-secondary">­ƒôè Ver Status</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>🚚 Frete Próprio (Loja)</h2>
+                <div class="endpoint-grid">
+                    <div class="endpoint-card">
+                        <h3>Simular Cotação</h3>
+                        <p>POST /shipping/quote</p>
+                        <p>Body:
+<pre>{
+  "destination_cep": "01001-000",
+  "items": [{"name": "Demo", "price": 99.9, "quantity": 1, "weight": 0.5}]
+}</pre>
+                        </p>
+                        <a href="''' + base_url + '''/" target="_blank" class="btn">Ver Página</a>
                     </div>
                 </div>
             </div>

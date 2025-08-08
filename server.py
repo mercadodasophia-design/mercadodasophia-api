@@ -2028,6 +2028,7 @@ def calculate_real_shipping_quotes(product_id, destination_cep, items):
                 "shipToCountry": "BR",
                 "provinceCode": "SP",  # São Paulo como padrão
                 "cityCode": "SAO",     # São Paulo como padrão
+                "selectedSkuId": "12000023999200390",  # SKU padrão
                 "language": "pt_BR",
                 "currency": "BRL",
                 "locale": "pt_BR"
@@ -2195,6 +2196,7 @@ def debug_freight():
                 "shipToCountry": "BR",
                 "provinceCode": "SP",
                 "cityCode": "SAO",
+                "selectedSkuId": "12000023999200390",  # SKU padrão
                 "language": "pt_BR",
                 "currency": "BRL",
                 "locale": "pt_BR"

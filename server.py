@@ -2179,6 +2179,49 @@ def debug_tokens():
             'tokens': None
         })
 
+@app.route('/debug/order', methods=['GET'])
+def debug_order():
+    """Debug endpoint para testar criação de pedidos"""
+    try:
+        # Dados de teste
+        order_data = {
+            "customer_id": "DEBUG_CUSTOMER_001",
+            "items": [
+                {
+                    "product_id": "1005007720304124",
+                    "quantity": 1,
+                    "sku_attr": "",
+                    "memo": "Debug order creation"
+                }
+            ],
+            "address": {
+                "country": "BR",
+                "province": "Ceara",
+                "city": "Fortaleza",
+                "district": "Centro",
+                "detail_address": "Rua Teste, 123 - Bloco 03, Apto 202",
+                "zip": "61771880",
+                "contact_person": "francisco adonay ferreira do nascimento",
+                "phone": "+5585997640050"
+            }
+        }
+        
+        # Tentar criar pedido
+        result = create_aliexpress_order(order_data)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Debug de criação de pedido',
+            'result': result
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Erro no debug: {str(e)}',
+            'error': str(e)
+        }), 500
+
 @app.route('/debug/freight', methods=['GET'])
 def debug_freight():
     """Endpoint para debug detalhado da API de frete"""
@@ -2291,7 +2334,7 @@ def create_aliexpress_order(order_data):
         # Parâmetros da API
         param_place_order_request = {
             "product_items": product_items,
-            "logistics_address": logistics_address,
+            "address": logistics_address,  # Campo correto é 'address'
             "out_order_id": f"ORDER_{int(time.time())}_{order_data.get('customer_id', 'CUSTOMER')}"
         }
         

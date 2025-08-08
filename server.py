@@ -2236,6 +2236,155 @@ def debug_freight():
             'traceback': str(e)
         })
 
+# ===================== CRIAÇÃO DE PEDIDOS =====================
+def create_aliexpress_order(order_data):
+    """Cria pedido no AliExpress usando aliexpress.ds.order.create"""
+    tokens = load_tokens()
+    if not tokens or not tokens.get('access_token'):
+        raise Exception('Token não encontrado. Faça autorização primeiro.')
+    
+    try:
+        # Preparar dados do pedido
+        product_items = []
+        for item in order_data['items']:
+            product_items.append({
+                "product_id": item['product_id'],
+                "product_count": str(item['quantity']),
+                "sku_attr": item.get('sku_attr', '14:70221'),  # SKU padrão
+                "logistics_service_name": "CAINIAO_FULFILLMENT_STD",  # Serviço padrão
+                "order_memo": item.get('memo', 'Pedido da Loja da Sophia')
+            })
+        
+        # Endereço da loja (consignee)
+        logistics_address = {
+            "zip": STORE_ORIGIN_CEP.replace('-', ''),
+            "country": STORE_COUNTRY,
+            "address": STORE_ADDRESS_LINE1,
+            "address2": STORE_ADDRESS_LINE2,
+            "city": STORE_CITY or "Fortaleza",
+            "contact_person": STORE_CONSIGNEE_NAME,
+            "mobile_no": STORE_PHONE.replace('+', ''),
+            "full_name": STORE_CONSIGNEE_NAME,
+            "province": STORE_STATE or "CE",
+            "locale": "pt_BR",
+            "phone_country": "+55"
+        }
+        
+        # Parâmetros da API
+        param_place_order_request = {
+            "product_items": product_items,
+            "logistics_address": logistics_address,
+            "out_order_id": f"ORDER_{int(time.time())}_{order_data.get('customer_id', 'CUSTOMER')}"
+        }
+        
+        # Parâmetros estendidos
+        ds_extend_request = {
+            "trade_extra_param": {
+                "business_model": "retail"
+            },
+            "payment": {
+                "try_to_pay": "false",
+                "pay_currency": "USD"
+            }
+        }
+        
+        # Parâmetros da requisição
+        params = {
+            "method": "aliexpress.ds.order.create",
+            "app_key": APP_KEY,
+            "timestamp": int(time.time() * 1000),
+            "sign_method": "md5",
+            "format": "json",
+            "v": "2.0",
+            "access_token": tokens['access_token'],
+            "param_place_order_request4_open_api_d_t_o": json.dumps(param_place_order_request),
+            "ds_extend_request": json.dumps(ds_extend_request)
+        }
+        
+        # Gerar assinatura
+        params["sign"] = generate_api_signature(params, APP_SECRET)
+        
+        print(f'🛒 Criando pedido AliExpress: {json.dumps(params, indent=2)}')
+        
+        # Fazer requisição
+        response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
+        print(f'🛒 Status Code: {response.status_code}')
+        print(f'🛒 Resposta: {response.text}')
+        
+        if response.status_code == 200:
+            data = response.json()
+            
+            if 'aliexpress_ds_order_create_response' in data:
+                order_response = data['aliexpress_ds_order_create_response']
+                result = order_response.get('result', {})
+                
+                if result.get('is_success') == 'true':
+                    order_id = result.get('order_id')
+                    print(f'✅ Pedido criado com sucesso! ID: {order_id}')
+                    
+                    return {
+                        'success': True,
+                        'order_id': order_id,
+                        'out_order_id': param_place_order_request['out_order_id'],
+                        'message': 'Pedido criado com sucesso no AliExpress',
+                        'fulfillment': {
+                            'mode': 'aliexpress_direct',
+                            'source': 'aliexpress_api',
+                            'notes': f'Pedido enviado para AliExpress - ID: {order_id}'
+                        }
+                    }
+                else:
+                    error_code = result.get('error_code', 'UNKNOWN_ERROR')
+                    error_msg = result.get('error_msg', 'Erro desconhecido')
+                    print(f'❌ Erro ao criar pedido: {error_code} - {error_msg}')
+                    raise Exception(f'Erro ao criar pedido: {error_code} - {error_msg}')
+            else:
+                print(f'❌ Estrutura inesperada da resposta: {list(data.keys())}')
+                raise Exception('Resposta inesperada da API de criação de pedidos')
+        else:
+            print(f'❌ Erro HTTP {response.status_code}: {response.text}')
+            raise Exception(f'Erro HTTP {response.status_code}: {response.text}')
+            
+    except Exception as e:
+        print(f'❌ Erro ao criar pedido AliExpress: {e}')
+        raise e
+
+@app.route('/api/aliexpress/orders/create', methods=['POST'])
+def create_order():
+    """Endpoint para criar pedidos no AliExpress"""
+    try:
+        data = request.get_json(silent=True) or {}
+        
+        # Validar dados obrigatórios
+        required_fields = ['items']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({
+                    'success': False,
+                    'message': f'Campo obrigatório ausente: {field}'
+                }), 400
+        
+        items = data['items']
+        if not isinstance(items, list) or len(items) == 0:
+            return jsonify({
+                'success': False,
+                'message': 'Lista de itens deve conter pelo menos um item'
+            }), 400
+        
+        print(f'🛒 Recebendo pedido: {json.dumps(data, indent=2)}')
+        
+        # Criar pedido no AliExpress
+        result = create_aliexpress_order(data)
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        print(f'❌ Erro no endpoint de criação de pedidos: {e}')
+        return jsonify({
+            'success': False,
+            'message': f'Erro ao criar pedido: {str(e)}'
+        }), 500
+
 if __name__ == '__main__':
     print(f'­ƒÜÇ Servidor rodando na porta {PORT}')
     print(f'APP_KEY: {"Ô£à" if APP_KEY else "ÔØî"} | APP_SECRET: {"Ô£à" if APP_SECRET else "ÔØî"} | REDIRECT_URI: {REDIRECT_URI}')

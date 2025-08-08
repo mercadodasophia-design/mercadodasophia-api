@@ -2143,7 +2143,7 @@ def debug_tokens():
         }
         
         # Gerar assinatura
-        test_params['sign'] = generate_signature(test_params, APP_SECRET)
+        test_params['sign'] = generate_api_signature(test_params, APP_SECRET)
         
         print(f"🔍 Testando tokens com params: {test_params}")
         

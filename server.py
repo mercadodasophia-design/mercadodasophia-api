@@ -33,6 +33,81 @@ def load_tokens():
             return json.load(f)
     return None
 
+# ===================== FRETE PRÓPRIO (ENVIO PELA LOJA) =====================
+def calculate_own_shipping_quotes(destination_cep, items):
+    """Calcula cotações de frete próprio a partir da loja.
+
+    Regras simples:
+      - preço base + adicional por kg acima de 1kg
+      - prazo = inbound (chegada do produto na loja) + manuseio + trânsito
+    """
+    origin_cep = os.getenv('STORE_ORIGIN_CEP', '01001-000')
+    handling_days = int(os.getenv('STORE_HANDLING_DAYS', '2'))
+    inbound_days = int(os.getenv('INBOUND_LEAD_TIME_DAYS', '12'))
+
+    total_weight = 0.0
+    for it in items:
+        qty = int(it.get('quantity', 1))
+        weight = float(it.get('weight', 0.5))
+        total_weight += weight * qty
+
+    services = [
+        {
+            'code': 'OWN_ECONOMY',
+            'name': 'Entrega Padrão (Loja)',
+            'base': 19.9,
+            'perKg': 6.5,
+            'carrier': 'Correios/Parceiro',
+            'transitDays': 5,
+        },
+        {
+            'code': 'OWN_EXPRESS',
+            'name': 'Entrega Expressa (Loja)',
+            'base': 29.9,
+            'perKg': 9.9,
+            'carrier': 'Parceiro Expresso',
+            'transitDays': 2,
+        },
+    ]
+
+    quotes = []
+    for s in services:
+        add_kg = max(0.0, total_weight - 1.0)
+        price = s['base'] + add_kg * s['perKg']
+        eta_days = inbound_days + handling_days + s['transitDays']
+        eta_ts = int(time.time()) + eta_days * 24 * 60 * 60
+
+        quotes.append({
+            'service_code': s['code'],
+            'service_name': s['name'],
+            'carrier': s['carrier'],
+            'price': round(price, 2),
+            'currency': 'BRL',
+            'estimated_days': eta_days,
+            'estimated_delivery_timestamp': eta_ts,
+            'origin_cep': origin_cep,
+            'destination_cep': destination_cep,
+            'notes': 'Cálculo de frete próprio (envio a partir da loja).'
+        })
+
+    return quotes
+
+
+@app.route('/shipping/quote', methods=['POST'])
+def shipping_quote():
+    try:
+        data = request.get_json(silent=True) or {}
+        destination_cep = data.get('destination_cep')
+        items = data.get('items', [])
+        if not destination_cep or not isinstance(items, list) or len(items) == 0:
+            return jsonify({'success': False, 'message': 'Parâmetros inválidos'}), 400
+
+        quotes = calculate_own_shipping_quotes(destination_cep, items)
+        return jsonify({'success': True, 'data': quotes})
+    except Exception as e:
+        print(f'❌ Erro ao calcular frete: {e}')
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 def generate_gop_signature(params, app_secret):
     """Gera assinatura GOP para AliExpress API"""
     # Ordenar par├ómetros alfabeticamente

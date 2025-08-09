@@ -15,6 +15,16 @@ from dotenv import load_dotenv
 from mercadopago_integration import mercadopago
 
 load_dotenv()  # Carrega variáveis do arquivo .env, se existir
+
+# ===================== MERCADO PAGO FALLBACK =====================
+# Se as variáveis MP não estiverem definidas, usar valores padrão
+if not os.getenv('MP_ACCESS_TOKEN'):
+    os.environ['MP_ACCESS_TOKEN'] = 'TEST-6048716701718688-080816-b095cf4abaa34073116ac070ff38e8f4-1514652489'
+if not os.getenv('MP_PUBLIC_KEY'):
+    os.environ['MP_PUBLIC_KEY'] = 'TEST-ce63c4af-fb50-4bef-b3dd-f0003f16cea3'
+if not os.getenv('MP_SANDBOX'):
+    os.environ['MP_SANDBOX'] = 'true'
+
 app = Flask(__name__)
 
 # ===================== CONFIGURA├º├ÁES =====================

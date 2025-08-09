@@ -23,7 +23,7 @@ if not os.getenv('MP_SANDBOX'):
     os.environ['MP_SANDBOX'] = 'true'
 
 # Importar integração Mercado Pago (DEPOIS de definir as variáveis)
-from mercadopago_integration import mercadopago
+from mercadopago_integration import mp_integration
 
 app = Flask(__name__)
 
@@ -2678,7 +2678,7 @@ def create_mp_preference():
                 }), 400
         
         # Criar preferência no Mercado Pago
-        result = mercadopago.create_preference(data)
+        result = mp_integration.create_preference(data)
         
         if result['success']:
             return jsonify({
@@ -2705,7 +2705,7 @@ def create_mp_preference():
 def get_mp_payment(payment_id):
     """Obter informações de um pagamento"""
     try:
-        result = mercadopago.get_payment_info(payment_id)
+        result = mp_integration.get_payment_info(payment_id)
         
         if result['success']:
             return jsonify({
@@ -2734,7 +2734,7 @@ def refund_mp_payment(payment_id):
         reason = data.get('reason', 'Refund requested')
         
         # Estornar pagamento
-        result = mercadopago.refund_payment(payment_id, amount, reason)
+        result = mp_integration.refund_payment(payment_id, amount, reason)
         
         if result['success']:
             return jsonify({
@@ -2760,7 +2760,7 @@ def refund_mp_payment(payment_id):
 def get_mp_preference(preference_id):
     """Obter detalhes de uma preferência"""
     try:
-        result = mercadopago.get_preference(preference_id)
+        result = mp_integration.get_preference(preference_id)
         
         if result['success']:
             return jsonify({
@@ -2794,7 +2794,7 @@ def mp_webhook():
             
             if payment_id:
                 # Obter informações do pagamento
-                payment_result = mercadopago.get_payment_info(payment_id)
+                payment_result = mp_integration.get_payment_info(payment_id)
                 
                 if payment_result['success']:
                     payment_data = payment_result['payment_data']
@@ -2934,7 +2934,7 @@ def process_payment():
             'payer': data.get('customer_info', {})
         }
         
-        mp_result = mercadopago.create_preference(mp_data)
+        mp_result = mp_integration.create_preference(mp_data)
         
         if not mp_result['success']:
             return jsonify({
@@ -2965,7 +2965,7 @@ def complete_payment(payment_id):
         data = request.get_json()
         
         # 1. Verificar status do pagamento
-        payment_result = mercadopago.get_payment_info(payment_id)
+        payment_result = mp_integration.get_payment_info(payment_id)
         
         if not payment_result['success']:
             return jsonify({
@@ -2993,7 +2993,7 @@ def complete_payment(payment_id):
         
         if not aliexpress_result['success']:
             # Se falhar no AliExpress, estornar Mercado Pago
-            refund_result = mercadopago.refund_payment(
+            refund_result = mp_integration.refund_payment(
                 payment_id,
                 reason="Falha na criação do pedido AliExpress"
             )
@@ -3023,7 +3023,7 @@ def complete_payment(payment_id):
 def debug_mp():
     """Debug do Mercado Pago"""
     try:
-        sdk_info = mercadopago.get_sdk_info()
+        sdk_info = mp_integration.get_sdk_info()
         return jsonify({
             'success': True,
             'sdk_info': sdk_info,

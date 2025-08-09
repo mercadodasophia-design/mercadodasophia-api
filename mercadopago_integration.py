@@ -235,4 +235,4 @@ class MercadoPagoIntegration:
         }
 
 # Instância global
-mercadopago = MercadoPagoIntegration()
+mp_integration = MercadoPagoIntegration()

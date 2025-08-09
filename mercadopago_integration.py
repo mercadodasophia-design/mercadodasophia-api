@@ -41,6 +41,10 @@ class MercadoPagoIntegration:
         Documentação: https://www.mercadopago.com.br/developers/docs/checkout-api/reference/preferences
         """
         try:
+            print(f"🔍 create_preference chamado com: {order_data}")
+            print(f"🔍 self.access_token: {bool(self.access_token)}")
+            print(f"🔍 self.sdk antes de _get_sdk(): {self.sdk}")
+            print(f"🔍 Atributos da classe: {dir(self)}")
             # Estrutura da preferência
             preference_data = {
                 "items": [

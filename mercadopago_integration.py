@@ -25,7 +25,14 @@ class MercadoPagoIntegration:
         if self.sdk is None:
             if not self.access_token:
                 raise Exception('MP_ACCESS_TOKEN não encontrado nas variáveis de ambiente')
-            self.sdk = mercadopago.SDK(self.access_token)
+            try:
+                self.sdk = mercadopago.SDK(self.access_token)
+                print(f"✅ SDK Mercado Pago inicializado com sucesso")
+                print(f"SDK type: {type(self.sdk)}")
+                print(f"SDK attributes: {dir(self.sdk)}")
+            except Exception as e:
+                print(f"❌ Erro ao inicializar SDK: {e}")
+                raise
         return self.sdk
     
     def create_preference(self, order_data):

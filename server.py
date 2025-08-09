@@ -2807,13 +2807,52 @@ def mp_webhook():
                     if status == 'approved':
                         print(f'✅ Pagamento aprovado! Criando pedido AliExpress...')
                         
-                        # Aqui você pode integrar com AliExpress
-                        # create_aliexpress_order(...)
-                        
-                        return jsonify({
-                            'success': True,
-                            'message': 'Webhook processado com sucesso'
-                        })
+                        try:
+                            # Buscar dados do pedido original pelo external_reference
+                            order_data = _get_order_data_from_external_reference(external_reference)
+                            
+                            if order_data:
+                                # Criar pedido no AliExpress
+                                aliexpress_result = _create_aliexpress_order_from_payment(order_data, payment_data)
+                                
+                                if aliexpress_result['success']:
+                                    print(f'🎉 Pedido AliExpress criado: {aliexpress_result["order_id"]}')
+                                    
+                                    # Salvar relação pagamento → pedido para tracking futuro
+                                    _save_payment_order_relation(payment_id, external_reference, aliexpress_result['order_id'])
+                                    
+                                    return jsonify({
+                                        'success': True,
+                                        'message': 'Pedido AliExpress criado com sucesso',
+                                        'order_id': aliexpress_result['order_id']
+                                    })
+                                else:
+                                    print(f'❌ Falha ao criar pedido AliExpress: {aliexpress_result["error"]}')
+                                    
+                                    # Tentar estorno automático
+                                    refund_result = mp_integration.refund_payment(
+                                        payment_id, 
+                                        reason="Falha na criação do pedido AliExpress"
+                                    )
+                                    
+                                    return jsonify({
+                                        'success': False,
+                                        'message': 'Falha ao criar pedido AliExpress. Estorno iniciado.',
+                                        'refunded': refund_result.get('success', False)
+                                    }), 500
+                            else:
+                                print(f'❌ Dados do pedido não encontrados para: {external_reference}')
+                                return jsonify({
+                                    'success': False,
+                                    'message': 'Dados do pedido não encontrados'
+                                }), 400
+                                
+                        except Exception as e:
+                            print(f'❌ Erro ao processar webhook: {e}')
+                            return jsonify({
+                                'success': False,
+                                'message': f'Erro interno: {str(e)}'
+                            }), 500
                     else:
                         print(f'⚠️ Pagamento não aprovado: {status}')
                         return jsonify({
@@ -3034,6 +3073,112 @@ def debug_mp():
             'success': False,
             'message': f'Erro ao obter informações do SDK: {str(e)}'
         }), 500
+
+# ============================================================================
+# FUNÇÕES AUXILIARES WEBHOOK
+# ============================================================================
+
+def _get_order_data_from_external_reference(external_reference):
+    """
+    Recuperar dados do pedido original pelo external_reference
+    Em um sistema real, isso viria de um banco de dados
+    """
+    # Por enquanto, vamos simular dados baseados no ORDER ID
+    if external_reference and external_reference.startswith('ORDER-'):
+        return {
+            'items': [
+                {
+                    'product_id': '1005006043070326',  # ID real do AliExpress
+                    'sku_attr': '',
+                    'quantity': 1,
+                    'price': 25.99
+                }
+            ],
+            'customer_info': {
+                'name': 'francisco adonay ferreira do nascimento',
+                'cpf': '07248629359',
+                'phone': '85997640050',
+                'address': {
+                    'contact_person': 'francisco adonay ferreira do nascimento',
+                    'mobile_no': '85997640050',
+                    'phone_country': '55',
+                    'full_name': 'francisco adonay ferreira do nascimento',
+                    'detail_address': 'Rua Teste, 123 - Bloco 03, Apto 202',
+                    'city': 'Fortaleza',
+                    'province': 'Ceara',
+                    'zip': '61771-880',
+                    'country': 'BR',
+                    'cpf': '07248629359'
+                }
+            }
+        }
+    return None
+
+def _create_aliexpress_order_from_payment(order_data, payment_data):
+    """
+    Criar pedido no AliExpress usando dados do pagamento
+    """
+    try:
+        # Preparar dados para AliExpress
+        product_items = []
+        for item in order_data['items']:
+            product_items.append({
+                'product_id': item['product_id'],
+                'sku_attr': item.get('sku_attr', ''),
+                'quantity': item['quantity']
+            })
+        
+        # Dados do endereço (sempre da loja)
+        logistics_address = order_data['customer_info']['address']
+        
+        # Criar pedido usando função existente
+        result = create_aliexpress_order({
+            'product_items': product_items,
+            'logistics_address': logistics_address
+        })
+        
+        return result
+        
+    except Exception as e:
+        print(f'❌ Erro ao criar pedido AliExpress: {e}')
+        return {
+            'success': False,
+            'error': str(e)
+        }
+
+def _save_payment_order_relation(payment_id, external_reference, order_id):
+    """
+    Salvar relação entre pagamento e pedido para tracking futuro
+    Em um sistema real, isso seria salvo em banco de dados
+    """
+    relation_data = {
+        'payment_id': payment_id,
+        'external_reference': external_reference,
+        'aliexpress_order_id': order_id,
+        'created_at': time.time(),
+        'status': 'created'
+    }
+    
+    # Salvar em arquivo temporário para demo
+    # Em produção, usar banco de dados
+    relations_file = 'payment_order_relations.json'
+    
+    try:
+        if os.path.exists(relations_file):
+            with open(relations_file, 'r') as f:
+                relations = json.load(f)
+        else:
+            relations = []
+        
+        relations.append(relation_data)
+        
+        with open(relations_file, 'w') as f:
+            json.dump(relations, f, indent=2)
+        
+        print(f'💾 Relação salva: {payment_id} → {order_id}')
+        
+    except Exception as e:
+        print(f'❌ Erro ao salvar relação: {e}')
 
 if __name__ == '__main__':
     print(f'🚀 Servidor rodando na porta {PORT}')

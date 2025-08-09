@@ -143,3 +143,4 @@ if __name__ == "__main__":
     
     # Testar processamento de pagamento
     test_process_payment()
+

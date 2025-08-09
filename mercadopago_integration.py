@@ -17,8 +17,16 @@ class MercadoPagoIntegration:
         self.public_key = os.getenv('MP_PUBLIC_KEY')
         self.sandbox_mode = os.getenv('MP_SANDBOX', 'true').lower() == 'true'
         
-        # Inicializar SDK
-        self.sdk = mercadopago.SDK(self.access_token)
+        # SDK será inicializado quando necessário
+        self.sdk = None
+    
+    def _get_sdk(self):
+        """Inicializar SDK apenas quando necessário"""
+        if self.sdk is None:
+            if not self.access_token:
+                raise Exception('MP_ACCESS_TOKEN não encontrado nas variáveis de ambiente')
+            self.sdk = mercadopago.SDK(self.access_token)
+        return self.sdk
     
     def create_preference(self, order_data):
         """
@@ -53,7 +61,8 @@ class MercadoPagoIntegration:
                 preference_data["payer"] = order_data['payer']
             
             # Criar preferência usando SDK
-            result = self.sdk.preference().create(preference_data)
+            sdk = self._get_sdk()
+            result = sdk.preference().create(preference_data)
             
             if result["status"] == 201:
                 preference = result["response"]
@@ -85,7 +94,8 @@ class MercadoPagoIntegration:
         Documentação: https://www.mercadopago.com.br/developers/docs/checkout-api/reference/payments
         """
         try:
-            result = self.sdk.payment().get(payment_id)
+            sdk = self._get_sdk()
+            result = sdk.payment().get(payment_id)
             
             if result["status"] == 200:
                 payment_data = result["response"]
@@ -118,7 +128,8 @@ class MercadoPagoIntegration:
             if amount:
                 refund_data["amount"] = float(amount)
             
-            result = self.sdk.refund().create(payment_id, refund_data)
+            sdk = self._get_sdk()
+            result = sdk.refund().create(payment_id, refund_data)
             
             if result["status"] == 201:
                 refund_data = result["response"]
@@ -149,7 +160,8 @@ class MercadoPagoIntegration:
         Documentação: https://www.mercadopago.com.br/developers/docs/checkout-api/reference/payments
         """
         try:
-            result = self.sdk.payment().create(payment_data)
+            sdk = self._get_sdk()
+            result = sdk.payment().create(payment_data)
             
             if result["status"] == 201:
                 payment = result["response"]
@@ -180,7 +192,8 @@ class MercadoPagoIntegration:
         Documentação: https://www.mercadopago.com.br/developers/docs/checkout-api/reference/preferences
         """
         try:
-            result = self.sdk.preference().get(preference_id)
+            sdk = self._get_sdk()
+            result = sdk.preference().get(preference_id)
             
             if result["status"] == 200:
                 preference = result["response"]

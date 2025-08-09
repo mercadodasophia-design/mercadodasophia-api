@@ -41,7 +41,7 @@ services:
       - key: MP_PUBLIC_KEY
         value: TEST-ce63c4af-fb50-4bef-b3dd-f0003f16cea3
       - key: MP_SANDBOX
-        value: true 
+        value: true
  
  
  

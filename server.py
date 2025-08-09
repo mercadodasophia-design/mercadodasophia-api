@@ -11,9 +11,6 @@ from flask import Flask, request, jsonify
 import iop
 from dotenv import load_dotenv
 
-# Importar integração Mercado Pago
-from mercadopago_integration import mercadopago
-
 load_dotenv()  # Carrega variáveis do arquivo .env, se existir
 
 # ===================== MERCADO PAGO FALLBACK =====================
@@ -24,6 +21,9 @@ if not os.getenv('MP_PUBLIC_KEY'):
     os.environ['MP_PUBLIC_KEY'] = 'TEST-ce63c4af-fb50-4bef-b3dd-f0003f16cea3'
 if not os.getenv('MP_SANDBOX'):
     os.environ['MP_SANDBOX'] = 'true'
+
+# Importar integração Mercado Pago (DEPOIS de definir as variáveis)
+from mercadopago_integration import mercadopago
 
 app = Flask(__name__)
 

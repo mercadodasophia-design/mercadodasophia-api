@@ -1,6 +1,6 @@
-services:
+      services:
   - type: web
-    name: aliexpress-python-api
+    name: aliexpress-dropshipping-api
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
@@ -9,11 +9,39 @@ services:
       - key: APP_KEY
         value: 517616
       - key: APP_SECRET
-        value: TTqNmTMs5Q0QiPbulDNenhXr2My18nN4
+        value: your_app_secret_here
       - key: REDIRECT_URI
         value: https://mercadodasophia-api.onrender.com/api/aliexpress/oauth-callback
-      - key: PORT
-        value: 10000
-      - key: PYTHON_VERSION
-        value: 3.11.7 
-        value: 10000 
+      - key: STORE_NAME
+        value: francisco adonay ferreira do nascimento
+      - key: STORE_CPF
+        value: 07248629359
+      - key: STORE_PHONE
+        value: 85997640050
+      - key: STORE_ADDRESS
+        value: Rua Teste, 123 - Bloco 03, Apto 202
+      - key: STORE_CITY
+        value: Fortaleza
+      - key: STORE_STATE
+        value: CE
+      - key: STORE_ZIP
+        value: 61771-880
+      - key: STORE_COUNTRY
+        value: BR
+      - key: INBOUND_LEAD_TIME_DAYS
+        value: 12
+      - key: STORE_HANDLING_DAYS
+        value: 2
+      - key: STORE_ORIGIN_CEP
+        value: 61771-880
+      - key: API_BASE_URL
+        value: https://mercadodasophia-api.onrender.com
+      - key: MP_ACCESS_TOKEN
+        value: TEST-6048716701718688-080816-b095cf4abaa34073116ac070ff38e8f4-1514652489
+      - key: MP_PUBLIC_KEY
+        value: TEST-ce63c4af-fb50-4bef-b3dd-f0003f16cea3
+      - key: MP_SANDBOX
+        value: true
+ 
+ 
+ 

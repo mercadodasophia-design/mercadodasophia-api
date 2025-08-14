@@ -38,7 +38,7 @@ CORS(app, origins=[
     "https://mercadodasophia-bbd01.firebaseapp.com"
 ], methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], allow_headers=["Content-Type", "Authorization"])
 
-# ===================== CONFIGURA├º├ÁES =====================
+# ===================== CONFIGURAÇÕES =====================
 APP_KEY = os.getenv('APP_KEY', '517616')  # Substitua pela sua APP_KEY
 APP_SECRET = os.getenv('APP_SECRET', 'skAvaPWbGLkkx5TlKf8kvLmILQtTV2sq')
 PORT = int(os.getenv('PORT', 5000))
@@ -57,7 +57,7 @@ STORE_CITY = os.getenv('STORE_CITY', '')
 STORE_STATE = os.getenv('STORE_STATE', '')
 STORE_COUNTRY = os.getenv('STORE_COUNTRY', 'BR')
 
-# ===================== FUN├º├ÁES AUXILIARES =====================
+# ===================== FUNÇÕES AUXILIARES =====================
 def save_tokens(tokens):
     with open(TOKENS_FILE, 'w') as f:
         json.dump(tokens, f)
@@ -164,15 +164,15 @@ def shipping_quote():
 
 def generate_gop_signature(params, app_secret):
     """Gera assinatura GOP para AliExpress API"""
-    # Ordenar par├ómetros alfabeticamente
+    # Ordenar parâmetros alfabeticamente
     sorted_params = sorted(params.items())
     
-    # Concatenar par├ómetros
+    # Concatenar parâmetros
     param_string = ''
     for key, value in sorted_params:
         param_string += f'{key}{value}'
     
-    # Adicionar app_secret no in├¡cio e fim
+    # Adicionar app_secret no início e fim
     sign_string = f'{app_secret}{param_string}{app_secret}'
     
     # Gerar MD5
@@ -181,20 +181,20 @@ def generate_gop_signature(params, app_secret):
     return signature
 
 def generate_api_signature(params, app_secret):
-    """Gerar assinatura para APIs de neg├│cios do AliExpress"""
+    """Gerar assinatura para APIs de negócios do AliExpress"""
     # 1´©ÅÔâú Ordenar e concatenar key+value
     sorted_params = "".join(f"{k}{v}" for k, v in sorted(params.items()))
     
     # 2´©ÅÔâú Concatenar secret + params + secret
     to_sign = f"{app_secret}{sorted_params}{app_secret}"
     
-    # 3´©ÅÔâú Gerar MD5 mai├║sculo
+    # 3. Gerar MD5 maiúsculo
     signature = hashlib.md5(to_sign.encode("utf-8")).hexdigest().upper()
     
     return signature
 
 def create_test_page():
-    """Cria p├ígina HTML de teste"""
+    """Cria página HTML de teste"""
     base_url = os.getenv('RENDER_EXTERNAL_URL', f'http://localhost:{PORT}')
     
     return '''
@@ -391,25 +391,36 @@ def create_test_page():
         
         <div class="content">
             <div class="info-box">
-                <h3>Ôä╣´©Å Como usar</h3>
-                <p>Esta ├® a vers├úo Python da API AliExpress que utiliza o SDK oficial da Alibaba. 
+                <h3>ℹ️ Como usar</h3>
+                <p>Esta é a versão Python da API AliExpress que utiliza o SDK oficial da Alibaba. 
                 Clique nos links abaixo para testar as funcionalidades. Para usar as APIs protegidas, 
-                primeiro fa├ºa a autoriza├º├úo OAuth.</p>
+                primeiro faça a autorização OAuth.</p>
             </div>
             
             <div class="section">
-                <h2>­ƒöÉ Autentica├º├úo OAuth</h2>
+                <h2>🔐 Autenticação OAuth</h2>
                 <div class="endpoint-grid">
                     <div class="endpoint-card">
-                        <h3>1. Gerar URL de Autoriza├º├úo</h3>
-                        <p>Gera a URL para autoriza├º├úo no AliExpress</p>
-                        <a href="''' + base_url + '''/api/aliexpress/auth" target="_blank" class="btn">­ƒöù Testar Autoriza├º├úo</a>
+                        <h3>1. Gerar URL de Autorização</h3>
+                        <p>Gera a URL para autorização no AliExpress</p>
+                        <a href="''' + base_url + '''/api/aliexpress/auth" target="_blank" class="btn">🔗 Testar Autorização</a>
                     </div>
                     
                     <div class="endpoint-card">
                         <h3>2. Status dos Tokens</h3>
-                        <p>Verifica se h├í tokens salvos no servidor</p>
+                        <p>Verifica se há tokens salvos no servidor</p>
                         <a href="''' + base_url + '''/api/aliexpress/tokens/status" target="_blank" class="btn btn-secondary">­ƒôè Ver Status</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>🔍 Teste Rápido - Buscar Produto por Link</h2>
+                <div class="endpoint-grid">
+                    <div class="endpoint-card">
+                        <h3>Buscar Produto Completo</h3>
+                        <p>Cole um link do AliExpress e veja todos os dados do produto</p>
+                        <a href="''' + base_url + '''/test-product" target="_blank" class="btn">🚀 Testar Busca</a>
                     </div>
                 </div>
             </div>
@@ -449,17 +460,17 @@ def create_test_page():
             </div>
             
             <div class="section">
-                <h2>­ƒôè Informa├º├Áes da API</h2>
+                <h2>📋 Informações da API</h2>
                 <div class="endpoint-grid">
                     <div class="endpoint-card">
-                        <h3>Informa├º├Áes do Servidor</h3>
-                        <p>Detalhes sobre endpoints dispon├¡veis</p>
+                        <h3>Informações do Servidor</h3>
+                        <p>Detalhes sobre endpoints disponíveis</p>
                         <a href="''' + base_url + '''/" target="_blank" class="btn">Ôä╣´©Å Ver Info</a>
                     </div>
                     
                     <div class="endpoint-card">
-                        <h3>Documenta├º├úo</h3>
-                        <p>Link para a documenta├º├úo do SDK</p>
+                        <h3>Documentação</h3>
+                        <p>Link para a documentação do SDK</p>
                         <a href="https://openservice.aliexpress.com/doc/doc.htm" target="_blank" class="btn btn-secondary">­ƒôÜ Ver Docs</a>
                     </div>
                 </div>
@@ -797,7 +808,7 @@ def create_callback_page(data):
 # ===================== ROTAS PRINCIPAIS =====================
 @app.route('/')
 def index():
-    """P├ígina inicial com links de teste"""
+    """Página inicial com links de teste"""
     if request.headers.get('Accept', '').find('text/html') != -1:
         return create_test_page()
     else:
@@ -908,7 +919,7 @@ def oauth_callback():
     """Callback OAuth"""
     code = request.args.get('code')
     if not code:
-        return jsonify({'error': 'C├│digo de autoriza├º├úo n├úo fornecido'}), 400
+        return jsonify({'error': 'Código de autorização não fornecido'}), 400
 
     print(f'­ƒöì Callback OAuth recebido com code: {code}')
 
@@ -944,14 +955,14 @@ def oauth_callback():
         
         try:
             if attempt['url'] == 'SDK_METHOD':
-                # Usar SDK oficial do AliExpress - M├®todo correto da documenta├º├úo
-                print(f'­ƒöº Usando SDK oficial do AliExpress (m├®todo correto)...')
+                # Usar SDK oficial do AliExpress - Método correto da documentação
+                print(f'🔧 Usando SDK oficial do AliExpress (método correto)...')
                 try:
-                    # URL base correta conforme documenta├º├úo
+                    # URL base correta conforme documentação
                     client = iop.IopClient('https://api-sg.aliexpress.com/rest', APP_KEY, APP_SECRET)
                     request_obj = iop.IopRequest('/auth/token/create')
                     request_obj.add_api_param('code', code)
-                    # N├úo adicionar uuid conforme documenta├º├úo
+                    # Não adicionar uuid conforme documentação
                     
                     response = client.execute(request_obj)
                     print(f'Ô£à SDK Response: {response.body}')
@@ -973,7 +984,7 @@ def oauth_callback():
                     print(f'ÔØî Erro no SDK: {sdk_error}')
                     continue
             else:
-                # Usar requisi├º├úo HTTP normal
+                # Usar requisição HTTP normal
                 response = requests.post(attempt['url'], headers=headers, data=data)
                 print(f'Ô£à Status Code: {response.status_code}')
                 print(f'Ô£à Content-Type: {response.headers.get("Content-Type")}')
@@ -990,11 +1001,11 @@ def oauth_callback():
                         print(f'Ô£à Sucesso na tentativa {attempt["name"]}!')
                         save_tokens(tokens)
                         
-                        # Retornar p├ígina HTML se a requisi├º├úo aceita HTML
+                        # Retornar página HTML se a requisição aceita HTML
                         if request.headers.get('Accept', '').find('text/html') != -1:
                             return create_callback_page(tokens)
                         else:
-                            # Retornar JSON para requisi├º├Áes program├íticas
+                            # Retornar JSON para requisições programáticas
                             return jsonify({'success': True, 'tokens': tokens})
                             
                     except json.JSONDecodeError as json_error:
@@ -1009,12 +1020,12 @@ def oauth_callback():
             continue
 
     # Se chegou aqui, nenhuma tentativa funcionou
-    error_message = "Todas as tentativas falharam. Verifique a configura├º├úo da app no AliExpress."
+    error_message = "Todas as tentativas falharam. Verifique a configuração da app no AliExpress."
     print(f'ÔØî {error_message}')
     return jsonify({
         'success': False,
         'message': error_message,
-        'details': 'A API est├í retornando HTML em vez de JSON. Isso pode indicar: 1) App n├úo configurada corretamente no AliExpress, 2) Tipo de app incorreto, 3) Permiss├Áes insuficientes'
+        'details': 'A API está retornando HTML em vez de JSON. Isso pode indicar: 1) App não configurada corretamente no AliExpress, 2) Tipo de app incorreto, 3) Permissões insuficientes'
     }), 400
 
 @app.route('/api/aliexpress/products')
@@ -1022,10 +1033,10 @@ def products():
     """Buscar produtos"""
     tokens = load_tokens()
     if not tokens or not tokens.get('access_token'):
-        return jsonify({'success': False, 'message': 'Token n├úo encontrado. Fa├ºa autoriza├º├úo primeiro.'}), 401
+        return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
 
     try:
-        # Par├ómetros para a API conforme documenta├º├úo
+        # Parâmetros para a API conforme documentação
         params = {
             "method": "aliexpress.ds.text.search",
             "app_key": APP_KEY,
@@ -1035,18 +1046,18 @@ def products():
             "v": "2.0",
             "access_token": tokens['access_token'],
             "keyWord": request.args.get('q', 'electronics'),  # Correto conforme documenta├º├úo
-            "countryCode": "BR",  # ­ƒæê obrigat├│rio para Brasil
-            "currency": "BRL",    # ­ƒæê obrigat├│rio para Brasil
-            "local": "pt_BR",     # ­ƒæê obrigat├│rio para Brasil
-            "pageSize": "400",    # Tamanho da p├ígina (aumentado para 100)
-            "pageIndex": "1",     # ├ìndice da p├ígina
+            "countryCode": "BR",  # obrigatório para Brasil
+"currency": "BRL",    # obrigatório para Brasil
+"local": "pt_BR",     # obrigatório para Brasil
+"pageSize": "400",    # Tamanho da página (aumentado para 100)
+"pageIndex": "1",     # índice da página
             "sortBy": "orders,desc"  # Ordenar por popularidade
         }
         
         # Gerar assinatura
         params["sign"] = generate_api_signature(params, APP_SECRET)
         
-        # Fazer requisi├º├úo HTTP direta para /sync
+        # Fazer requisição HTTP direta para /sync
         response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
         
         # Salvar resposta completa em arquivo JSON
@@ -1076,16 +1087,16 @@ def products():
             print(json.dumps(data, indent=2, ensure_ascii=False))
             print(f'💾 Dados processados salvos em: {processed_log_filename}')
             
-            # Verificar se h├í produtos na resposta
+            # Verificar se há produtos na resposta
             if 'aliexpress_ds_text_search_response' in data:
                 search_response = data['aliexpress_ds_text_search_response']
                 
                 # Analisar estrutura dos dados
                 result = search_response.get('result', {})
-                print(f'­ƒöì AN├áLISE ESTRUTURA - BUSCA RESULT:')
-                print(f'  - Keys dispon├¡veis: {list(result.keys())}')
+                print(f'🔍 ANÁLISE ESTRUTURA - BUSCA RESULT:')
+print(f'  - Keys disponíveis: {list(result.keys())}')
                 
-                # Extrair informa├º├Áes ├║teis para o frontend
+                # Extrair informações úteis para o frontend
                 processed_search = {
                     'total_count': result.get('total_count', 0),
                     'page_size': result.get('page_size', 20),
@@ -1326,13 +1337,52 @@ def product_details(product_id):
                 print(f'❌ ESTRUTURA INESPERADA: {list(data.keys())}')
                 return jsonify({'success': False, 'error': data}), 400
             
-            # Extrair informações úteis para o frontend
+            # Extrair informações completas conforme documentação da API
+            base_info = result.get('ae_item_base_info_dto', {})
+            multimedia_info = result.get('ae_multimedia_info_dto', {})
+            store_info = result.get('ae_store_info', {})
+            package_info = result.get('package_info_dto', {})
+            
             processed_data = {
                 'basic_info': {
                     'product_id': product_id,
-                    'title': result.get('ae_item_base_info_dto', {}).get('subject', ''),
-                    'description': result.get('ae_item_base_info_dto', {}).get('detail', ''),
-                    'main_image': result.get('ae_multimedia_info_dto', {}).get('image_urls', '').split(';')[0] if result.get('ae_multimedia_info_dto', {}).get('image_urls') else '',
+                    'title': base_info.get('subject', ''),
+                    'description': base_info.get('detail', ''),
+                    'mobile_detail': base_info.get('mobile_detail', ''),
+                    'main_image': multimedia_info.get('image_urls', '').split(';')[0] if multimedia_info.get('image_urls') else '',
+                    'gmt_modified': base_info.get('gmt_modified', ''),
+                    'gmt_create': base_info.get('gmt_create', ''),
+                    'product_status_type': base_info.get('product_status_type', ''),
+                    'category_id': base_info.get('category_id', ''),
+                    'category_sequence': base_info.get('category_sequence', ''),
+                    'currency_code': base_info.get('currency_code', 'USD'),
+                    'owner_member_seq_long': base_info.get('owner_member_seq_long', ''),
+                },
+                'ratings': {
+                    'avg_evaluation_rating': base_info.get('avg_evaluation_rating', '0'),
+                    'evaluation_count': base_info.get('evaluation_count', '0'),
+                    'sales_count': base_info.get('sales_count', '0'),
+                },
+                'store_info': {
+                    'store_name': store_info.get('store_name', ''),
+                    'store_id': store_info.get('store_id', ''),
+                    'store_country_code': store_info.get('store_country_code', ''),
+                    'item_as_described_rating': store_info.get('item_as_described_rating', '0'),
+                    'communication_rating': store_info.get('communication_rating', '0'),
+                    'shipping_speed_rating': store_info.get('shipping_speed_rating', '0'),
+                },
+                'package_info': {
+                    'gross_weight': package_info.get('gross_weight', ''),
+                    'package_length': package_info.get('package_length', ''),
+                    'package_width': package_info.get('package_width', ''),
+                    'package_height': package_info.get('package_height', ''),
+                    'package_type': package_info.get('package_type', ''),
+                    'base_unit': package_info.get('base_unit', ''),
+                    'product_unit': package_info.get('product_unit', ''),
+                },
+                'logistics_info': {
+                    'ship_to_country': result.get('logistics_info_dto', {}).get('ship_to_country', ''),
+                    'delivery_time': result.get('logistics_info_dto', {}).get('delivery_time', ''),
                 },
                 'pricing': {
                     'min_price': '',
@@ -1340,7 +1390,9 @@ def product_details(product_id):
                     'currency': 'BRL',
                 },
                 'images': [],
+                'videos': [],
                 'variations': [],
+                'properties': [],
                 'raw_data': result  # Dados completos para análise
             }
             
@@ -1352,39 +1404,109 @@ def product_details(product_id):
                     if image_urls:
                         processed_data['images'] = image_urls.split(';')
             
-            # Extrair variações/SKUs
+                # Extrair vídeos se disponíveis
+                if 'ae_video_dtos' in multimedia_info:
+                    videos = multimedia_info['ae_video_dtos']
+                    if isinstance(videos, list):
+                        processed_data['videos'] = videos
+                    elif isinstance(videos, dict) and 'ae_video_d_t_o' in videos:
+                        video_list = videos['ae_video_d_t_o']
+                        processed_data['videos'] = video_list if isinstance(video_list, list) else [video_list]
+            
+            # Extrair propriedades do produto (atributos)
+            if 'ae_item_properties' in result:
+                properties = result['ae_item_properties']
+                if isinstance(properties, list):
+                    processed_data['properties'] = properties
+                elif isinstance(properties, dict) and 'ae_item_property' in properties:
+                    prop_list = properties['ae_item_property']
+                    processed_data['properties'] = prop_list if isinstance(prop_list, list) else [prop_list]
+            
+            # Extrair variações/SKUs com todos os dados disponíveis
             if 'ae_item_sku_info_dtos' in result:
                 sku_info = result['ae_item_sku_info_dtos']
                 if 'ae_item_sku_info_d_t_o' in sku_info:
                     skus = sku_info['ae_item_sku_info_d_t_o']
                     skus_list = skus if isinstance(skus, list) else [skus]
                     
-                    # Corrigir propriedades nas variações
-                    print(f'🔍 PROCESSANDO {len(skus_list)} SKUs PARA CORREÇÃO DE CORES')
+                    print(f'🔍 PROCESSANDO {len(skus_list)} SKUs COM DADOS COMPLETOS')
+                    
+                    # Processar cada SKU com todos os campos da documentação
                     for i, sku in enumerate(skus_list):
                         print(f'  SKU {i+1}: {sku.get("sku_id", "N/A")}')
+                        
+                        # Garantir que todos os campos estão presentes
+                        processed_sku = {
+                            'sku_id': sku.get('sku_id', ''),
+                            'sku_attr': sku.get('sku_attr', ''),
+                            'offer_sale_price': sku.get('offer_sale_price', ''),
+                            'sku_price': sku.get('sku_price', ''),
+                            'offer_bulk_sale_price': sku.get('offer_bulk_sale_price', ''),
+                            'sku_available_stock': sku.get('sku_available_stock', 0),
+                            'sku_bulk_order': sku.get('sku_bulk_order', 0),
+                            'barcode': sku.get('barcode', ''),
+                            'ean_code': sku.get('ean_code', ''),
+                            'currency_code': sku.get('currency_code', 'USD'),
+                            'price_include_tax': sku.get('price_include_tax', False),
+                            'tax_currency_code': sku.get('tax_currency_code', ''),
+                            'tax_amount': sku.get('tax_amount', ''),
+                            'estimated_import_charges': sku.get('estimated_import_charges', ''),
+                            'buy_amount_limit_set_by_promotion': sku.get('buy_amount_limit_set_by_promotion', ''),
+                            'limit_strategy': sku.get('limit_strategy', ''),
+                            'wholesale_price_tiers': sku.get('wholesale_price_tiers', []),
+                            'ae_sku_property_dtos': sku.get('ae_sku_property_dtos', {}),
+                        }
+                        
+                        # Processar propriedades do SKU (cores, tamanhos, etc.)
                         if 'ae_sku_property_dtos' in sku:
                             properties = sku['ae_sku_property_dtos'].get('ae_sku_property_d_t_o', [])
                             if isinstance(properties, list):
+                                processed_properties = []
                                 for prop in properties:
                                     print(f'    Propriedade: {prop.get("sku_property_name")} = {prop.get("sku_property_value")} (def: {prop.get("property_value_definition_name")})')
+                                    
+                                    processed_prop = {
+                                        'sku_property_name': prop.get('sku_property_name', ''),
+                                        'sku_property_value': prop.get('sku_property_value', ''),
+                                        'property_value_definition_name': prop.get('property_value_definition_name', ''),
+                                        'sku_property_id': prop.get('sku_property_id', ''),
+                                        'property_value_id': prop.get('property_value_id', ''),
+                                        'sku_image': prop.get('sku_image', ''),
+                                    }
+                                    
                                     # Para cores, usar property_value_definition_name se disponível
                                     if prop.get('sku_property_name') == 'cor':
                                         real_color = prop.get('property_value_definition_name')
                                         if real_color and real_color.lower() not in ['branco', 'white']:
-                                            prop['sku_property_value'] = real_color
+                                            processed_prop['sku_property_value'] = real_color
                                             print(f'      ✅ Cor corrigida: {real_color}')
                                     # Para outros atributos, garantir que o valor está correto
                                     elif prop.get('property_value_definition_name'):
-                                        prop['sku_property_value'] = prop.get('property_value_definition_name')
+                                        processed_prop['sku_property_value'] = prop.get('property_value_definition_name')
                                         print(f'      ✅ Atributo corrigido: {prop.get("property_value_definition_name")}')
+                                    
+                                    processed_properties.append(processed_prop)
+                                
+                                processed_sku['ae_sku_property_dtos'] = {
+                                    'ae_sku_property_d_t_o': processed_properties
+                                }
+                        
+                        skus_list[i] = processed_sku
                     
                     processed_data['variations'] = skus_list
             
             print(f'📊 DADOS PROCESSADOS PARA FRONTEND:')
-            print(f'  - Imagens encontradas: {len(processed_data["images"])}')
-            print(f'  - Variações encontradas: {len(processed_data["variations"])}')
             print(f'  - Título: {processed_data["basic_info"]["title"][:50]}...')
+            print(f'  - Categoria ID: {processed_data["basic_info"]["category_id"]}')
+            print(f'  - Avaliação: {processed_data["ratings"]["avg_evaluation_rating"]}/5 ({processed_data["ratings"]["evaluation_count"]} avaliações)')
+            print(f'  - Vendas: {processed_data["ratings"]["sales_count"]}')
+            print(f'  - Loja: {processed_data["store_info"]["store_name"]}')
+            print(f'  - Imagens encontradas: {len(processed_data["images"])}')
+            print(f'  - Vídeos encontrados: {len(processed_data["videos"])}')
+            print(f'  - Propriedades encontradas: {len(processed_data["properties"])}')
+            print(f'  - Variações encontradas: {len(processed_data["variations"])}')
+            print(f'  - Peso: {processed_data["package_info"]["gross_weight"]}')
+            print(f'  - Dimensões: {processed_data["package_info"]["package_length"]}x{processed_data["package_info"]["package_width"]}x{processed_data["package_info"]["package_height"]}')
             
             return jsonify({'success': True, 'data': processed_data})
         
@@ -2458,6 +2580,455 @@ def test_endpoint():
             'STORE_HANDLING_DAYS': os.getenv('STORE_HANDLING_DAYS', '2')
         }
     })
+
+@app.route('/test-product')
+def test_product_page():
+    """Página de teste para buscar produtos por link"""
+    base_url = os.getenv('RENDER_EXTERNAL_URL', f'http://localhost:{PORT}')
+    
+    return '''
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste - Buscar Produto AliExpress</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .search-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .search-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .result-section {
+            margin-top: 30px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .product-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .product-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .product-image {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-right: 20px;
+        }
+        
+        .product-info h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .product-info p {
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .data-section {
+            margin-top: 20px;
+        }
+        
+        .data-section h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+        }
+        
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .data-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        
+        .data-item strong {
+            color: #333;
+        }
+        
+        .variations-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .variation-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .back-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #6c757d;
+            color: white;
+            text-decoration: none;
+            border-radius: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .back-btn:hover {
+            background: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Teste - Buscar Produto AliExpress</h1>
+            <p>Cole um link do AliExpress e veja todos os dados do produto</p>
+        </div>
+        
+        <div class="content">
+            <a href="''' + base_url + '''/" class="back-btn">← Voltar</a>
+            
+            <div class="search-section">
+                <h2>Buscar Produto por Link</h2>
+                <div class="input-group">
+                    <label for="productLink">Link do Produto AliExpress:</label>
+                    <input type="text" id="productLink" placeholder="https://www.aliexpress.com/item/..." />
+                </div>
+                <button onclick="searchProduct()" class="btn" id="searchBtn">🔍 Buscar Produto</button>
+            </div>
+            
+            <div id="result" class="result-section"></div>
+        </div>
+    </div>
+    
+    <script>
+        function extractProductId(url) {
+            // Extrair ID do produto de diferentes formatos de URL do AliExpress
+            const patterns = [
+                /\/item\/(\d+)\.html/,
+                /\/item\/(\d+)/,
+                /product_id=(\d+)/,
+                /itemId=(\d+)/,
+                /(\d{10,})/  // ID do produto geralmente tem 10+ dígitos
+            ];
+            
+            for (let pattern of patterns) {
+                const match = url.match(pattern);
+                if (match) {
+                    return match[1];
+                }
+            }
+            
+            return null;
+        }
+        
+        async function searchProduct() {
+            const link = document.getElementById('productLink').value.trim();
+            const searchBtn = document.getElementById('searchBtn');
+            const resultDiv = document.getElementById('result');
+            
+            if (!link) {
+                resultDiv.innerHTML = '<div class="error">Por favor, insira um link do AliExpress</div>';
+                return;
+            }
+            
+            const productId = extractProductId(link);
+            if (!productId) {
+                resultDiv.innerHTML = '<div class="error">Não foi possível extrair o ID do produto do link fornecido</div>';
+                return;
+            }
+            
+            searchBtn.disabled = true;
+            searchBtn.textContent = '🔍 Buscando...';
+            resultDiv.innerHTML = '<div class="loading">Carregando dados do produto...</div>';
+            
+            try {
+                const response = await fetch(`''' + base_url + '''/api/aliexpress/product/${productId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayProduct(data.data);
+                } else {
+                    resultDiv.innerHTML = `<div class="error">Erro: ${data.message || 'Erro desconhecido'}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">Erro na requisição: ${error.message}</div>`;
+            } finally {
+                searchBtn.disabled = false;
+                searchBtn.textContent = '🔍 Buscar Produto';
+            }
+        }
+        
+        function displayProduct(productData) {
+            const resultDiv = document.getElementById('result');
+            
+            const basicInfo = productData.basic_info || {};
+            const ratings = productData.ratings || {};
+            const storeInfo = productData.store_info || {};
+            const packageInfo = productData.package_info || {};
+            const variations = productData.variations || [];
+            const properties = productData.properties || [];
+            const images = productData.images || [];
+            
+            let html = `
+                <div class="product-card">
+                    <div class="product-header">
+                        <img src="${basicInfo.main_image || ''}" alt="Produto" class="product-image" onerror="this.style.display='none'">
+                        <div class="product-info">
+                            <h3>${basicInfo.title || 'Sem título'}</h3>
+                            <p><strong>ID:</strong> ${basicInfo.product_id || 'N/A'}</p>
+                            <p><strong>Categoria:</strong> ${basicInfo.category_id || 'N/A'}</p>
+                            <p><strong>Status:</strong> ${basicInfo.product_status_type || 'N/A'}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="data-section">
+                        <h4>📊 Avaliações e Vendas</h4>
+                        <div class="data-grid">
+                            <div class="data-item">
+                                <strong>Avaliação:</strong> ${ratings.avg_evaluation_rating || '0'}/5
+                            </div>
+                            <div class="data-item">
+                                <strong>Avaliações:</strong> ${ratings.evaluation_count || '0'}
+                            </div>
+                            <div class="data-item">
+                                <strong>Vendas:</strong> ${ratings.sales_count || '0'}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="data-section">
+                        <h4>🏪 Informações da Loja</h4>
+                        <div class="data-grid">
+                            <div class="data-item">
+                                <strong>Nome:</strong> ${storeInfo.store_name || 'N/A'}
+                            </div>
+                            <div class="data-item">
+                                <strong>ID:</strong> ${storeInfo.store_id || 'N/A'}
+                            </div>
+                            <div class="data-item">
+                                <strong>País:</strong> ${storeInfo.store_country_code || 'N/A'}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="data-section">
+                        <h4>📦 Informações do Pacote</h4>
+                        <div class="data-grid">
+                            <div class="data-item">
+                                <strong>Peso:</strong> ${packageInfo.gross_weight || 'N/A'}
+                            </div>
+                            <div class="data-item">
+                                <strong>Dimensões:</strong> ${packageInfo.package_length || 'N/A'} x ${packageInfo.package_width || 'N/A'} x ${packageInfo.package_height || 'N/A'}
+                            </div>
+                            <div class="data-item">
+                                <strong>Tipo:</strong> ${packageInfo.package_type || 'N/A'}
+                            </div>
+                        </div>
+                    </div>
+            `;
+            
+            if (images.length > 0) {
+                html += `
+                    <div class="data-section">
+                        <h4>🖼️ Imagens (${images.length})</h4>
+                        <div class="data-grid">
+                            ${images.slice(0, 5).map(img => `<div class="data-item"><img src="${img}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 5px;" onerror="this.style.display='none'"></div>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (properties.length > 0) {
+                html += `
+                    <div class="data-section">
+                        <h4>🏷️ Propriedades (${properties.length})</h4>
+                        <div class="data-grid">
+                            ${properties.slice(0, 10).map(prop => `
+                                <div class="data-item">
+                                    <strong>${prop.attr_name || 'N/A'}:</strong> ${prop.attr_value || 'N/A'}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (variations.length > 0) {
+                html += `
+                    <div class="data-section">
+                        <h4>🎨 Variações (${variations.length})</h4>
+                        <div class="variations-list">
+                            ${variations.slice(0, 10).map(variation => {
+                                const skuProps = variation.ae_sku_property_dtos?.ae_sku_property_d_t_o || [];
+                                const propsHtml = skuProps.map(prop => 
+                                    `<div><strong>${prop.sku_property_name}:</strong> ${prop.sku_property_value}</div>`
+                                ).join('');
+                                
+                                return `
+                                    <div class="variation-item">
+                                        <div><strong>SKU ID:</strong> ${variation.sku_id || 'N/A'}</div>
+                                        <div><strong>Preço:</strong> ${variation.offer_sale_price || 'N/A'}</div>
+                                        <div><strong>Estoque:</strong> ${variation.sku_available_stock || 'N/A'}</div>
+                                        ${propsHtml}
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            html += `
+                <div class="data-section">
+                    <h4>📋 Dados Completos (JSON)</h4>
+                    <pre style="background: #f8f9fa; padding: 15px; border-radius: 5px; overflow-x: auto; font-size: 12px;">${JSON.stringify(productData, null, 2)}</pre>
+                </div>
+            </div>
+            `;
+            
+            resultDiv.innerHTML = html;
+        }
+        
+        // Permitir busca com Enter
+        document.getElementById('productLink').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchProduct();
+            }
+        });
+    </script>
+</body>
+</html>
+    '''
 
 @app.route('/debug/tokens', methods=['GET'])
 def debug_tokens():

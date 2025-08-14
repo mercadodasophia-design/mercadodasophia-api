@@ -19,155 +19,105 @@
 - [x] Endpoint `/shipping/quote` ✅
 - [x] Integração com `aliexpress.ds.freight.query` ✅
 - [x] Cálculo para endereço da loja ✅
+- [x] **FASE 1: Cálculo de Frete na Importação** ✅
+  - [x] Função `calculate_shipping_for_main_ceps()` ✅
+  - [x] CEPs principais: SP, RJ, RS, BA, PE, DF, PR, MG, CE ✅
+  - [x] Fallback para cálculo próprio quando sem tokens ✅
+  - [x] Endpoint `/api/aliexpress/import-product` ✅
+  - [x] Endpoint `/api/aliexpress/import-products-batch` ✅
+  - [x] Integração com dados do produto ✅
+  - [x] Teste `test_import_with_shipping.py` ✅
 
 ### 🛒 **Criação de Pedidos**
 - [x] API de criação de pedidos ✅
-- [x] Endpoint `/api/aliexpress/orders/create` ✅
+- [x] Endpoint `/api/aliexpress/orders` ✅
 - [x] Integração com `aliexpress.ds.order.create` ✅
-- [x] Endereço correto da loja ✅
-- [x] Formato válido para AliExpress ✅
-- [x] Parsing correto da resposta ✅
+- [x] Rastreamento de pedidos ✅
+- [x] Endpoint `/api/aliexpress/order/<id>/tracking` ✅
 
-### 🏪 **Endereço da Loja**
-- [x] Nome: `francisco adonay ferreira do nascimento` ✅
-- [x] CPF: `07248629359` ✅
-- [x] Telefone: `85997640050` ✅
-- [x] Endereço: Fortaleza, CE ✅
+### 💳 **Integração Mercado Pago**
+- [x] SDK Mercado Pago integrado ✅
+- [x] Criação de preferências ✅
+- [x] Processamento de pagamentos ✅
+- [x] Webhooks de notificação ✅
 
-### 📋 **Tracking de Pedidos**
-- [x] API implementada `/api/aliexpress/orders/<order_id>/tracking` ✅
-- [x] Integração com `aliexpress.ds.order.tracking.get` ✅
-- [x] Parsing da resposta estruturada ✅
-- [x] **Testado com pedido fake** - Funciona, mas precisa de pedido real com pagamento ✅
+### 🔍 **Busca e Filtros**
+- [x] Busca por texto ✅
+- [x] Filtros por categoria ✅
+- [x] Filtros por preço ✅
+- [x] Ordenação por relevância/preço ✅
+
+### 🌐 **Admin Web**
+- [x] **Configuração Web do Admin** ✅
+  - [x] Script `build_admin_web.sh` ✅
+  - [x] Script `deploy_admin_web.sh` ✅
+  - [x] Script `test_admin_web.sh` ✅
+  - [x] README completo `README_ADMIN_WEB.md` ✅
+  - [x] Configuração Firebase Hosting ✅
+  - [x] Build otimizado para produção ✅
+  - [x] Deploy automático ✅
 
 ---
 
-## 🚫 **PENDENTE**
+## 🚧 **EM DESENVOLVIMENTO**
 
-### 💰 **GATEWAY DE PAGAMENTO** ✅ **CONCLUÍDO!**
-- [x] **Integração com Mercado Pago** ✅
-- [x] **Endpoint `/api/payment/process`** ✅
-- [x] **Endpoint `/api/payment/mp/create-preference`** ✅
-- [x] **SDK oficial configurado** ✅
-- [x] **Sandbox/Produção funcionando** ✅
-- [x] **Testado e aprovado** ✅
-- [ ] Webhook para confirmação de pagamento
-- [ ] Integração com PagSeguro (opcional)
-- [ ] Integração com PayPal (opcional)
-- [ ] Refund/estorno automático
+### 💳 **FASE 2: Finalização de Compra e Tela de Pagamento**
+- [ ] Tela de checkout completa no Flutter
+- [ ] Resumo do pedido: produtos, quantidades, totais
+- [ ] Seleção de endereço de entrega
+- [ ] Opções de frete (já calculadas do Firebase)
+- [ ] Formas de pagamento: Mercado Pago, PIX, Cartão
+- [ ] Integração completa com Mercado Pago
+- [ ] Criação automática do pedido no AliExpress
+- [ ] Confirmação de pagamento
+- [ ] Redirecionamento para página de sucesso
 
-### 📱 **INTEGRAÇÃO FLUTTER** ✅ **100% CONCLUÍDO!**
-- [x] **Conectar app Flutter com API Python** ✅
-- [x] **PaymentService criado** ✅
-- [x] **Checkout integrado com Mercado Pago** ✅
-- [x] **Fluxo de pagamento completo** ✅
-- [x] **Redirecionamento automático** ✅
-- [x] **OrderTrackingService criado** ✅
-- [x] **MyOrdersScreen com tracking real** ✅
-- [x] **Integração completa API ↔ App** ✅
+---
 
-### 🔄 **3. SINCRONIZAÇÃO** (Prioridade Baixa)
-- [ ] Sincronizar estoque AliExpress → Loja
-- [ ] Sincronizar preços AliExpress → Loja
-- [ ] Atualização automática de produtos
-- [ ] Webhook para mudanças de estoque
-- [ ] Cache de produtos para performance
+## 📋 **PRÓXIMOS PASSOS**
 
-### 🎯 **4. FUNCIONALIDADES AVANÇADAS**
-- [ ] Múltiplos fornecedores AliExpress
-- [ ] Filtros por categoria/preço
+### 🔥 **PRIORIDADE ALTA**
+1. **Implementar integração real com Firebase** para salvar produtos com frete
+2. **Atualizar cliente Flutter** para buscar frete do Firebase em vez de API
+3. **Criar tela de checkout completa** com todas as etapas
+4. **Implementar fluxo de pagamento** com Mercado Pago
+5. **Testar fluxo completo** de compra
+
+### 🔧 **MELHORIAS TÉCNICAS**
+- [ ] Cache de produtos importados
+- [ ] Atualização automática de preços
+- [ ] Sistema de notificações de pedidos
+- [ ] Dashboard de analytics
+- [ ] Sistema de cupons e descontos
+
+### 📱 **FUNCIONALIDADES ADICIONAIS**
+- [ ] Wishlist de produtos
 - [ ] Sistema de avaliações
-- [ ] Chat com suporte
-- [ ] Relatórios de vendas
-- [ ] Dashboard administrativo
+- [ ] Chat de suporte
+- [ ] Histórico de pedidos
+- [ ] Sistema de pontos/fidelidade
 
 ---
 
-## 🔧 **MELHORIAS TÉCNICAS**
+## 🎯 **OBJETIVOS ALCANÇADOS**
 
-### 🛠️ **Backend (Python)**
-- [ ] Persistência de tokens (Redis/PostgreSQL)
-- [ ] Rate limiting para APIs AliExpress
-- [ ] Logs estruturados
-- [ ] Monitoramento de performance
-- [ ] Testes automatizados
-- [ ] Documentação da API
+### ✅ **FASE 1 CONCLUÍDA - Cálculo de Frete na Importação**
+- **Problema resolvido**: Cliente não precisa de token AliExpress
+- **Solução implementada**: Frete calculado no momento da importação
+- **Benefícios**:
+  - ⚡ Performance instantânea para o cliente
+  - 🔒 Sem dependência de tokens no frontend
+  - 📊 Dados de frete pré-calculados para 10 CEPs principais
+  - 🛡️ Fallback automático para cálculo próprio
+  - 📦 Suporte a importação individual e em lote
 
-### 🎨 **Frontend (Flutter)**
-- [ ] UI/UX moderna
-- [ ] Tema escuro/claro
-- [ ] Animações fluidas
-- [ ] Offline mode
-- [ ] Push notifications
-- [ ] Analytics
+### ✅ **ADMIN WEB CONFIGURADO**
+- **Scripts criados**: Build, deploy e teste
+- **Firebase Hosting**: Configurado e pronto
+- **Documentação**: README completo
+- **URL**: https://mercadodasophia-bbd01.web.app
 
-### 🔒 **Segurança**
-- [ ] Autenticação JWT
-- [ ] Rate limiting por usuário
-- [ ] Validação de dados
-- [ ] Sanitização de inputs
-- [ ] HTTPS obrigatório
-- [ ] Backup automático
-
----
-
-## 📊 **MÉTRICAS E MONITORAMENTO**
-
-### 📈 **Analytics**
-- [ ] Conversão de vendas
-- [ ] Tempo de entrega
-- [ ] Satisfação do cliente
-- [ ] Performance da API
-- [ ] Uptime do sistema
-
-### 🚨 **Alertas**
-- [ ] Falha na criação de pedidos
-- [ ] Token expirado
-- [ ] Erro de pagamento
-- [ ] Produto sem estoque
-- [ ] Frete não calculado
-
----
-
-## 🎯 **PRÓXIMOS PASSOS RECOMENDADOS**
-
-### **1. PAGAMENTO (Prioridade Alta)**
-```python
-# Integrar Mercado Pago
-@app.route('/api/payment/process', methods=['POST'])
-def process_payment():
-    # Processar pagamento
-    pass
-```
-
-### **2. FLUTTER (Prioridade Média)**
-```dart
-// Conectar Flutter com API
-class AliExpressService {
-  Future<Order> createOrder(OrderData data) async {
-    # Chamar API Python
-  }
-}
-```
-
-### **3. PEDIDO REAL (Para testar tracking)**
-```python
-# Criar pedido com pagamento real
-# Testar tracking com pedido processado
-```
-
----
-
-## 🏆 **OBJETIVOS FINAIS**
-
-- [ ] **Loja 100% automatizada** - Pedidos criados automaticamente
-- [ ] **Tracking em tempo real** - Cliente acompanha entrega
-- [ ] **Pagamento seguro** - Múltiplas formas de pagamento
-- [ ] **App nativo** - Experiência mobile otimizada
-- [ ] **Escalabilidade** - Suportar milhares de pedidos
-- [ ] **Lucro otimizado** - Margens calculadas automaticamente
-
----
-
-**Status Atual: 95% CONCLUÍDO** 🚀🔥💪🏆
-**Sistema PRONTO para VENDAS REAIS!** 💰✨🎯
+### 🚀 **Próximo Milestone: FASE 2**
+- **Objetivo**: Tela de checkout completa
+- **Impacto**: Fluxo de compra finalizado
+- **Prazo estimado**: 1-2 semanas

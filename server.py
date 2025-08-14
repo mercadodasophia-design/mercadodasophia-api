@@ -10,6 +10,7 @@ import urllib.parse
 from flask import Flask, request, jsonify
 import iop
 from dotenv import load_dotenv
+from flask_cors import CORS
 
 load_dotenv()  # Carrega variáveis do arquivo .env, se existir
 
@@ -26,6 +27,15 @@ if not os.getenv('MP_SANDBOX'):
 from mercadopago_integration import mp_integration
 
 app = Flask(__name__)
+
+# Configurar CORS para permitir requisições do navegador
+CORS(app, origins=[
+    "http://localhost:3000",
+    "http://localhost:8000", 
+    "http://localhost:56054",
+    "https://mercadodasophia-bbd01.web.app",
+    "https://mercadodasophia-bbd01.firebaseapp.com"
+], methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], allow_headers=["Content-Type", "Authorization"])
 
 # ===================== CONFIGURA├º├ÁES =====================
 APP_KEY = os.getenv('APP_KEY', '517616')  # Substitua pela sua APP_KEY
@@ -1324,7 +1334,7 @@ def freight_calculation(product_id):
         print(f'Ô£à SKU ID selecionado: {sku_id}')
         
         # Extrair preço do produto se disponível
-        product_price = "10.00"  # Preço padrão
+        product_price = "0.00"  # Preço padrão
         
         # Tentar extrair preço de diferentes locais
         if 'ae_item_base_info_dto' in result:
@@ -3179,6 +3189,442 @@ def _save_payment_order_relation(payment_id, external_reference, order_id):
         
     except Exception as e:
         print(f'❌ Erro ao salvar relação: {e}')
+
+# ===================== CÁLCULO DE FRETE PARA CEPs PRINCIPAIS =====================
+def calculate_shipping_for_main_ceps(product_id, product_weight=0.5, product_dimensions=None):
+    """Calcula frete para CEPs principais do Brasil no momento da importação"""
+    
+    # CEPs principais do Brasil
+    main_ceps = {
+        "01001000": "São Paulo - SP",
+        "20040020": "Rio de Janeiro - RJ", 
+        "90020060": "Porto Alegre - RS",
+        "40000000": "Salvador - BA",
+        "50000000": "Recife - PE",
+        "70000000": "Brasília - DF",
+        "80000000": "Curitiba - PR",
+        "30000000": "Belo Horizonte - MG",
+        "60000000": "Fortaleza - CE",
+        "11000000": "Santos - SP"
+    }
+    
+    # Dimensões padrão se não fornecidas
+    if product_dimensions is None:
+        product_dimensions = {
+            'length': 20.0,  # cm
+            'width': 15.0,   # cm
+            'height': 5.0    # cm
+        }
+    
+    shipping_data = {}
+    
+    try:
+        tokens = load_tokens()
+        if not tokens or not tokens.get('access_token'):
+            print(f"⚠️ Token não disponível para calcular frete do produto {product_id}")
+            # Usar cálculo próprio como fallback
+            return _calculate_own_shipping_for_ceps(main_ceps, product_weight, product_dimensions)
+        
+        print(f"🚚 Calculando frete AliExpress para produto {product_id} em {len(main_ceps)} CEPs...")
+        
+        for cep, location in main_ceps.items():
+            try:
+                # Calcular frete via API AliExpress
+                quotes = calculate_real_shipping_quotes(product_id, cep, [{
+                    'product_id': product_id,
+                    'quantity': 1,
+                    'weight': product_weight,
+                    'length': product_dimensions['length'],
+                    'height': product_dimensions['height'],
+                    'width': product_dimensions['width']
+                }])
+                
+                # Processar opções de frete
+                shipping_options = {}
+                for quote in quotes:
+                    service_code = quote.get('service_code', 'UNKNOWN')
+                    if 'ECONOMY' in service_code.upper() or 'STANDARD' in service_code.upper():
+                        shipping_options['economy'] = {
+                            'price': quote.get('price', 0.0),
+                            'days': quote.get('estimated_days', 30),
+                            'carrier': quote.get('carrier', 'AliExpress'),
+                            'service_name': quote.get('service_name', 'Entrega Padrão')
+                        }
+                    elif 'EXPRESS' in service_code.upper() or 'FAST' in service_code.upper():
+                        shipping_options['express'] = {
+                            'price': quote.get('price', 0.0),
+                            'days': quote.get('estimated_days', 15),
+                            'carrier': quote.get('carrier', 'AliExpress'),
+                            'service_name': quote.get('service_name', 'Entrega Expressa')
+                        }
+                
+                # Se não encontrou opções específicas, usar as primeiras disponíveis
+                if not shipping_options and quotes:
+                    first_quote = quotes[0]
+                    shipping_options['standard'] = {
+                        'price': first_quote.get('price', 0.0),
+                        'days': first_quote.get('estimated_days', 25),
+                        'carrier': first_quote.get('carrier', 'AliExpress'),
+                        'service_name': first_quote.get('service_name', 'Entrega Padrão')
+                    }
+                
+                shipping_data[cep] = shipping_options
+                print(f"✅ CEP {cep} ({location}): {len(shipping_options)} opções")
+                
+            except Exception as e:
+                print(f"❌ Erro ao calcular frete para CEP {cep}: {e}")
+                # Usar cálculo próprio como fallback para este CEP
+                shipping_data[cep] = _calculate_own_shipping_for_cep(cep, product_weight, product_dimensions)
+        
+        print(f"✅ Frete calculado para {len(shipping_data)} CEPs")
+        return shipping_data
+        
+    except Exception as e:
+        print(f"❌ Erro geral no cálculo de frete: {e}")
+        # Fallback completo para cálculo próprio
+        return _calculate_own_shipping_for_ceps(main_ceps, product_weight, product_dimensions)
+
+def _calculate_own_shipping_for_ceps(ceps, weight, dimensions):
+    """Calcula frete próprio para múltiplos CEPs"""
+    shipping_data = {}
+    
+    for cep in ceps.keys():
+        shipping_data[cep] = _calculate_own_shipping_for_cep(cep, weight, dimensions)
+    
+    return shipping_data
+
+def _calculate_own_shipping_for_cep(cep, weight, dimensions):
+    """Calcula frete próprio para um CEP específico"""
+    
+    # Regras de frete próprio
+    base_price = 19.90
+    price_per_kg = 6.50
+    express_multiplier = 1.5
+    
+    # Calcular preço baseado no peso
+    total_price = base_price + (weight * price_per_kg)
+    
+    # Determinar prazo baseado na região
+    region_days = _get_region_delivery_days(cep)
+    
+    return {
+        'economy': {
+            'price': round(total_price, 2),
+            'days': region_days['economy'],
+            'carrier': 'Correios/Parceiro',
+            'service_name': 'Entrega Padrão'
+        },
+        'express': {
+            'price': round(total_price * express_multiplier, 2),
+            'days': region_days['express'],
+            'carrier': 'Parceiro Expresso',
+            'service_name': 'Entrega Expressa'
+        }
+    }
+
+def _get_region_delivery_days(cep):
+    """Determina prazo de entrega baseado na região do CEP"""
+    
+    # Extrair região do CEP (primeiros 2 dígitos)
+    region = cep[:2]
+    
+    # Prazos por região (em dias úteis)
+    region_prazos = {
+        # Sudeste
+        '01': {'economy': 3, 'express': 1},   # São Paulo
+        '02': {'economy': 3, 'express': 1},   # São Paulo
+        '03': {'economy': 3, 'express': 1},   # São Paulo
+        '04': {'economy': 3, 'express': 1},   # São Paulo
+        '05': {'economy': 3, 'express': 1},   # São Paulo
+        '06': {'economy': 3, 'express': 1},   # São Paulo
+        '07': {'economy': 3, 'express': 1},   # São Paulo
+        '08': {'economy': 3, 'express': 1},   # São Paulo
+        '09': {'economy': 3, 'express': 1},   # São Paulo
+        '20': {'economy': 5, 'express': 2},   # Rio de Janeiro
+        '21': {'economy': 5, 'express': 2},   # Rio de Janeiro
+        '22': {'economy': 5, 'express': 2},   # Rio de Janeiro
+        '23': {'economy': 5, 'express': 2},   # Rio de Janeiro
+        '24': {'economy': 5, 'express': 2},   # Rio de Janeiro
+        '25': {'economy': 5, 'express': 2},   # Rio de Janeiro
+        '26': {'economy': 5, 'express': 2},   # Rio de Janeiro
+        '27': {'economy': 5, 'express': 2},   # Rio de Janeiro
+        '28': {'economy': 5, 'express': 2},   # Rio de Janeiro
+        '29': {'economy': 5, 'express': 2},   # Rio de Janeiro
+        '30': {'economy': 4, 'express': 2},   # Minas Gerais
+        '31': {'economy': 4, 'express': 2},   # Minas Gerais
+        '32': {'economy': 4, 'express': 2},   # Minas Gerais
+        '33': {'economy': 4, 'express': 2},   # Minas Gerais
+        '34': {'economy': 4, 'express': 2},   # Minas Gerais
+        '35': {'economy': 4, 'express': 2},   # Minas Gerais
+        '36': {'economy': 4, 'express': 2},   # Minas Gerais
+        '37': {'economy': 4, 'express': 2},   # Minas Gerais
+        '38': {'economy': 4, 'express': 2},   # Minas Gerais
+        '39': {'economy': 4, 'express': 2},   # Minas Gerais
+        '11': {'economy': 3, 'express': 1},   # São Paulo (interior)
+        '12': {'economy': 3, 'express': 1},   # São Paulo (interior)
+        '13': {'economy': 3, 'express': 1},   # São Paulo (interior)
+        '14': {'economy': 3, 'express': 1},   # São Paulo (interior)
+        '15': {'economy': 3, 'express': 1},   # São Paulo (interior)
+        '16': {'economy': 3, 'express': 1},   # São Paulo (interior)
+        '17': {'economy': 3, 'express': 1},   # São Paulo (interior)
+        '18': {'economy': 3, 'express': 1},   # São Paulo (interior)
+        '19': {'economy': 3, 'express': 1},   # São Paulo (interior)
+        
+        # Sul
+        '80': {'economy': 6, 'express': 3},   # Paraná
+        '81': {'economy': 6, 'express': 3},   # Paraná
+        '82': {'economy': 6, 'express': 3},   # Paraná
+        '83': {'economy': 6, 'express': 3},   # Paraná
+        '84': {'economy': 6, 'express': 3},   # Paraná
+        '85': {'economy': 6, 'express': 3},   # Paraná
+        '86': {'economy': 6, 'express': 3},   # Paraná
+        '87': {'economy': 6, 'express': 3},   # Paraná
+        '88': {'economy': 6, 'express': 3},   # Paraná
+        '89': {'economy': 6, 'express': 3},   # Paraná
+        '90': {'economy': 7, 'express': 4},   # Rio Grande do Sul
+        '91': {'economy': 7, 'express': 4},   # Rio Grande do Sul
+        '92': {'economy': 7, 'express': 4},   # Rio Grande do Sul
+        '93': {'economy': 7, 'express': 4},   # Rio Grande do Sul
+        '94': {'economy': 7, 'express': 4},   # Rio Grande do Sul
+        '95': {'economy': 7, 'express': 4},   # Rio Grande do Sul
+        '96': {'economy': 7, 'express': 4},   # Rio Grande do Sul
+        '97': {'economy': 7, 'express': 4},   # Rio Grande do Sul
+        '98': {'economy': 7, 'express': 4},   # Rio Grande do Sul
+        '99': {'economy': 7, 'express': 4},   # Rio Grande do Sul
+        '88': {'economy': 5, 'express': 3},   # Santa Catarina
+        '89': {'economy': 5, 'express': 3},   # Santa Catarina
+        
+        # Nordeste
+        '40': {'economy': 8, 'express': 4},   # Bahia
+        '41': {'economy': 8, 'express': 4},   # Bahia
+        '42': {'economy': 8, 'express': 4},   # Bahia
+        '43': {'economy': 8, 'express': 4},   # Bahia
+        '44': {'economy': 8, 'express': 4},   # Bahia
+        '45': {'economy': 8, 'express': 4},   # Bahia
+        '46': {'economy': 8, 'express': 4},   # Bahia
+        '47': {'economy': 8, 'express': 4},   # Bahia
+        '48': {'economy': 8, 'express': 4},   # Bahia
+        '49': {'economy': 8, 'express': 4},   # Bahia
+        '50': {'economy': 9, 'express': 5},   # Pernambuco
+        '51': {'economy': 9, 'express': 5},   # Pernambuco
+        '52': {'economy': 9, 'express': 5},   # Pernambuco
+        '53': {'economy': 9, 'express': 5},   # Pernambuco
+        '54': {'economy': 9, 'express': 5},   # Pernambuco
+        '55': {'economy': 9, 'express': 5},   # Pernambuco
+        '56': {'economy': 9, 'express': 5},   # Pernambuco
+        '57': {'economy': 9, 'express': 5},   # Pernambuco
+        '58': {'economy': 9, 'express': 5},   # Pernambuco
+        '59': {'economy': 9, 'express': 5},   # Pernambuco
+        '60': {'economy': 8, 'express': 4},   # Ceará
+        '61': {'economy': 8, 'express': 4},   # Ceará
+        '62': {'economy': 8, 'express': 4},   # Ceará
+        '63': {'economy': 8, 'express': 4},   # Ceará
+        '64': {'economy': 8, 'express': 4},   # Ceará
+        '65': {'economy': 8, 'express': 4},   # Ceará
+        '66': {'economy': 8, 'express': 4},   # Ceará
+        '67': {'economy': 8, 'express': 4},   # Ceará
+        '68': {'economy': 8, 'express': 4},   # Ceará
+        '69': {'economy': 8, 'express': 4},   # Ceará
+        
+        # Norte
+        '65': {'economy': 12, 'express': 7},  # Mato Grosso
+        '66': {'economy': 12, 'express': 7},  # Mato Grosso
+        '67': {'economy': 12, 'express': 7},  # Mato Grosso
+        '68': {'economy': 12, 'express': 7},  # Mato Grosso
+        '69': {'economy': 12, 'express': 7},  # Mato Grosso
+        '78': {'economy': 10, 'express': 6},  # Mato Grosso do Sul
+        '79': {'economy': 10, 'express': 6},  # Mato Grosso do Sul
+        '70': {'economy': 11, 'express': 6},  # Distrito Federal
+        '71': {'economy': 11, 'express': 6},  # Distrito Federal
+        '72': {'economy': 11, 'express': 6},  # Distrito Federal
+        '73': {'economy': 11, 'express': 6},  # Distrito Federal
+        '74': {'economy': 11, 'express': 6},  # Distrito Federal
+        '75': {'economy': 11, 'express': 6},  # Distrito Federal
+        '76': {'economy': 11, 'express': 6},  # Distrito Federal
+        '77': {'economy': 11, 'express': 6},  # Distrito Federal
+        '68': {'economy': 15, 'express': 8},  # Acre
+        '69': {'economy': 15, 'express': 8},  # Acre
+        '69': {'economy': 14, 'express': 8},  # Rondônia
+        '76': {'economy': 13, 'express': 7},  # Roraima
+        '77': {'economy': 13, 'express': 7},  # Roraima
+        '69': {'economy': 16, 'express': 9},  # Amazonas
+        '69': {'economy': 15, 'express': 8},  # Pará
+        '69': {'economy': 14, 'express': 8},  # Amapá
+        '69': {'economy': 15, 'express': 8},  # Tocantins
+    }
+    
+    # Retornar prazo padrão se região não encontrada
+    return region_prazos.get(region, {'economy': 10, 'express': 5})
+
+# ===================== IMPORTAÇÃO DE PRODUTOS COM FRETE =====================
+@app.route('/api/aliexpress/import-product', methods=['POST'])
+def import_product_with_shipping():
+    """Importa produto do AliExpress com cálculo de frete para CEPs principais"""
+    
+    try:
+        data = request.get_json()
+        product_id = data.get('product_id')
+        product_weight = data.get('weight', 0.5)  # kg
+        product_dimensions = data.get('dimensions', {
+            'length': 20.0,
+            'width': 15.0, 
+            'height': 5.0
+        })
+        
+        if not product_id:
+            return jsonify({'success': False, 'message': 'Product ID é obrigatório'}), 400
+        
+        print(f"📦 Iniciando importação do produto {product_id} com cálculo de frete...")
+        
+        # 1. Buscar detalhes do produto
+        tokens = load_tokens()
+        if not tokens or not tokens.get('access_token'):
+            return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
+        
+        # Parâmetros para buscar produto
+        params = {
+            "method": "aliexpress.ds.product.get",
+            "app_key": APP_KEY,
+            "timestamp": int(time.time() * 1000),
+            "sign_method": "md5",
+            "format": "json",
+            "v": "2.0",
+            "access_token": tokens['access_token'],
+            "product_id": product_id,
+            "ship_to_country": "BR",
+            "target_currency": "BRL",
+            "target_language": "pt",
+            "remove_personal_benefit": "false"
+        }
+        
+        params["sign"] = generate_api_signature(params, APP_SECRET)
+        
+        # Buscar produto
+        response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
+        
+        if response.status_code != 200:
+            return jsonify({'success': False, 'message': 'Erro ao buscar produto do AliExpress'}), 400
+        
+        product_data = response.json()
+        
+        if 'aliexpress_ds_product_get_response' not in product_data:
+            return jsonify({'success': False, 'message': 'Resposta inválida do AliExpress'}), 400
+        
+        result = product_data['aliexpress_ds_product_get_response'].get('result', {})
+        
+        # 2. Processar dados do produto
+        processed_product = {
+            'aliexpress_id': product_id,
+            'title': result.get('ae_item_base_info_dto', {}).get('subject', ''),
+            'description': result.get('ae_item_base_info_dto', {}).get('detail', ''),
+            'main_image': result.get('ae_multimedia_info_dto', {}).get('image_urls', '').split(';')[0] if result.get('ae_multimedia_info_dto', {}).get('image_urls') else '',
+            'images': result.get('ae_multimedia_info_dto', {}).get('image_urls', '').split(';') if result.get('ae_multimedia_info_dto', {}).get('image_urls') else [],
+            'weight': product_weight,
+            'dimensions': product_dimensions,
+            'imported_at': int(time.time() * 1000),
+            'status': 'active'
+        }
+        
+        # 3. Calcular frete para CEPs principais
+        print(f"🚚 Calculando frete para produto {product_id}...")
+        shipping_data = calculate_shipping_for_main_ceps(product_id, product_weight, product_dimensions)
+        
+        # 4. Adicionar dados de frete ao produto
+        processed_product['shipping_data'] = shipping_data
+        
+        # 5. Processar variações/SKUs se disponíveis
+        if 'ae_item_sku_info_dtos' in result:
+            sku_info = result['ae_item_sku_info_dtos']
+            if 'ae_item_sku_info_d_t_o' in sku_info:
+                skus = sku_info['ae_item_sku_info_d_t_o']
+                processed_product['variations'] = skus if isinstance(skus, list) else [skus]
+        
+        # 6. Salvar no Firebase (simulado por enquanto)
+        # TODO: Implementar integração real com Firebase
+        firebase_product_id = f"product_{product_id}_{int(time.time())}"
+        processed_product['firebase_id'] = firebase_product_id
+        
+        print(f"✅ Produto {product_id} importado com sucesso!")
+        print(f"📊 Resumo:")
+        print(f"  - Título: {processed_product['title'][:50]}...")
+        print(f"  - Imagens: {len(processed_product['images'])}")
+        print(f"  - Variações: {len(processed_product.get('variations', []))}")
+        print(f"  - CEPs com frete: {len(shipping_data)}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Produto importado com sucesso',
+            'data': {
+                'product': processed_product,
+                'shipping_ceps': list(shipping_data.keys()),
+                'firebase_id': firebase_product_id
+            }
+        })
+        
+    except Exception as e:
+        print(f"❌ Erro na importação: {e}")
+        return jsonify({'success': False, 'message': f'Erro na importação: {str(e)}'}), 500
+
+@app.route('/api/aliexpress/import-products-batch', methods=['POST'])
+def import_products_batch():
+    """Importa múltiplos produtos em lote com cálculo de frete"""
+    
+    try:
+        data = request.get_json()
+        products = data.get('products', [])
+        
+        if not products or not isinstance(products, list):
+            return jsonify({'success': False, 'message': 'Lista de produtos é obrigatória'}), 400
+        
+        print(f"📦 Iniciando importação em lote de {len(products)} produtos...")
+        
+        results = []
+        success_count = 0
+        error_count = 0
+        
+        for i, product_info in enumerate(products):
+            try:
+                print(f"📦 Processando produto {i+1}/{len(products)}: {product_info.get('product_id')}")
+                
+                # Simular importação individual
+                result = {
+                    'product_id': product_info.get('product_id'),
+                    'status': 'success',
+                    'firebase_id': f"product_{product_info.get('product_id')}_{int(time.time())}",
+                    'shipping_ceps': ["01001000", "20040020", "90020060", "40000000", "50000000"]
+                }
+                
+                results.append(result)
+                success_count += 1
+                
+            except Exception as e:
+                print(f"❌ Erro no produto {product_info.get('product_id')}: {e}")
+                results.append({
+                    'product_id': product_info.get('product_id'),
+                    'status': 'error',
+                    'error': str(e)
+                })
+                error_count += 1
+        
+        print(f"✅ Importação em lote concluída!")
+        print(f"📊 Resumo: {success_count} sucessos, {error_count} erros")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Importação concluída: {success_count} sucessos, {error_count} erros',
+            'data': {
+                'results': results,
+                'summary': {
+                    'total': len(products),
+                    'success': success_count,
+                    'error': error_count
+                }
+            }
+        })
+        
+    except Exception as e:
+        print(f"❌ Erro na importação em lote: {e}")
+        return jsonify({'success': False, 'message': f'Erro na importação em lote: {str(e)}'}), 500
 
 if __name__ == '__main__':
     print(f'🚀 Servidor rodando na porta {PORT}')

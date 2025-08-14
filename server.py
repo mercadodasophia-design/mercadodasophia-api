@@ -814,13 +814,93 @@ def index():
 
 @app.route('/api/aliexpress/auth')
 def auth():
-    """Gera URL de autoriza├º├úo"""
+    """Gera URL de autorização"""
     auth_url = (
         f'https://api-sg.aliexpress.com/oauth/authorize?response_type=code'
         f'&force_auth=true&client_id={APP_KEY}&redirect_uri={REDIRECT_URI}'
     )
-    print(f'­ƒöù URL de autoriza├º├úo gerada: {auth_url}')
+    print(f'🔗 URL de autorização gerada: {auth_url}')
     return jsonify({'success': True, 'auth_url': auth_url})
+
+@app.route('/api/aliexpress/token-status')
+def token_status():
+    """Verifica o status do token de autorização"""
+    tokens = load_tokens()
+    
+    if not tokens:
+        return jsonify({
+            'success': False,
+            'has_token': False,
+            'message': 'Nenhum token encontrado. Faça autorização primeiro.',
+            'auth_required': True
+        })
+    
+    access_token = tokens.get('access_token')
+    refresh_token = tokens.get('refresh_token')
+    
+    if not access_token:
+        return jsonify({
+            'success': False,
+            'has_token': False,
+            'message': 'Token de acesso não encontrado. Faça autorização primeiro.',
+            'auth_required': True
+        })
+    
+    # Verificar se o token ainda é válido (opcional)
+    try:
+        # Fazer uma requisição de teste para verificar se o token ainda funciona
+        params = {
+            "method": "aliexpress.ds.category.get",
+            "app_key": APP_KEY,
+            "timestamp": int(time.time() * 1000),
+            "sign_method": "md5",
+            "format": "json",
+            "v": "2.0",
+            "access_token": access_token,
+            "parent_category_id": "0"
+        }
+        
+        params["sign"] = generate_api_signature(params, APP_SECRET)
+        
+        response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
+        
+        if response.status_code == 200:
+            data = response.json()
+            if 'error_response' in data:
+                error_code = data['error_response'].get('code', '')
+                if error_code in ['15', '40001', '40002']:  # Códigos de token expirado/inválido
+                    return jsonify({
+                        'success': False,
+                        'has_token': True,
+                        'token_expired': True,
+                        'message': 'Token expirado. Faça autorização novamente.',
+                        'auth_required': True
+                    })
+            
+            return jsonify({
+                'success': True,
+                'has_token': True,
+                'token_valid': True,
+                'message': 'Token válido e funcionando.',
+                'auth_required': False
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'has_token': True,
+                'token_error': True,
+                'message': f'Erro ao verificar token: {response.status_code}',
+                'auth_required': True
+            })
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'has_token': True,
+            'token_error': True,
+            'message': f'Erro ao verificar token: {str(e)}',
+            'auth_required': True
+        })
 
 @app.route('/api/aliexpress/oauth-callback')
 def oauth_callback():
@@ -1036,10 +1116,10 @@ def categories():
     """Buscar categorias"""
     tokens = load_tokens()
     if not tokens or not tokens.get('access_token'):
-        return jsonify({'success': False, 'message': 'Token n├úo encontrado. Fa├ºa autoriza├º├úo primeiro.'}), 401
+        return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
 
     try:
-        # Par├ómetros para a API conforme documenta├º├úo
+        # Parâmetros para a API conforme documentação
         params = {
             "method": "aliexpress.ds.category.get",
             "app_key": APP_KEY,
@@ -1054,7 +1134,7 @@ def categories():
         # Gerar assinatura
         params["sign"] = generate_api_signature(params, APP_SECRET)
         
-        # Fazer requisi├º├úo HTTP direta para /sync
+        # Fazer requisição HTTP direta para /sync
         response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
         print(f'Ô£à Resposta categorias: {response.text}')
         
@@ -1281,7 +1361,7 @@ def freight_calculation(product_id):
     """Calcular frete para um produto"""
     tokens = load_tokens()
     if not tokens or not tokens.get('access_token'):
-        return jsonify({'success': False, 'message': 'Token n├úo encontrado. Fa├ºa autoriza├º├úo primeiro.'}), 401
+        return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
 
     try:
         # Primeiro, buscar detalhes do produto para obter o skuId
@@ -1308,9 +1388,9 @@ def freight_calculation(product_id):
             
         product_data = product_response.json()
         if 'aliexpress_ds_product_get_response' not in product_data:
-            return jsonify({'success': False, 'error': 'Dados do produto n├úo encontrados'}), 400
+            return jsonify({'success': False, 'error': 'Dados do produto não encontrados'}), 400
             
-        # Extrair o primeiro skuId dispon├¡vel
+        # Extrair o primeiro skuId disponível
         result = product_data['aliexpress_ds_product_get_response'].get('result', {})
         sku_info = result.get('ae_item_sku_info_dtos', {}).get('ae_item_sku_info_d_t_o', [])
         
@@ -3625,6 +3705,95 @@ def import_products_batch():
     except Exception as e:
         print(f"❌ Erro na importação em lote: {e}")
         return jsonify({'success': False, 'message': f'Erro na importação em lote: {str(e)}'}), 500
+
+@app.route('/api/aliexpress/product-details')
+def product_details():
+    """Buscar detalhes de um produto específico pelo ID"""
+    tokens = load_tokens()
+    if not tokens or not tokens.get('access_token'):
+        return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
+
+    product_id = request.args.get('product_id')
+    if not product_id:
+        return jsonify({'success': False, 'message': 'ID do produto é obrigatório'}), 400
+
+    try:
+        # Parâmetros para a API de detalhes do produto conforme documentação
+        params = {
+            "method": "aliexpress.ds.product.get",
+            "app_key": APP_KEY,
+            "timestamp": int(time.time() * 1000),
+            "sign_method": "md5",
+            "format": "json",
+            "v": "2.0",
+            "access_token": tokens['access_token'],
+            "ship_to_country": "BR",
+            "product_id": product_id,
+            "target_currency": "BRL",
+            "target_language": "pt"
+        }
+        
+        # Gerar assinatura
+        params["sign"] = generate_api_signature(params, APP_SECRET)
+        
+        # Fazer requisição para a API
+        response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
+        print(f'📥 Resposta detalhes do produto: {response.text[:500]}...')
+        
+        if response.status_code == 200:
+            data = response.json()
+            print(f'📥 ESTRUTURA COMPLETA - DETALHES PRODUTO:')
+            print(json.dumps(data, indent=2, ensure_ascii=False))
+            
+            # Verificar se há dados do produto na resposta
+            if 'aliexpress_ds_product_get_response' in data:
+                product_response = data['aliexpress_ds_product_get_response']
+                result = product_response.get('result', {})
+                
+                # Extrair informações do produto conforme estrutura real da API
+                ae_item_base_info = result.get('ae_item_base_info_dto', {})
+                ae_multimedia_info = result.get('ae_multimedia_info_dto', {})
+                ae_store_info = result.get('ae_store_info', {})
+                
+                # Extrair primeira imagem da lista
+                image_urls = ae_multimedia_info.get('image_urls', '')
+                main_image = image_urls.split(';')[0] if image_urls else ''
+                
+                product_data = {
+                    'itemId': product_id,
+                    'title': ae_item_base_info.get('subject', 'Produto sem título'),
+                    'salePrice': ae_item_base_info.get('currency_code', 'CNY'),
+                    'originalPrice': ae_item_base_info.get('currency_code', 'CNY'),
+                    'mainImage': main_image,
+                    'discount': '0%',  # Não disponível na resposta
+                    'rating': ae_item_base_info.get('avg_evaluation_rating', '0.0'),
+                    'orders': ae_item_base_info.get('sales_count', '0'),
+                    'description': ae_item_base_info.get('detail', ''),
+                    'mobileDetail': ae_item_base_info.get('mobile_detail', ''),
+                    'evaluationCount': ae_item_base_info.get('evaluation_count', '0'),
+                    'productStatus': ae_item_base_info.get('product_status_type', ''),
+                    'categoryId': ae_item_base_info.get('category_id', ''),
+                    'storeName': ae_store_info.get('store_name', ''),
+                    'storeRating': ae_store_info.get('shipping_speed_rating', '0.0'),
+                    'imageUrls': image_urls.split(';') if image_urls else []
+                }
+                
+                print(f'✅ Produto encontrado: {product_data["title"]}')
+                
+                return jsonify({
+                    'success': True,
+                    'data': product_data,
+                    'raw_data': data
+                })
+            else:
+                print(f'❌ ESTRUTURA INESPERADA DETALHES: {list(data.keys())}')
+                return jsonify({'success': False, 'error': 'Estrutura de resposta inesperada'}), 400
+        else:
+            return jsonify({'success': False, 'error': response.text}), response.status_code
+
+    except Exception as e:
+        print(f'❌ Erro ao buscar detalhes do produto: {e}')
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 if __name__ == '__main__':
     print(f'🚀 Servidor rodando na porta {PORT}')

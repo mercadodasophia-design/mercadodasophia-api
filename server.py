@@ -1175,17 +1175,27 @@ def get_category_name(category_id):
         # Gerar assinatura
         params["sign"] = generate_api_signature(params, APP_SECRET)
         
+        print(f'🔍 Debug - Parâmetros enviados para categoria {category_id}: {params}')
+        
         # Fazer requisição HTTP direta para /sync
         response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
         print(f'📡 Resposta categoria {category_id}: {response.text}')
         
         if response.status_code == 200:
             data = response.json()
-            if data.get('code') == '0':
-                result = data.get('resp_result', {}).get('result', {})
-                categories = result.get('categories', [])
-                if categories:
-                    category = categories[0]  # Pegar a primeira categoria
+            print(f'📊 Dados parseados: {data}')
+            
+            # Verificar se a resposta tem a estrutura esperada
+            aliexpress_response = data.get('aliexpress_ds_category_get_response', {})
+            resp_result = aliexpress_response.get('resp_result', {})
+            
+            if resp_result.get('resp_code') == 200:
+                result = resp_result.get('result', {})
+                categories_data = result.get('categories', {})
+                categories_list = categories_data.get('category', [])
+                
+                if categories_list:
+                    category = categories_list[0]  # Pegar a primeira categoria
                     return jsonify({
                         'success': True,
                         'category_id': category.get('category_id'),

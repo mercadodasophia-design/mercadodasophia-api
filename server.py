@@ -1240,7 +1240,21 @@ def product_details(product_id):
                 sku_info = result['ae_item_sku_info_dtos']
                 if 'ae_item_sku_info_d_t_o' in sku_info:
                     skus = sku_info['ae_item_sku_info_d_t_o']
-                    processed_data['variations'] = skus if isinstance(skus, list) else [skus]
+                    skus_list = skus if isinstance(skus, list) else [skus]
+                    
+                    # Corrigir cores nas variações
+                    for sku in skus_list:
+                        if 'ae_sku_property_dtos' in sku:
+                            properties = sku['ae_sku_property_dtos'].get('ae_sku_property_d_t_o', [])
+                            if isinstance(properties, list):
+                                for prop in properties:
+                                    if prop.get('sku_property_name') == 'cor':
+                                        # Usar property_value_definition_name se disponível
+                                        real_color = prop.get('property_value_definition_name')
+                                        if real_color and real_color.lower() not in ['branco', 'white']:
+                                            prop['sku_property_value'] = real_color
+                    
+                    processed_data['variations'] = skus_list
             
             print(f'📊 DADOS PROCESSADOS PARA FRONTEND:')
             print(f'  - Imagens encontradas: {len(processed_data["images"])}')
@@ -2001,7 +2015,26 @@ def translate_attributes():
         def translate_attribute_value(value):
             """Traduzir valor de atributo"""
             value_lower = str(value).lower()
+            
+            # Se o valor já está em português, não traduzir
+            if any(pt_word in value_lower for pt_word in ['verde', 'vermelho', 'azul', 'amarelo', 'preto', 'branco', 'rosa', 'roxo', 'laranja', 'marrom', 'cinza', 'cinzento']):
+                return str(value)
+            
+            # Traduzir apenas valores em inglês
             return value_translations.get(value_lower, str(value))
+        
+        def get_real_color_value(property_data):
+            """Extrair a cor real do atributo, priorizando property_value_definition_name"""
+            if not property_data:
+                return None
+                
+            # Priorizar property_value_definition_name que geralmente tem a cor real
+            real_color = property_data.get('property_value_definition_name')
+            if real_color and real_color.lower() not in ['branco', 'white']:
+                return real_color
+                
+            # Fallback para sku_property_value
+            return property_data.get('sku_property_value')
         
         def parse_attribute_string(attr_string):
             """Parsear string de atributos complexa"""

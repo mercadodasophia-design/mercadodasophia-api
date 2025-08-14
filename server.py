@@ -1243,19 +1243,24 @@ def product_details(product_id):
                     skus_list = skus if isinstance(skus, list) else [skus]
                     
                     # Corrigir propriedades nas variações
-                    for sku in skus_list:
+                    print(f'🔍 PROCESSANDO {len(skus_list)} SKUs PARA CORREÇÃO DE CORES')
+                    for i, sku in enumerate(skus_list):
+                        print(f'  SKU {i+1}: {sku.get("sku_id", "N/A")}')
                         if 'ae_sku_property_dtos' in sku:
                             properties = sku['ae_sku_property_dtos'].get('ae_sku_property_d_t_o', [])
                             if isinstance(properties, list):
                                 for prop in properties:
+                                    print(f'    Propriedade: {prop.get("sku_property_name")} = {prop.get("sku_property_value")} (def: {prop.get("property_value_definition_name")})')
                                     # Para cores, usar property_value_definition_name se disponível
                                     if prop.get('sku_property_name') == 'cor':
                                         real_color = prop.get('property_value_definition_name')
                                         if real_color and real_color.lower() not in ['branco', 'white']:
                                             prop['sku_property_value'] = real_color
+                                            print(f'      ✅ Cor corrigida: {real_color}')
                                     # Para outros atributos, garantir que o valor está correto
                                     elif prop.get('property_value_definition_name'):
                                         prop['sku_property_value'] = prop.get('property_value_definition_name')
+                                        print(f'      ✅ Atributo corrigido: {prop.get("property_value_definition_name")}')
                     
                     processed_data['variations'] = skus_list
             

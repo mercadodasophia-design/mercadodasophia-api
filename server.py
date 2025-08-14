@@ -1694,6 +1694,27 @@ def freight_calculation(product_id):
                             processed_freight['freight_options'] = options
                         else:
                             processed_freight['freight_options'] = [options]
+                        
+                        # Converter valores de USD para BRL se necessário
+                        for option in processed_freight['freight_options']:
+                            if 'freight' in option and 'currency_code' in option['freight']:
+                                currency = option['freight']['currency_code']
+                                amount = option['freight'].get('amount', 0)
+                                
+                                print(f'💰 Frete original: {amount} {currency}')
+                                
+                                # Se está em USD, converter para BRL (taxa aproximada 5.2)
+                                if currency == 'USD' and amount:
+                                    try:
+                                        usd_amount = float(amount)
+                                        brl_amount = usd_amount * 5.2  # Taxa de conversão aproximada
+                                        option['freight']['amount'] = round(brl_amount, 2)
+                                        option['freight']['currency_code'] = 'BRL'
+                                        option['freight']['original_usd'] = usd_amount
+                                        print(f'💰 Frete convertido: R$ {brl_amount:.2f} (original: USD {usd_amount})')
+                                    except (ValueError, TypeError) as e:
+                                        print(f'❌ Erro na conversão: {e}')
+                                        continue
                 
                 # VERIFICAÇÃO CRÍTICA: Se não há opções de frete reais, retornar erro
                 if not processed_freight['freight_options']:
@@ -1709,6 +1730,14 @@ def freight_calculation(product_id):
                 print(f'  - Sucesso: {processed_freight["success"]}')
                 print(f'  - Opções de frete: {len(processed_freight["freight_options"])}')
                 print(f'  - Erro: {processed_freight["error_message"]}')
+                
+                # Log detalhado das opções de frete
+                for i, option in enumerate(processed_freight['freight_options']):
+                    if 'freight' in option:
+                        freight = option['freight']
+                        print(f'  📦 Opção {i+1}: {freight.get("amount", "N/A")} {freight.get("currency_code", "N/A")} - {option.get("service_name", "N/A")}')
+                        if 'original_usd' in freight:
+                            print(f'    💱 Original USD: {freight["original_usd"]}')
                 
                 return jsonify({
                     'success': True, 

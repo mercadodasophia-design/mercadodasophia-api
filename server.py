@@ -1242,17 +1242,20 @@ def product_details(product_id):
                     skus = sku_info['ae_item_sku_info_d_t_o']
                     skus_list = skus if isinstance(skus, list) else [skus]
                     
-                    # Corrigir cores nas variações
+                    # Corrigir propriedades nas variações
                     for sku in skus_list:
                         if 'ae_sku_property_dtos' in sku:
                             properties = sku['ae_sku_property_dtos'].get('ae_sku_property_d_t_o', [])
                             if isinstance(properties, list):
                                 for prop in properties:
+                                    # Para cores, usar property_value_definition_name se disponível
                                     if prop.get('sku_property_name') == 'cor':
-                                        # Usar property_value_definition_name se disponível
                                         real_color = prop.get('property_value_definition_name')
                                         if real_color and real_color.lower() not in ['branco', 'white']:
                                             prop['sku_property_value'] = real_color
+                                    # Para outros atributos, garantir que o valor está correto
+                                    elif prop.get('property_value_definition_name'):
+                                        prop['sku_property_value'] = prop.get('property_value_definition_name')
                     
                     processed_data['variations'] = skus_list
             

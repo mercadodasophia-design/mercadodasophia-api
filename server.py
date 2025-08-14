@@ -1543,6 +1543,16 @@ def freight_calculation(product_id):
                         else:
                             processed_freight['freight_options'] = [options]
                 
+                # VERIFICAÇÃO CRÍTICA: Se não há opções de frete reais, retornar erro
+                if not processed_freight['freight_options']:
+                    error_msg = f"API do AliExpress não retornou opções de frete válidas. Erro: {result.get('error_desc', 'Dados insuficientes')}"
+                    print(f'❌ {error_msg}')
+                    return jsonify({
+                        'success': False, 
+                        'error': error_msg,
+                        'message': 'Frete não disponível - necessário verificar configuração da API'
+                    }), 400
+                
                 print(f'📦 DADOS DE FRETE PROCESSADOS:')
                 print(f'  - Sucesso: {processed_freight["success"]}')
                 print(f'  - Opções de frete: {len(processed_freight["freight_options"])}')

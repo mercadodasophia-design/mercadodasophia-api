@@ -1094,7 +1094,7 @@ def products():
                 # Analisar estrutura dos dados
                 result = search_response.get('result', {})
                 print(f'🔍 ANÁLISE ESTRUTURA - BUSCA RESULT:')
-print(f'  - Keys disponíveis: {list(result.keys())}')
+                print(f'  - Keys disponíveis: {list(result.keys())}')
                 
                 # Extrair informações úteis para o frontend
                 processed_search = {

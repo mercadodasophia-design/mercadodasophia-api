@@ -7,6 +7,7 @@ import requests
 import hashlib
 import time
 import urllib.parse
+from datetime import datetime
 from flask import Flask, request, jsonify
 import iop
 from dotenv import load_dotenv
@@ -1047,12 +1048,33 @@ def products():
         
         # Fazer requisi├º├úo HTTP direta para /sync
         response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
+        
+        # Salvar resposta completa em arquivo JSON
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        query = request.args.get('q', 'electronics')
+        log_filename = f"logs/product_search_{query}_{timestamp}.json"
+        
+        # Criar diretório logs se não existir
+        os.makedirs("logs", exist_ok=True)
+        
+        # Salvar resposta bruta
+        with open(log_filename, 'w', encoding='utf-8') as f:
+            f.write(response.text)
+        
         print(f'Ô£à Resposta produtos: {response.text[:500]}...')
+        print(f'💾 Resposta completa salva em: {log_filename}')
         
         if response.status_code == 200:
             data = response.json()
+            
+            # Salvar dados processados também
+            processed_log_filename = f"logs/product_search_processed_{query}_{timestamp}.json"
+            with open(processed_log_filename, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            
             print(f'­ƒôè ESTRUTURA COMPLETA - BUSCA PRODUTOS:')
             print(json.dumps(data, indent=2, ensure_ascii=False))
+            print(f'💾 Dados processados salvos em: {processed_log_filename}')
             
             # Verificar se h├í produtos na resposta
             if 'aliexpress_ds_text_search_response' in data:
@@ -1179,7 +1201,20 @@ def get_category_name(category_id):
         
         # Fazer requisição HTTP direta para /sync
         response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
+        
+        # Salvar resposta completa em arquivo JSON
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        log_filename = f"logs/category_get_{category_id}_{timestamp}.json"
+        
+        # Criar diretório logs se não existir
+        os.makedirs("logs", exist_ok=True)
+        
+        # Salvar resposta bruta
+        with open(log_filename, 'w', encoding='utf-8') as f:
+            f.write(response.text)
+        
         print(f'📡 Resposta categoria {category_id}: {response.text}')
+        print(f'💾 Resposta completa salva em: {log_filename}')
         
         if response.status_code == 200:
             data = response.json()
@@ -1254,12 +1289,32 @@ def product_details(product_id):
         
         # Fazer requisição HTTP direta para /sync
         response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
+        
+        # Salvar resposta completa em arquivo JSON
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        log_filename = f"logs/product_details_{product_id}_{timestamp}.json"
+        
+        # Criar diretório logs se não existir
+        os.makedirs("logs", exist_ok=True)
+        
+        # Salvar resposta bruta
+        with open(log_filename, 'w', encoding='utf-8') as f:
+            f.write(response.text)
+        
         print(f'📡 Resposta detalhes produto {product_id}: {response.text[:500]}...')
+        print(f'💾 Resposta completa salva em: {log_filename}')
 
         if response.status_code == 200:
             data = response.json()
+            
+            # Salvar dados processados também
+            processed_log_filename = f"logs/product_details_processed_{product_id}_{timestamp}.json"
+            with open(processed_log_filename, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            
             print(f'✅ ESTRUTURA COMPLETA - DETALHES PRODUTO {product_id}:')
             print(json.dumps(data, indent=2, ensure_ascii=False))
+            print(f'💾 Dados processados salvos em: {processed_log_filename}')
             
             # Verificar se há dados na resposta
             if 'aliexpress_ds_product_get_response' in data:
@@ -1567,7 +1622,20 @@ def freight_calculation(product_id):
             
             # Fazer requisição HTTP direta para /sync
             response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
+            
+            # Salvar resposta completa em arquivo JSON
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            log_filename = f"logs/freight_calculation_{product_id}_{current_sku_id}_{timestamp}.json"
+            
+            # Criar diretório logs se não existir
+            os.makedirs("logs", exist_ok=True)
+            
+            # Salvar resposta bruta
+            with open(log_filename, 'w', encoding='utf-8') as f:
+                f.write(response.text)
+            
             print(f'🚚 Resposta frete produto {product_id} (sku: {current_sku_id}): {response.text[:500]}...')
+            print(f'💾 Resposta completa salva em: {log_filename}')
             
             if response.status_code == 200:
                 data = response.json()

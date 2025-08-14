@@ -1,0 +1,25 @@
+runtime: python39
+entrypoint: gunicorn server:app --bind 0.0.0.0:$PORT
+
+env_variables:
+  APP_KEY: "517616"
+  APP_SECRET: "skAvaPWbGLkkx5TlKf8kvLmILQtTV2sq"
+  STORE_CONSIGNEE_NAME: "ana cristina silva lima"
+  STORE_PHONE: "+5585997640050"
+  STORE_ORIGIN_CEP: "61771-880"
+  STORE_ADDRESS_LINE1: "numero 280, bloco 03 ap 202"
+  STORE_CITY: ""
+  STORE_STATE: ""
+  STORE_COUNTRY: "BR"
+  INBOUND_LEAD_TIME_DAYS: "12"
+  STORE_HANDLING_DAYS: "2"
+
+automatic_scaling:
+  target_cpu_utilization: 0.65
+  min_instances: 0
+  max_instances: 10
+
+handlers:
+  - url: /.*
+    script: auto
+    secure: always

@@ -1498,11 +1498,22 @@ def product_wholesale_details(product_id):
 @app.route('/api/aliexpress/freight/<product_id>')
 def freight_calculation(product_id):
     """Calcular frete para um produto"""
+    print(f'🚚 INICIANDO CÁLCULO DE FRETE - PRODUTO ID: {product_id}')
+    print(f'🚚 Tipo do ID: {type(product_id)}')
+    
     tokens = load_tokens()
     if not tokens or not tokens.get('access_token'):
         return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
 
     try:
+        # Validar se o product_id é válido
+        try:
+            product_id_int = int(product_id)
+            print(f'✅ Product ID válido: {product_id} -> {product_id_int}')
+        except ValueError:
+            print(f'❌ Product ID inválido: {product_id} - não é um número')
+            return jsonify({'success': False, 'error': f'ID do produto inválido: {product_id}'}), 400
+        
         # Primeiro, buscar detalhes do produto para obter o skuId
         product_params = {
             "method": "aliexpress.ds.product.get",
@@ -1512,7 +1523,7 @@ def freight_calculation(product_id):
             "format": "json",
             "v": "2.0",
             "access_token": tokens['access_token'],
-            "product_id": product_id,
+            "product_id": product_id_int,
             "ship_to_country": "BR",
             "target_currency": "BRL",
             "target_language": "pt",
@@ -1598,13 +1609,21 @@ def freight_calculation(product_id):
             # Calcular frete com o SKU atual (conforme documentação oficial)
             freight_params = {
                 "country_code": "BR",
-                "product_id": int(product_id),
+                "product_id": product_id_int,
                 "product_num": 1,
                 "send_goods_country_code": "CN",
                 "sku_id": current_sku_id,  # SKU ID (opcional mas recomendado)
                 "price": product_price,  # Preço (opcional)
                 "price_currency": "USD"  # Moeda (opcional)
             }
+            
+            print(f'🚚 PARÂMETROS DE FRETE ENVIADOS:')
+            print(f'  - Product ID: {product_id} (tipo: {type(product_id)})')
+            print(f'  - Product ID convertido: {int(product_id)} (tipo: {type(int(product_id))})')
+            print(f'  - SKU ID: {current_sku_id}')
+            print(f'  - Price: {product_price}')
+            print(f'  - Country: BR')
+            print(f'  - Send from: CN')
             
             params = {
                 "method": "aliexpress.logistics.buyer.freight.calculate",

@@ -1151,6 +1151,58 @@ def categories():
         print(f'ÔØî Erro ao buscar categorias: {e}')
         return jsonify({'success': False, 'message': str(e)}), 500
 
+@app.route('/api/aliexpress/category/<category_id>')
+def get_category_name(category_id):
+    """Buscar nome da categoria pelo ID"""
+    tokens = load_tokens()
+    if not tokens or not tokens.get('access_token'):
+        return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
+
+    try:
+        # Parâmetros para a API conforme documentação
+        params = {
+            "method": "aliexpress.ds.category.get",
+            "app_key": APP_KEY,
+            "timestamp": int(time.time() * 1000),
+            "sign_method": "md5",
+            "format": "json",
+            "v": "2.0",
+            "access_token": tokens['access_token'],
+            "categoryId": category_id,
+            "language": "pt"  # Português
+        }
+        
+        # Gerar assinatura
+        params["sign"] = generate_api_signature(params, APP_SECRET)
+        
+        # Fazer requisição HTTP direta para /sync
+        response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
+        print(f'📡 Resposta categoria {category_id}: {response.text}')
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get('code') == '0':
+                result = data.get('resp_result', {}).get('result', {})
+                categories = result.get('categories', [])
+                if categories:
+                    category = categories[0]  # Pegar a primeira categoria
+                    return jsonify({
+                        'success': True,
+                        'category_id': category.get('category_id'),
+                        'category_name': category.get('category_name'),
+                        'parent_category_id': category.get('parent_category_id')
+                    })
+                else:
+                    return jsonify({'success': False, 'message': 'Categoria não encontrada'}), 404
+            else:
+                return jsonify({'success': False, 'error': data}), 400
+        else:
+            return jsonify({'success': False, 'error': response.text}), response.status_code
+
+    except Exception as e:
+        print(f'❌ Erro ao buscar categoria {category_id}: {e}')
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 @app.route('/api/aliexpress/tokens/status')
 def tokens_status():
     tokens = load_tokens()

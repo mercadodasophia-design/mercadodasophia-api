@@ -2336,9 +2336,10 @@ def get_available_feeds():
             print(json.dumps(data, indent=2, ensure_ascii=False))
             
             # Verificar se há dados na resposta
-            if 'aliexpress_ds_feed_name_list_get_response' in data:
-                feed_response = data['aliexpress_ds_feed_name_list_get_response']
-                result = feed_response.get('result', {})
+            if 'aliexpress_ds_feedname_get_response' in data:
+                feed_response = data['aliexpress_ds_feedname_get_response']
+                resp_result = feed_response.get('resp_result', {})
+                result = resp_result.get('result', {})
                 
                 # Processar dados para o frontend
                 processed_feeds = {
@@ -2347,14 +2348,32 @@ def get_available_feeds():
                     'raw_data': result
                 }
                 
-                # Extrair lista de feeds
-                if 'feeds' in result:
-                    feeds_data = result['feeds']
-                    if isinstance(feeds_data, list):
-                        processed_feeds['feeds'] = feeds_data
-                    elif isinstance(feeds_data, dict) and 'feed' in feeds_data:
-                        feeds_list = feeds_data['feed']
-                        processed_feeds['feeds'] = feeds_list if isinstance(feeds_list, list) else [feeds_list]
+                # Extrair lista de feeds (promos)
+                if 'promos' in result:
+                    promos_data = result['promos']
+                    if isinstance(promos_data, dict) and 'promo' in promos_data:
+                        promos_list = promos_data['promo']
+                        if isinstance(promos_list, list):
+                            # Converter promos para formato de feeds
+                            processed_feeds['feeds'] = [
+                                {
+                                    'feed_name': promo.get('promo_name', ''),
+                                    'feed_id': str(i + 1),
+                                    'display_name': promo.get('promo_name', ''),
+                                    'description': promo.get('promo_desc', ''),
+                                    'product_count': int(promo.get('product_num', 0))
+                                }
+                                for i, promo in enumerate(promos_list)
+                            ]
+                        elif isinstance(promos_list, dict):
+                            # Se for apenas um promo
+                            processed_feeds['feeds'] = [{
+                                'feed_name': promos_list.get('promo_name', ''),
+                                'feed_id': '1',
+                                'display_name': promos_list.get('promo_name', ''),
+                                'description': promos_list.get('promo_desc', ''),
+                                'product_count': int(promos_list.get('product_num', 0))
+                            }]
                 
                 # Se não há feeds na resposta, criar feeds padrão
                 if not processed_feeds['feeds']:

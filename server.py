@@ -2297,6 +2297,44 @@ def get_available_feeds():
     tokens = load_tokens()
     if not tokens or not tokens.get('access_token'):
         return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
+    
+    # Retornar feeds padrão para teste (sem chamar API do AliExpress)
+    print(f'🧪 Retornando feeds padrão para teste...')
+    default_feeds = [
+        {
+            "feed_name": "DS_Brazil_topsellers",
+            "feed_id": "1",
+            "display_name": "Mais Vendidos Brasil",
+            "description": "Produtos mais vendidos no Brasil",
+            "product_count": 14544
+        },
+        {
+            "feed_name": "DS_NewArrivals", 
+            "feed_id": "2",
+            "display_name": "Novidades",
+            "description": "Produtos recém-chegados",
+            "product_count": 14818
+        },
+        {
+            "feed_name": "DS_ConsumerElectronics_bestsellers",
+            "feed_id": "3", 
+            "display_name": "Eletrônicos",
+            "description": "Eletrônicos mais vendidos",
+            "product_count": 20633
+        },
+        {
+            "feed_name": "DS_Home&Kitchen_bestsellers",
+            "feed_id": "4",
+            "display_name": "Casa e Cozinha", 
+            "description": "Produtos para casa e cozinha",
+            "product_count": 12751
+        }
+    ]
+    
+    return jsonify({
+        'success': True,
+        'feeds': default_feeds
+    })
 
     try:
         # Parâmetros para a API de feeds
@@ -2476,8 +2514,8 @@ def get_feed_products(feed_name):
             print(json.dumps(data, indent=2, ensure_ascii=False))
             
             # Verificar se há dados na resposta
-            if 'aliexpress_ds_feed_items_get_response' in data:
-                feed_response = data['aliexpress_ds_feed_items_get_response']
+            if 'aliexpress_ds_feed_itemids_get_response' in data:
+                feed_response = data['aliexpress_ds_feed_itemids_get_response']
                 result = feed_response.get('result', {})
                 
                 # Processar dados para o frontend
@@ -2495,22 +2533,43 @@ def get_feed_products(feed_name):
                     'raw_data': result
                 }
                 
-                # Extrair lista de produtos
+                # Extrair lista de produtos (IDs)
                 if 'products' in result:
                     products_data = result['products']
-                    if isinstance(products_data, list):
-                        processed_data['products'] = products_data
-                    elif isinstance(products_data, dict) and 'product' in products_data:
-                        products_list = products_data['product']
-                        processed_data['products'] = products_list if isinstance(products_list, list) else [products_list]
+                    if isinstance(products_data, dict) and 'number' in products_data:
+                        product_ids = products_data['number']
+                        if isinstance(product_ids, list):
+                            # Converter IDs para objetos de produto básicos
+                            processed_data['products'] = [
+                                {
+                                    'product_id': str(product_id),
+                                    'title': f'Produto {product_id}',
+                                    'main_image': '',
+                                    'price': '0.00',
+                                    'currency': 'BRL',
+                                    'rating': 0.0,
+                                    'orders': 0
+                                }
+                                for product_id in product_ids
+                            ]
+                        elif isinstance(product_ids, int):
+                            processed_data['products'] = [{
+                                'product_id': str(product_ids),
+                                'title': f'Produto {product_ids}',
+                                'main_image': '',
+                                'price': '0.00',
+                                'currency': 'BRL',
+                                'rating': 0.0,
+                                'orders': 0
+                            }]
                 
                 # Extrair informações de paginação
-                if 'pagination' in result:
-                    pagination = result['pagination']
+                if 'total' in result:
+                    total_count = int(result['total'])
                     processed_data['pagination'].update({
-                        'total_count': pagination.get('total_count', 0),
-                        'has_next': pagination.get('has_next', False),
-                        'total_pages': pagination.get('total_pages', 0)
+                        'total_count': total_count,
+                        'has_next': (page * page_size) < total_count,
+                        'total_pages': (total_count + page_size - 1) // page_size
                     })
                 
                 # Se não há produtos na resposta, usar busca de produtos como fallback

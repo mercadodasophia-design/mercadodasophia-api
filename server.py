@@ -2301,7 +2301,7 @@ def get_available_feeds():
     try:
         # Parâmetros para a API de feeds
         params = {
-            "method": "aliexpress.ds.feed.name.list.get",
+            "method": "aliexpress.ds.feedname.get",
             "app_key": APP_KEY,
             "timestamp": int(time.time() * 1000),
             "sign_method": "md5",
@@ -2419,7 +2419,7 @@ def get_feed_products(feed_name):
         
         # Parâmetros para a API de produtos do feed
         params = {
-            "method": "aliexpress.ds.feed.items.get",
+            "method": "aliexpress.ds.feed.itemids.get",
             "app_key": APP_KEY,
             "timestamp": int(time.time() * 1000),
             "sign_method": "md5",

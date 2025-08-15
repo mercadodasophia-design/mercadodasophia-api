@@ -51,7 +51,17 @@ except Exception as e:
 CORS(app, origins=[
     "https://mercadodasophia-bbd01.web.app",
     "https://mercadodasophia-bbd01.firebaseapp.com",
-    "https://service-api-aliexpress.mercadodasophia.com.br"
+    "https://service-api-aliexpress.mercadodasophia.com.br",
+    "http://localhost:3000",
+    "http://localhost:5000",
+    "http://localhost:8000",
+    "http://localhost:8080",
+    "http://localhost:60333",
+    "https://localhost:3000",
+    "https://localhost:5000",
+    "https://localhost:8000",
+    "https://localhost:8080",
+    "https://localhost:60333"
 ], methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], allow_headers=["Content-Type", "Authorization"])
 
 # ===================== CONFIGURAÇÕES =====================

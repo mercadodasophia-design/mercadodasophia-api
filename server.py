@@ -49,11 +49,9 @@ except Exception as e:
 
 # Configurar CORS para permitir requisições do navegador
 CORS(app, origins=[
-    "http://localhost:3000",
-    "http://localhost:8000", 
-    "http://localhost:56054",
     "https://mercadodasophia-bbd01.web.app",
-    "https://mercadodasophia-bbd01.firebaseapp.com"
+    "https://mercadodasophia-bbd01.firebaseapp.com",
+    "https://service-api-aliexpress.mercadodasophia.com.br"
 ], methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], allow_headers=["Content-Type", "Authorization"])
 
 # ===================== CONFIGURAÇÕES =====================
@@ -213,7 +211,7 @@ def generate_api_signature(params, app_secret):
 
 def create_test_page():
     """Cria página HTML de teste"""
-    base_url = os.getenv('RENDER_EXTERNAL_URL', f'http://localhost:{PORT}')
+    base_url = os.getenv('RENDER_EXTERNAL_URL', 'https://service-api-aliexpress.mercadodasophia.com.br')
     
     return '''
 <!DOCTYPE html>
@@ -539,8 +537,8 @@ def create_test_page():
     '''
 
 def create_callback_page(data):
-    """Cria p├ígina HTML para callback OAuth"""
-    base_url = os.getenv('RENDER_EXTERNAL_URL', f'http://localhost:{PORT}')
+    """Cria página HTML para callback OAuth"""
+    base_url = os.getenv('RENDER_EXTERNAL_URL', 'https://service-api-aliexpress.mercadodasophia.com.br')
     
     return '''
 <!DOCTYPE html>
@@ -2602,7 +2600,7 @@ def test_endpoint():
 @app.route('/test-product')
 def test_product_page():
     """Página de teste para buscar produtos por link"""
-    base_url = os.getenv('RENDER_EXTERNAL_URL', f'http://localhost:{PORT}')
+    base_url = os.getenv('RENDER_EXTERNAL_URL', 'https://service-api-aliexpress.mercadodasophia.com.br')
     
     return '''
 <!DOCTYPE html>

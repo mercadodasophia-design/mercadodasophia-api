@@ -14,8 +14,8 @@ from dotenv import load_dotenv
 from flask_cors import CORS
 # Firebase Admin SDK (opcional)
 try:
-    import firebase_admin
-    from firebase_admin import credentials, firestore
+import firebase_admin
+from firebase_admin import credentials, firestore
     FIREBASE_AVAILABLE = True
 except ImportError:
     FIREBASE_AVAILABLE = False
@@ -40,19 +40,19 @@ app = Flask(__name__)
 
 # Inicializar Firebase Admin SDK (opcional - apenas para funcionalidades locais)
 if FIREBASE_AVAILABLE:
+try:
+    # Tentar usar credenciais de arquivo
+    cred = credentials.Certificate('firebase-credentials.json')
+    firebase_admin.initialize_app(cred)
+    print('✅ Firebase Admin SDK inicializado com credenciais de arquivo')
+except Exception as e:
     try:
-        # Tentar usar credenciais de arquivo
-        cred = credentials.Certificate('firebase-credentials.json')
-        firebase_admin.initialize_app(cred)
-        print('✅ Firebase Admin SDK inicializado com credenciais de arquivo')
-    except Exception as e:
-        try:
-            # Tentar usar variáveis de ambiente
-            firebase_admin.initialize_app()
-            print('✅ Firebase Admin SDK inicializado com variáveis de ambiente')
-        except Exception as e2:
-            print(f'⚠️ Firebase Admin SDK não inicializado: {e2}')
-            print('⚠️ Funcionalidades de pedidos podem não funcionar corretamente')
+        # Tentar usar variáveis de ambiente
+        firebase_admin.initialize_app()
+        print('✅ Firebase Admin SDK inicializado com variáveis de ambiente')
+    except Exception as e2:
+        print(f'⚠️ Firebase Admin SDK não inicializado: {e2}')
+        print('⚠️ Funcionalidades de pedidos podem não funcionar corretamente')
             print('✅ Feeds do AliExpress funcionarão normalmente')
 else:
     print('✅ Firebase não disponível - apenas APIs do AliExpress ativas')
@@ -2469,6 +2469,10 @@ def get_feed_products(feed_name):
     if not tokens or not tokens.get('access_token'):
         return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
     
+    # Parâmetros de paginação
+    page = int(request.args.get('page', 1))
+    page_size = int(request.args.get('page_size', 20))
+    
     # Usar API de produtos reais do AliExpress
     print(f'📡 Buscando produtos reais para feed: {feed_name}')
     
@@ -2551,184 +2555,6 @@ def get_feed_products(feed_name):
             'success': False,
             'message': str(e)
         }), 500
-
-    try:
-        # Parâmetros de paginação
-        page = int(request.args.get('page', 1))
-        page_size = int(request.args.get('page_size', 20))
-        
-        # Parâmetros para a API de produtos do feed
-        params = {
-            "method": "aliexpress.ds.feed.itemids.get",
-            "app_key": APP_KEY,
-            "timestamp": int(time.time() * 1000),
-            "sign_method": "md5",
-            "format": "json",
-            "v": "2.0",
-            "access_token": tokens['access_token'],
-            "feed_name": feed_name,
-            "page_size": str(page_size),
-            "page_no": str(page)
-        }
-        
-        # Gerar assinatura
-        params["sign"] = generate_api_signature(params, APP_SECRET)
-        
-        print(f'📡 Consultando produtos do feed: {feed_name} (página {page})')
-        response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
-        
-        # Salvar resposta completa em arquivo JSON
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        log_filename = f"logs/feed_products_{feed_name}_{page}_{timestamp}.json"
-        
-        # Criar diretório logs se não existir
-        os.makedirs("logs", exist_ok=True)
-        
-        # Salvar resposta bruta
-        with open(log_filename, 'w', encoding='utf-8') as f:
-            f.write(response.text)
-        
-        print(f'📡 Resposta produtos do feed {feed_name}: {response.text[:500]}...')
-        print(f'💾 Resposta completa salva em: {log_filename}')
-        
-        if response.status_code == 200:
-            data = response.json()
-            print(f'✅ ESTRUTURA COMPLETA - PRODUTOS DO FEED {feed_name}:')
-            print(json.dumps(data, indent=2, ensure_ascii=False))
-            
-            # Verificar se há dados na resposta
-            if 'aliexpress_ds_feed_itemids_get_response' in data:
-                feed_response = data['aliexpress_ds_feed_itemids_get_response']
-                result = feed_response.get('result', {})
-                
-                # Processar dados para o frontend
-                processed_data = {
-                    'success': True,
-                    'feed_name': feed_name,
-                    'products': [],
-                    'pagination': {
-                        'page_no': page,
-                        'page_size': page_size,
-                        'total_count': 0,
-                        'has_next': False,
-                        'total_pages': 0
-                    },
-                    'raw_data': result
-                }
-                
-                # Extrair lista de produtos (IDs)
-                if 'products' in result:
-                    products_data = result['products']
-                    if isinstance(products_data, dict) and 'number' in products_data:
-                        product_ids = products_data['number']
-                        if isinstance(product_ids, list):
-                            # Converter IDs para objetos de produto básicos
-                            processed_data['products'] = [
-                                {
-                                    'product_id': str(product_id),
-                                    'title': f'Produto {product_id}',
-                                    'main_image': '',
-                                    'price': '0.00',
-                                    'currency': 'BRL',
-                                    'rating': 0.0,
-                                    'orders': 0
-                                }
-                                for product_id in product_ids
-                            ]
-                        elif isinstance(product_ids, int):
-                            processed_data['products'] = [{
-                                'product_id': str(product_ids),
-                                'title': f'Produto {product_ids}',
-                                'main_image': '',
-                                'price': '0.00',
-                                'currency': 'BRL',
-                                'rating': 0.0,
-                                'orders': 0
-                            }]
-                
-                # Extrair informações de paginação
-                if 'total' in result:
-                    total_count = int(result['total'])
-                    processed_data['pagination'].update({
-                        'total_count': total_count,
-                        'has_next': (page * page_size) < total_count,
-                        'total_pages': (total_count + page_size - 1) // page_size
-                    })
-                
-                # Se não há produtos na resposta, usar busca de produtos como fallback
-                if not processed_data['products']:
-                    print(f'⚠️ Nenhum produto encontrado no feed {feed_name}, usando busca como fallback...')
-                    
-                    # Usar busca de produtos como alternativa
-                    search_params = {
-                        "method": "aliexpress.ds.text.search",
-                        "app_key": APP_KEY,
-                        "timestamp": int(time.time() * 1000),
-                        "sign_method": "md5",
-                        "format": "json",
-                        "v": "2.0",
-                        "access_token": tokens['access_token'],
-                        "keyWord": "electronics",  # Termo genérico
-                        "countryCode": "BR",
-                        "currency": "BRL",
-                        "local": "pt_BR",
-                        "pageSize": str(page_size),
-                        "pageIndex": str(page),
-                        "sortBy": "orders,desc"
-                    }
-                    
-                    search_params["sign"] = generate_api_signature(search_params, APP_SECRET)
-                    search_response = requests.get('https://api-sg.aliexpress.com/sync', params=search_params)
-                    
-                    if search_response.status_code == 200:
-                        search_data = search_response.json()
-                        if 'aliexpress_ds_text_search_response' in search_data:
-                            search_result = search_data['aliexpress_ds_text_search_response'].get('result', {})
-                            
-                            if 'products' in search_result:
-                                products_data = search_result['products']
-                                if 'selection_search_product' in products_data:
-                                    products = products_data['selection_search_product']
-                                    processed_data['products'] = products if isinstance(products, list) else [products]
-                                    
-                                    # Atualizar paginação
-                                    processed_data['pagination'].update({
-                                        'total_count': search_result.get('total_count', 0),
-                                        'has_next': len(processed_data['products']) == page_size,
-                                        'total_pages': (search_result.get('total_count', 0) + page_size - 1) // page_size
-                                    })
-                
-                print(f'📊 DADOS PROCESSADOS PARA FRONTEND:')
-                print(f'  - Feed: {feed_name}')
-                print(f'  - Produtos encontrados: {len(processed_data["products"])}')
-                print(f'  - Página: {page}/{processed_data["pagination"]["total_pages"]}')
-                print(f'  - Total: {processed_data["pagination"]["total_count"]}')
-                print(f'  - Tem próxima: {processed_data["pagination"]["has_next"]}')
-                
-                # Log do primeiro produto para análise
-                if processed_data['products']:
-                    first_product = processed_data['products'][0]
-                    print(f'📦 EXEMPLO PRIMEIRO PRODUTO:')
-                    print(f'  - ID: {first_product.get("item_id", "N/A")}')
-                    print(f'  - Título: {first_product.get("product_title", "N/A")[:50]}...')
-                    print(f'  - Preço: {first_product.get("product_price", "N/A")}')
-                    print(f'  - Keys disponíveis: {list(first_product.keys())}')
-                
-                return jsonify(processed_data)
-            else:
-                print(f'❌ ESTRUTURA INESPERADA: {list(data.keys())}')
-                return jsonify({'success': False, 'error': data}), 400
-        else:
-            try:
-                data = response.json()
-                print(f'❌ Erro na API: {data}')
-                return jsonify({'success': False, 'error': data}), response.status_code
-            except:
-                return jsonify({'success': False, 'error': response.text}), response.status_code
-                
-    except Exception as e:
-        print(f'❌ Erro ao consultar produtos do feed {feed_name}: {e}')
-        return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/api/aliexpress/translate-attributes', methods=['POST'])
 def translate_attributes():
@@ -5342,6 +5168,151 @@ def check_multiple_products_status():
         return jsonify({
             'success': False,
             'message': f'Erro na verificação em lote: {str(e)}'
+        }), 500
+
+@app.route('/api/aliexpress/feeds/complete', methods=['GET'])
+def get_complete_feeds():
+    """Retorna feeds e produtos completos em JSON estruturado"""
+    tokens = load_tokens()
+    if not tokens or not tokens.get('access_token'):
+        return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
+    
+    # Parâmetros de paginação
+    page = int(request.args.get('page', 1))
+    page_size = int(request.args.get('page_size', 20))
+    max_feeds = int(request.args.get('max_feeds', 5))  # Limitar número de feeds para performance
+    
+    print(f'🚀 Gerando JSON completo de feeds (página {page}, {page_size} produtos por feed, max {max_feeds} feeds)')
+    
+    try:
+        # 1. Buscar feeds disponíveis
+        feeds_params = {
+            "method": "aliexpress.ds.feedname.get",
+            "app_key": APP_KEY,
+            "timestamp": int(time.time() * 1000),
+            "sign_method": "md5",
+            "format": "json",
+            "v": "2.0",
+            "access_token": tokens['access_token']
+        }
+        
+        feeds_params["sign"] = generate_api_signature(feeds_params, APP_SECRET)
+        feeds_response = requests.get('https://api-sg.aliexpress.com/sync', params=feeds_params)
+        
+        if feeds_response.status_code != 200:
+            return jsonify({'success': False, 'message': 'Erro ao buscar feeds'}), 500
+        
+        feeds_data = feeds_response.json()
+        feeds_list = []
+        
+        if 'aliexpress_ds_feedname_get_response' in feeds_data:
+            feed_response = feeds_data['aliexpress_ds_feedname_get_response']
+            resp_result = feed_response.get('resp_result', {})
+            result = resp_result.get('result', {})
+            
+            if 'promos' in result:
+                promos_data = result['promos']
+                if isinstance(promos_data, dict) and 'promo' in promos_data:
+                    promos_list = promos_data['promo']
+                    if isinstance(promos_list, list):
+                        feeds_list = promos_list[:max_feeds]  # Limitar número de feeds
+                    elif isinstance(promos_list, dict):
+                        feeds_list = [promos_list]
+        
+        # 2. Para cada feed, buscar produtos
+        complete_data = {
+            'success': True,
+            'timestamp': datetime.now().isoformat(),
+            'pagination': {
+                'page': page,
+                'page_size': page_size,
+                'total_feeds': len(feeds_list)
+            },
+            'feeds': []
+        }
+        
+        for i, feed in enumerate(feeds_list):
+            feed_name = feed.get('promo_name', f'Feed_{i+1}')
+            feed_desc = feed.get('promo_desc', '')
+            product_count = int(feed.get('product_num', 0))
+            
+            print(f'📦 Processando feed {i+1}/{len(feeds_list)}: {feed_name}')
+            
+            # Buscar produtos para este feed
+            search_params = {
+                "method": "aliexpress.ds.text.search",
+                "app_key": APP_KEY,
+                "timestamp": int(time.time() * 1000),
+                "sign_method": "md5",
+                "format": "json",
+                "v": "2.0",
+                "access_token": tokens['access_token'],
+                "keyWord": "electronics",  # Termo base para busca
+                "countryCode": "BR",
+                "currency": "BRL",
+                "local": "pt_BR",
+                "pageSize": str(page_size),
+                "pageIndex": str(page),
+                "sortBy": "orders,desc"
+            }
+            
+            search_params["sign"] = generate_api_signature(search_params, APP_SECRET)
+            search_response = requests.get('https://api-sg.aliexpress.com/sync', params=search_params)
+            
+            feed_products = []
+            if search_response.status_code == 200:
+                search_data = search_response.json()
+                if 'aliexpress_ds_text_search_response' in search_data:
+                    search_result = search_data['aliexpress_ds_text_search_response'].get('data', {})
+                    
+                    if 'products' in search_result:
+                        products_data = search_result['products']
+                        if 'selection_search_product' in products_data:
+                            products = products_data['selection_search_product']
+                            
+                            # Converter para formato do frontend
+                            for product in products:
+                                feed_products.append({
+                                    'product_id': product.get('product_id', ''),
+                                    'title': product.get('product_title', ''),
+                                    'main_image': product.get('product_main_image_url', ''),
+                                    'price': product.get('product_price', '0.00'),
+                                    'currency': 'BRL',
+                                    'rating': float(product.get('evaluate_rate', '0')),
+                                    'orders': int(product.get('sale_count', '0')),
+                                    'shop_name': product.get('shop_name', ''),
+                                    'shop_url': product.get('shop_url', ''),
+                                    'product_url': product.get('product_url', ''),
+                                    'discount': product.get('discount', '0'),
+                                    'original_price': product.get('original_price', '0.00'),
+                                    'shipping_cost': product.get('shipping_cost', '0.00'),
+                                    'free_shipping': product.get('free_shipping', False),
+                                    'wishlist_count': product.get('wishlist_count', 0),
+                                    'review_count': product.get('review_count', 0),
+                                    'tags': product.get('tags', []),
+                                    'attributes': product.get('attributes', {})
+                                })
+            
+            # Adicionar feed com produtos ao resultado
+            complete_data['feeds'].append({
+                'feed_id': str(i + 1),
+                'feed_name': feed_name,
+                'display_name': feed_name,
+                'description': feed_desc,
+                'product_count': product_count,
+                'products': feed_products,
+                'products_found': len(feed_products)
+            })
+        
+        print(f'✅ JSON completo gerado com {len(complete_data["feeds"])} feeds e {sum(len(feed["products"]) for feed in complete_data["feeds"])} produtos')
+        
+        return jsonify(complete_data)
+        
+    except Exception as e:
+        print(f'❌ Erro ao gerar JSON completo: {e}')
+        return jsonify({
+            'success': False,
+            'message': str(e)
         }), 500
 
 

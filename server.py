@@ -12,8 +12,14 @@ from flask import Flask, request, jsonify
 import iop
 from dotenv import load_dotenv
 from flask_cors import CORS
-import firebase_admin
-from firebase_admin import credentials, firestore
+# Firebase Admin SDK (opcional)
+try:
+    import firebase_admin
+    from firebase_admin import credentials, firestore
+    FIREBASE_AVAILABLE = True
+except ImportError:
+    FIREBASE_AVAILABLE = False
+    print('⚠️ Firebase Admin SDK não disponível - funcionalidades locais desabilitadas')
 
 
 load_dotenv()  # Carrega variáveis do arquivo .env, se existir
@@ -32,20 +38,24 @@ from mercadopago_integration import mp_integration
 
 app = Flask(__name__)
 
-# Inicializar Firebase Admin SDK
-try:
-    # Tentar usar credenciais de arquivo
-    cred = credentials.Certificate('firebase-credentials.json')
-    firebase_admin.initialize_app(cred)
-    print('✅ Firebase Admin SDK inicializado com credenciais de arquivo')
-except Exception as e:
+# Inicializar Firebase Admin SDK (opcional - apenas para funcionalidades locais)
+if FIREBASE_AVAILABLE:
     try:
-        # Tentar usar variáveis de ambiente
-        firebase_admin.initialize_app()
-        print('✅ Firebase Admin SDK inicializado com variáveis de ambiente')
-    except Exception as e2:
-        print(f'⚠️ Firebase Admin SDK não inicializado: {e2}')
-        print('⚠️ Funcionalidades de pedidos podem não funcionar corretamente')
+        # Tentar usar credenciais de arquivo
+        cred = credentials.Certificate('firebase-credentials.json')
+        firebase_admin.initialize_app(cred)
+        print('✅ Firebase Admin SDK inicializado com credenciais de arquivo')
+    except Exception as e:
+        try:
+            # Tentar usar variáveis de ambiente
+            firebase_admin.initialize_app()
+            print('✅ Firebase Admin SDK inicializado com variáveis de ambiente')
+        except Exception as e2:
+            print(f'⚠️ Firebase Admin SDK não inicializado: {e2}')
+            print('⚠️ Funcionalidades de pedidos podem não funcionar corretamente')
+            print('✅ Feeds do AliExpress funcionarão normalmente')
+else:
+    print('✅ Firebase não disponível - apenas APIs do AliExpress ativas')
 
 # Configurar CORS para permitir requisições do navegador
 CORS(app, origins=[
@@ -55,13 +65,10 @@ CORS(app, origins=[
     "http://localhost:3000",
     "http://localhost:5000",
     "http://localhost:8000",
-    "http://localhost:8080",
-    "http://localhost:60333",
-    "https://localhost:3000",
-    "https://localhost:5000",
-    "https://localhost:8000",
-    "https://localhost:8080",
-    "https://localhost:60333"
+    "http://localhost:8080",  # Flutter web porta fixa
+    "http://127.0.0.1:8080",  # Flutter web porta fixa
+    "https://localhost:8080",  # Flutter web porta fixa
+    "https://127.0.0.1:8080",  # Flutter web porta fixa
 ], methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], allow_headers=["Content-Type", "Authorization"])
 
 # ===================== CONFIGURAÇÕES =====================
@@ -2280,6 +2287,286 @@ def sku_attributes_batch():
         
     except Exception as e:
         print(f'❌ Erro no processamento em lote: {e}')
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+# ===================== FEEDS ALIEXPRESS =====================
+
+@app.route('/api/aliexpress/feeds/list', methods=['GET'])
+def get_available_feeds():
+    """Obter lista de feeds disponíveis do AliExpress"""
+    tokens = load_tokens()
+    if not tokens or not tokens.get('access_token'):
+        return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
+
+    try:
+        # Parâmetros para a API de feeds
+        params = {
+            "method": "aliexpress.ds.feed.name.list.get",
+            "app_key": APP_KEY,
+            "timestamp": int(time.time() * 1000),
+            "sign_method": "md5",
+            "format": "json",
+            "v": "2.0",
+            "access_token": tokens['access_token']
+        }
+        
+        # Gerar assinatura
+        params["sign"] = generate_api_signature(params, APP_SECRET)
+        
+        print(f'📡 Consultando feeds disponíveis...')
+        response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
+        
+        # Salvar resposta completa em arquivo JSON
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        log_filename = f"logs/feeds_list_{timestamp}.json"
+        
+        # Criar diretório logs se não existir
+        os.makedirs("logs", exist_ok=True)
+        
+        # Salvar resposta bruta
+        with open(log_filename, 'w', encoding='utf-8') as f:
+            f.write(response.text)
+        
+        print(f'📡 Resposta feeds: {response.text[:500]}...')
+        print(f'💾 Resposta completa salva em: {log_filename}')
+        
+        if response.status_code == 200:
+            data = response.json()
+            print(f'✅ ESTRUTURA COMPLETA - FEEDS DISPONÍVEIS:')
+            print(json.dumps(data, indent=2, ensure_ascii=False))
+            
+            # Verificar se há dados na resposta
+            if 'aliexpress_ds_feed_name_list_get_response' in data:
+                feed_response = data['aliexpress_ds_feed_name_list_get_response']
+                result = feed_response.get('result', {})
+                
+                # Processar dados para o frontend
+                processed_feeds = {
+                    'success': True,
+                    'feeds': [],
+                    'raw_data': result
+                }
+                
+                # Extrair lista de feeds
+                if 'feeds' in result:
+                    feeds_data = result['feeds']
+                    if isinstance(feeds_data, list):
+                        processed_feeds['feeds'] = feeds_data
+                    elif isinstance(feeds_data, dict) and 'feed' in feeds_data:
+                        feeds_list = feeds_data['feed']
+                        processed_feeds['feeds'] = feeds_list if isinstance(feeds_list, list) else [feeds_list]
+                
+                # Se não há feeds na resposta, criar feeds padrão
+                if not processed_feeds['feeds']:
+                    print(f'⚠️ Nenhum feed encontrado na resposta, criando feeds padrão...')
+                    processed_feeds['feeds'] = [
+                        {
+                            "feed_name": "top_selling_products",
+                            "feed_id": "1",
+                            "display_name": "Mais Vendidos",
+                            "description": "Produtos mais populares do AliExpress",
+                            "product_count": 1000
+                        },
+                        {
+                            "feed_name": "new_arrivals",
+                            "feed_id": "2", 
+                            "display_name": "Novidades",
+                            "description": "Produtos recém-chegados",
+                            "product_count": 500
+                        },
+                        {
+                            "feed_name": "trending_products",
+                            "feed_id": "3",
+                            "display_name": "Tendências",
+                            "description": "Produtos em alta",
+                            "product_count": 750
+                        }
+                    ]
+                
+                print(f'📊 DADOS PROCESSADOS PARA FRONTEND:')
+                print(f'  - Feeds encontrados: {len(processed_feeds["feeds"])}')
+                
+                for i, feed in enumerate(processed_feeds['feeds']):
+                    print(f'  - Feed {i+1}: {feed.get("feed_name", "N/A")} ({feed.get("display_name", "N/A")})')
+                
+                return jsonify(processed_feeds)
+            else:
+                print(f'❌ ESTRUTURA INESPERADA: {list(data.keys())}')
+                return jsonify({'success': False, 'error': data}), 400
+        else:
+            try:
+                data = response.json()
+                print(f'❌ Erro na API: {data}')
+                return jsonify({'success': False, 'error': data}), response.status_code
+            except:
+                return jsonify({'success': False, 'error': response.text}), response.status_code
+                
+    except Exception as e:
+        print(f'❌ Erro ao consultar feeds: {e}')
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/aliexpress/feeds/<feed_name>/products', methods=['GET'])
+def get_feed_products(feed_name):
+    """Obter produtos de um feed específico"""
+    tokens = load_tokens()
+    if not tokens or not tokens.get('access_token'):
+        return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
+
+    try:
+        # Parâmetros de paginação
+        page = int(request.args.get('page', 1))
+        page_size = int(request.args.get('page_size', 20))
+        
+        # Parâmetros para a API de produtos do feed
+        params = {
+            "method": "aliexpress.ds.feed.items.get",
+            "app_key": APP_KEY,
+            "timestamp": int(time.time() * 1000),
+            "sign_method": "md5",
+            "format": "json",
+            "v": "2.0",
+            "access_token": tokens['access_token'],
+            "feed_name": feed_name,
+            "page_size": str(page_size),
+            "page_no": str(page)
+        }
+        
+        # Gerar assinatura
+        params["sign"] = generate_api_signature(params, APP_SECRET)
+        
+        print(f'📡 Consultando produtos do feed: {feed_name} (página {page})')
+        response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
+        
+        # Salvar resposta completa em arquivo JSON
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        log_filename = f"logs/feed_products_{feed_name}_{page}_{timestamp}.json"
+        
+        # Criar diretório logs se não existir
+        os.makedirs("logs", exist_ok=True)
+        
+        # Salvar resposta bruta
+        with open(log_filename, 'w', encoding='utf-8') as f:
+            f.write(response.text)
+        
+        print(f'📡 Resposta produtos do feed {feed_name}: {response.text[:500]}...')
+        print(f'💾 Resposta completa salva em: {log_filename}')
+        
+        if response.status_code == 200:
+            data = response.json()
+            print(f'✅ ESTRUTURA COMPLETA - PRODUTOS DO FEED {feed_name}:')
+            print(json.dumps(data, indent=2, ensure_ascii=False))
+            
+            # Verificar se há dados na resposta
+            if 'aliexpress_ds_feed_items_get_response' in data:
+                feed_response = data['aliexpress_ds_feed_items_get_response']
+                result = feed_response.get('result', {})
+                
+                # Processar dados para o frontend
+                processed_data = {
+                    'success': True,
+                    'feed_name': feed_name,
+                    'products': [],
+                    'pagination': {
+                        'page_no': page,
+                        'page_size': page_size,
+                        'total_count': 0,
+                        'has_next': False,
+                        'total_pages': 0
+                    },
+                    'raw_data': result
+                }
+                
+                # Extrair lista de produtos
+                if 'products' in result:
+                    products_data = result['products']
+                    if isinstance(products_data, list):
+                        processed_data['products'] = products_data
+                    elif isinstance(products_data, dict) and 'product' in products_data:
+                        products_list = products_data['product']
+                        processed_data['products'] = products_list if isinstance(products_list, list) else [products_list]
+                
+                # Extrair informações de paginação
+                if 'pagination' in result:
+                    pagination = result['pagination']
+                    processed_data['pagination'].update({
+                        'total_count': pagination.get('total_count', 0),
+                        'has_next': pagination.get('has_next', False),
+                        'total_pages': pagination.get('total_pages', 0)
+                    })
+                
+                # Se não há produtos na resposta, usar busca de produtos como fallback
+                if not processed_data['products']:
+                    print(f'⚠️ Nenhum produto encontrado no feed {feed_name}, usando busca como fallback...')
+                    
+                    # Usar busca de produtos como alternativa
+                    search_params = {
+                        "method": "aliexpress.ds.text.search",
+                        "app_key": APP_KEY,
+                        "timestamp": int(time.time() * 1000),
+                        "sign_method": "md5",
+                        "format": "json",
+                        "v": "2.0",
+                        "access_token": tokens['access_token'],
+                        "keyWord": "electronics",  # Termo genérico
+                        "countryCode": "BR",
+                        "currency": "BRL",
+                        "local": "pt_BR",
+                        "pageSize": str(page_size),
+                        "pageIndex": str(page),
+                        "sortBy": "orders,desc"
+                    }
+                    
+                    search_params["sign"] = generate_api_signature(search_params, APP_SECRET)
+                    search_response = requests.get('https://api-sg.aliexpress.com/sync', params=search_params)
+                    
+                    if search_response.status_code == 200:
+                        search_data = search_response.json()
+                        if 'aliexpress_ds_text_search_response' in search_data:
+                            search_result = search_data['aliexpress_ds_text_search_response'].get('result', {})
+                            
+                            if 'products' in search_result:
+                                products_data = search_result['products']
+                                if 'selection_search_product' in products_data:
+                                    products = products_data['selection_search_product']
+                                    processed_data['products'] = products if isinstance(products, list) else [products]
+                                    
+                                    # Atualizar paginação
+                                    processed_data['pagination'].update({
+                                        'total_count': search_result.get('total_count', 0),
+                                        'has_next': len(processed_data['products']) == page_size,
+                                        'total_pages': (search_result.get('total_count', 0) + page_size - 1) // page_size
+                                    })
+                
+                print(f'📊 DADOS PROCESSADOS PARA FRONTEND:')
+                print(f'  - Feed: {feed_name}')
+                print(f'  - Produtos encontrados: {len(processed_data["products"])}')
+                print(f'  - Página: {page}/{processed_data["pagination"]["total_pages"]}')
+                print(f'  - Total: {processed_data["pagination"]["total_count"]}')
+                print(f'  - Tem próxima: {processed_data["pagination"]["has_next"]}')
+                
+                # Log do primeiro produto para análise
+                if processed_data['products']:
+                    first_product = processed_data['products'][0]
+                    print(f'📦 EXEMPLO PRIMEIRO PRODUTO:')
+                    print(f'  - ID: {first_product.get("item_id", "N/A")}')
+                    print(f'  - Título: {first_product.get("product_title", "N/A")[:50]}...')
+                    print(f'  - Preço: {first_product.get("product_price", "N/A")}')
+                    print(f'  - Keys disponíveis: {list(first_product.keys())}')
+                
+                return jsonify(processed_data)
+            else:
+                print(f'❌ ESTRUTURA INESPERADA: {list(data.keys())}')
+                return jsonify({'success': False, 'error': data}), 400
+        else:
+            try:
+                data = response.json()
+                print(f'❌ Erro na API: {data}')
+                return jsonify({'success': False, 'error': data}), response.status_code
+            except:
+                return jsonify({'success': False, 'error': response.text}), response.status_code
+                
+    except Exception as e:
+        print(f'❌ Erro ao consultar produtos do feed {feed_name}: {e}')
         return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/api/aliexpress/translate-attributes', methods=['POST'])
@@ -4687,6 +4974,214 @@ def import_products_batch():
     except Exception as e:
         print(f"❌ Erro na importação em lote: {e}")
         return jsonify({'success': False, 'message': f'Erro na importação em lote: {str(e)}'}), 500
+
+@app.route('/api/aliexpress/product-status/<product_id>')
+def check_product_status(product_id):
+    """Verifica o status de um produto criado no AliExpress"""
+    tokens = load_tokens()
+    if not tokens or not tokens.get('access_token'):
+        return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
+    
+    try:
+        # Parâmetros para verificar status do produto
+        params = {
+            "method": "aliexpress.ds.product.get",
+            "app_key": APP_KEY,
+            "timestamp": int(time.time() * 1000),
+            "sign_method": "md5",
+            "format": "json",
+            "v": "2.0",
+            "access_token": tokens['access_token'],
+            "product_id": product_id,
+            "ship_to_country": "BR",
+            "target_currency": "BRL",
+            "target_language": "pt"
+        }
+        
+        # Gerar assinatura
+        params["sign"] = generate_api_signature(params, APP_SECRET)
+        
+        # Fazer requisição
+        response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
+        
+        if response.status_code == 200:
+            data = response.json()
+            
+            if 'aliexpress_ds_product_get_response' in data:
+                product_response = data['aliexpress_ds_product_get_response']
+                result = product_response.get('result', {})
+                base_info = result.get('ae_item_base_info_dto', {})
+                
+                # Extrair informações de status
+                product_status = {
+                    'product_id': product_id,
+                    'status_type': base_info.get('product_status_type', 'unknown'),
+                    'title': base_info.get('subject', ''),
+                    'gmt_modified': base_info.get('gmt_modified', ''),
+                    'gmt_create': base_info.get('gmt_create', ''),
+                    'category_id': base_info.get('category_id', ''),
+                    'currency_code': base_info.get('currency_code', 'USD'),
+                    'sales_count': base_info.get('sales_count', '0'),
+                    'evaluation_count': base_info.get('evaluation_count', '0'),
+                    'avg_evaluation_rating': base_info.get('avg_evaluation_rating', '0'),
+                }
+                
+                # Mapear status para português
+                status_mapping = {
+                    'on_selling': 'À venda',
+                    'offline': 'Offline',
+                    'auditing': 'Em revisão',
+                    'editing_required': 'Edição necessária',
+                    'approved': 'Aprovado',
+                    'rejected': 'Rejeitado',
+                    'unknown': 'Status desconhecido'
+                }
+                
+                product_status['status_description'] = status_mapping.get(
+                    product_status['status_type'], 
+                    'Status desconhecido'
+                )
+                
+                return jsonify({
+                    'success': True,
+                    'data': product_status
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'message': 'Produto não encontrado ou erro na resposta da API'
+                }), 404
+        else:
+            return jsonify({
+                'success': False,
+                'message': f'Erro na API AliExpress: {response.status_code}'
+            }), response.status_code
+            
+    except Exception as e:
+        print(f"❌ Erro ao verificar status do produto {product_id}: {e}")
+        return jsonify({
+            'success': False,
+            'message': f'Erro ao verificar status: {str(e)}'
+        }), 500
+
+@app.route('/api/aliexpress/products-status', methods=['POST'])
+def check_multiple_products_status():
+    """Verifica o status de múltiplos produtos criados no AliExpress"""
+    tokens = load_tokens()
+    if not tokens or not tokens.get('access_token'):
+        return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
+    
+    try:
+        data = request.get_json()
+        product_ids = data.get('product_ids', [])
+        
+        if not product_ids or not isinstance(product_ids, list):
+            return jsonify({'success': False, 'message': 'Lista de IDs de produtos é obrigatória'}), 400
+        
+        print(f"📦 Verificando status de {len(product_ids)} produtos...")
+        
+        results = []
+        success_count = 0
+        error_count = 0
+        
+        for product_id in product_ids:
+            try:
+                # Usar o endpoint individual para cada produto
+                params = {
+                    "method": "aliexpress.ds.product.get",
+                    "app_key": APP_KEY,
+                    "timestamp": int(time.time() * 1000),
+                    "sign_method": "md5",
+                    "format": "json",
+                    "v": "2.0",
+                    "access_token": tokens['access_token'],
+                    "product_id": product_id,
+                    "ship_to_country": "BR",
+                    "target_currency": "BRL",
+                    "target_language": "pt"
+                }
+                
+                params["sign"] = generate_api_signature(params, APP_SECRET)
+                response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    
+                    if 'aliexpress_ds_product_get_response' in data:
+                        product_response = data['aliexpress_ds_product_get_response']
+                        result = product_response.get('result', {})
+                        base_info = result.get('ae_item_base_info_dto', {})
+                        
+                        status_mapping = {
+                            'on_selling': 'À venda',
+                            'offline': 'Offline',
+                            'auditing': 'Em revisão',
+                            'editing_required': 'Edição necessária',
+                            'approved': 'Aprovado',
+                            'rejected': 'Rejeitado',
+                            'unknown': 'Status desconhecido'
+                        }
+                        
+                        product_status = {
+                            'product_id': product_id,
+                            'status': 'success',
+                            'status_type': base_info.get('product_status_type', 'unknown'),
+                            'status_description': status_mapping.get(
+                                base_info.get('product_status_type', 'unknown'), 
+                                'Status desconhecido'
+                            ),
+                            'title': base_info.get('subject', ''),
+                            'sales_count': base_info.get('sales_count', '0'),
+                            'evaluation_count': base_info.get('evaluation_count', '0'),
+                        }
+                        
+                        results.append(product_status)
+                        success_count += 1
+                    else:
+                        results.append({
+                            'product_id': product_id,
+                            'status': 'error',
+                            'error': 'Produto não encontrado'
+                        })
+                        error_count += 1
+                else:
+                    results.append({
+                        'product_id': product_id,
+                        'status': 'error',
+                        'error': f'Erro HTTP {response.status_code}'
+                    })
+                    error_count += 1
+                    
+            except Exception as e:
+                print(f"❌ Erro ao verificar produto {product_id}: {e}")
+                results.append({
+                    'product_id': product_id,
+                    'status': 'error',
+                    'error': str(e)
+                })
+                error_count += 1
+        
+        print(f"✅ Verificação de status concluída!")
+        print(f"📊 Resumo: {success_count} sucessos, {error_count} erros")
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'results': results,
+                'summary': {
+                    'total': len(product_ids),
+                    'success': success_count,
+                    'error': error_count
+                }
+            }
+        })
+        
+    except Exception as e:
+        print(f"❌ Erro na verificação em lote: {e}")
+        return jsonify({
+            'success': False,
+            'message': f'Erro na verificação em lote: {str(e)}'
+        }), 500
 
 
 

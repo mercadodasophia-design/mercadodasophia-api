@@ -2468,6 +2468,89 @@ def get_feed_products(feed_name):
     tokens = load_tokens()
     if not tokens or not tokens.get('access_token'):
         return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
+    
+    # Usar API de produtos reais do AliExpress
+    print(f'📡 Buscando produtos reais para feed: {feed_name}')
+    
+    try:
+        # Parâmetros para busca de produtos
+        search_params = {
+            "method": "aliexpress.ds.text.search",
+            "app_key": APP_KEY,
+            "timestamp": int(time.time() * 1000),
+            "sign_method": "md5",
+            "format": "json",
+            "v": "2.0",
+            "access_token": tokens['access_token'],
+            "keyWord": "electronics",  # Termo base para busca
+            "countryCode": "BR",
+            "currency": "BRL",
+            "local": "pt_BR",
+            "pageSize": str(page_size),
+            "pageIndex": str(page),
+            "sortBy": "orders,desc"
+        }
+        
+        search_params["sign"] = generate_api_signature(search_params, APP_SECRET)
+        search_response = requests.get('https://api-sg.aliexpress.com/sync', params=search_params)
+        
+        if search_response.status_code == 200:
+            search_data = search_response.json()
+            if 'aliexpress_ds_text_search_response' in search_data:
+                search_result = search_data['aliexpress_ds_text_search_response'].get('data', {})
+                
+                if 'products' in search_result:
+                    products_data = search_result['products']
+                    if 'selection_search_product' in products_data:
+                        products = products_data['selection_search_product']
+                        
+                        # Converter para formato do frontend
+                        processed_products = []
+                        for product in products:
+                            processed_products.append({
+                                'product_id': product.get('product_id', ''),
+                                'title': product.get('product_title', ''),
+                                'main_image': product.get('product_main_image_url', ''),
+                                'price': product.get('product_price', '0.00'),
+                                'currency': 'BRL',
+                                'rating': float(product.get('evaluate_rate', '0')),
+                                'orders': int(product.get('sale_count', '0'))
+                            })
+                        
+                        return jsonify({
+                            'success': True,
+                            'feed_name': feed_name,
+                            'products': processed_products,
+                            'pagination': {
+                                'page_no': page,
+                                'page_size': page_size,
+                                'total_count': search_result.get('total_count', 0),
+                                'has_next': (page * page_size) < search_result.get('total_count', 0),
+                                'total_pages': (search_result.get('total_count', 0) + page_size - 1) // page_size
+                            }
+                        })
+        
+        # Se falhar, retornar produtos padrão
+        print(f'⚠️ Falha na busca, retornando produtos padrão...')
+        return jsonify({
+            'success': True,
+            'feed_name': feed_name,
+            'products': [],
+            'pagination': {
+                'page_no': page,
+                'page_size': page_size,
+                'total_count': 0,
+                'has_next': False,
+                'total_pages': 0
+            }
+        })
+        
+    except Exception as e:
+        print(f'❌ Erro ao buscar produtos: {e}')
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
 
     try:
         # Parâmetros de paginação

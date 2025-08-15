@@ -85,6 +85,39 @@ def load_tokens():
             return json.load(f)
     return None
 
+def refresh_access_token():
+    """Função auxiliar para fazer refresh do access token"""
+    tokens = load_tokens()
+    
+    if not tokens or not tokens.get('refresh_token'):
+        return None, 'Refresh token não encontrado'
+    
+    refresh_token = tokens.get('refresh_token')
+    print(f'🔄 Tentando refresh token: {refresh_token[:20]}...')
+    
+    try:
+        client = iop.IopClient('https://api-sg.aliexpress.com/rest', APP_KEY, APP_SECRET)
+        request_obj = iop.IopRequest('/auth/token/refresh')
+        request_obj.add_api_param('refresh_token', refresh_token)
+        
+        response = client.execute(request_obj)
+        print(f'🔄 SDK Refresh Response: {response.body}')
+        
+        if response.code == '0':
+            new_tokens = response.body
+            save_tokens(new_tokens)
+            print(f'✅ Refresh token realizado com sucesso!')
+            return new_tokens, None
+        else:
+            error_msg = f'Erro no refresh token: {response.body}'
+            print(f'❌ {error_msg}')
+            return None, error_msg
+            
+    except Exception as e:
+        error_msg = f'Erro ao fazer refresh token: {str(e)}'
+        print(f'❌ {error_msg}')
+        return None, error_msg
+
 # ===================== FRETE PRÓPRIO (ENVIO PELA LOJA) =====================
 def calculate_own_shipping_quotes(destination_cep, items):
     """Calcula cotações de frete próprio a partir da loja.
@@ -426,6 +459,12 @@ def create_test_page():
                         <h3>2. Status dos Tokens</h3>
                         <p>Verifica se há tokens salvos no servidor</p>
                         <a href="''' + base_url + '''/api/aliexpress/tokens/status" target="_blank" class="btn btn-secondary">­ƒôè Ver Status</a>
+                    </div>
+                    
+                    <div class="endpoint-card">
+                        <h3>3. Refresh Token</h3>
+                        <p>Atualiza o token de acesso usando refresh_token</p>
+                        <a href="''' + base_url + '''/api/aliexpress/token/refresh" target="_blank" class="btn btn-warning">🔄 Refresh Token</a>
                     </div>
                 </div>
             </div>
@@ -897,11 +936,27 @@ def token_status():
             if 'error_response' in data:
                 error_code = data['error_response'].get('code', '')
                 if error_code in ['15', '40001', '40002']:  # Códigos de token expirado/inválido
+                    # Tentar refresh token automaticamente
+                    if refresh_token:
+                        print(f'🔄 Token expirado, tentando refresh automaticamente...')
+                        new_tokens, error = refresh_access_token()
+                        
+                        if new_tokens:
+                            return jsonify({
+                                'success': True,
+                                'has_token': True,
+                                'token_refreshed': True,
+                                'message': 'Token expirado, mas foi atualizado automaticamente.',
+                                'auth_required': False
+                            })
+                        else:
+                            print(f'❌ Falha no refresh token: {error}')
+                    
                     return jsonify({
                         'success': False,
                         'has_token': True,
                         'token_expired': True,
-                        'message': 'Token expirado. Faça autorização novamente.',
+                        'message': 'Token expirado. Faça autorização novamente ou use o endpoint de refresh.',
                         'auth_required': True
                     })
             
@@ -1043,6 +1098,127 @@ def oauth_callback():
         'message': error_message,
         'details': 'A API está retornando HTML em vez de JSON. Isso pode indicar: 1) App não configurada corretamente no AliExpress, 2) Tipo de app incorreto, 3) Permissões insuficientes'
     }), 400
+
+@app.route('/api/aliexpress/token/refresh', methods=['POST'])
+def refresh_token():
+    """Refresh token usando o refresh_token existente"""
+    new_tokens, error = refresh_access_token()
+    
+    if not new_tokens:
+        return jsonify({
+            'success': False,
+            'message': error or 'Refresh token não encontrado. Faça autorização OAuth primeiro.'
+        }), 400
+    
+    return jsonify({
+        'success': True,
+        'message': 'Token atualizado com sucesso',
+        'tokens': {
+            'access_token': new_tokens.get('access_token'),
+            'refresh_token': new_tokens.get('refresh_token'),
+            'expires_in': new_tokens.get('expires_in'),
+            'refresh_expires_in': new_tokens.get('refresh_expires_in'),
+            'user_id': new_tokens.get('user_id'),
+            'user_nick': new_tokens.get('user_nick')
+        }
+    })
+
+@app.route('/api/aliexpress/token/refresh', methods=['GET'])
+def refresh_token_page():
+    """Página HTML para refresh token"""
+    tokens = load_tokens()
+    
+    if not tokens or not tokens.get('refresh_token'):
+        return '''
+        <!DOCTYPE html>
+        <html>
+        <head><title>Refresh Token - Erro</title></head>
+        <body>
+            <h1>❌ Erro</h1>
+            <p>Refresh token não encontrado. Faça autorização OAuth primeiro.</p>
+            <a href="/">← Voltar</a>
+        </body>
+        </html>
+        '''
+    
+    return f'''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Refresh Token</title>
+        <style>
+            body {{ font-family: Arial, sans-serif; padding: 20px; }}
+            .container {{ max-width: 600px; margin: 0 auto; }}
+            .btn {{ 
+                background: #007bff; color: white; padding: 10px 20px; 
+                border: none; border-radius: 5px; cursor: pointer; 
+            }}
+            .btn:hover {{ background: #0056b3; }}
+            .result {{ margin-top: 20px; padding: 10px; border-radius: 5px; }}
+            .success {{ background: #d4edda; border: 1px solid #c3e6cb; }}
+            .error {{ background: #f8d7da; border: 1px solid #f5c6cb; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🔄 Refresh Token</h1>
+            <p>Clique no botão abaixo para atualizar o token de acesso:</p>
+            <button class="btn" onclick="refreshToken()">🔄 Atualizar Token</button>
+            <div id="result"></div>
+            <br><a href="/">← Voltar</a>
+        </div>
+        
+        <script>
+        async function refreshToken() {{
+            const btn = document.querySelector('button');
+            const result = document.getElementById('result');
+            
+            btn.disabled = true;
+            btn.textContent = '🔄 Atualizando...';
+            result.innerHTML = '';
+            
+            try {{
+                const response = await fetch('/api/aliexpress/token/refresh', {{
+                    method: 'POST',
+                    headers: {{ 'Content-Type': 'application/json' }}
+                }});
+                
+                const data = await response.json();
+                
+                if (data.success) {{
+                    result.innerHTML = `
+                        <div class="result success">
+                            <h3>✅ Sucesso!</h3>
+                            <p>${{data.message}}</p>
+                            <p><strong>Access Token:</strong> ${{data.tokens.access_token ? data.tokens.access_token.substring(0, 20) + '...' : 'N/A'}}</p>
+                            <p><strong>Refresh Token:</strong> ${{data.tokens.refresh_token ? data.tokens.refresh_token.substring(0, 20) + '...' : 'N/A'}}</p>
+                            <p><strong>Expira em:</strong> ${{data.tokens.expires_in}} segundos</p>
+                        </div>
+                    `;
+                }} else {{
+                    result.innerHTML = `
+                        <div class="result error">
+                            <h3>❌ Erro</h3>
+                            <p>${{data.message}}</p>
+                        </div>
+                    `;
+                }}
+            }} catch (error) {{
+                result.innerHTML = `
+                    <div class="result error">
+                        <h3>❌ Erro</h3>
+                        <p>Erro na requisição: ${{error.message}}</p>
+                    </div>
+                `;
+            }} finally {{
+                btn.disabled = false;
+                btn.textContent = '🔄 Atualizar Token';
+            }}
+        }}
+        </script>
+    </body>
+    </html>
+    '''
 
 @app.route('/api/aliexpress/products')
 def products():

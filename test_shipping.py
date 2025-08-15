@@ -3,7 +3,7 @@ import requests
 import json
 
 def test_shipping_endpoint():
-    url = "https://mercadodasophia-api.onrender.com/shipping/quote"
+    url = "https://service-api-aliexpress.mercadodasophia.com.br/shipping/quote"
     
     # Usando um product_id real do AliExpress para teste
     data = {

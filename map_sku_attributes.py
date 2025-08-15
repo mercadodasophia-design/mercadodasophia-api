@@ -7,7 +7,7 @@ import time
 from collections import defaultdict
 
 # Configurações
-API_BASE_URL = "https://mercadodasophia-api.onrender.com/api"
+API_BASE_URL = "https://service-api-aliexpress.mercadodasophia.com.br/api"
 
 # Categorias mais comuns do AliExpress (IDs reais)
 COMMON_CATEGORIES = {

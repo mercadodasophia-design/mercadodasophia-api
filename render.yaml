@@ -11,7 +11,7 @@ services:
       - key: APP_SECRET
         value: your_app_secret_here
       - key: REDIRECT_URI
-        value: https://mercadodasophia-api.onrender.com/api/aliexpress/oauth-callback
+        value: https://service-api-aliexpress.mercadodasophia.com.br/api/aliexpress/oauth-callback
       - key: STORE_NAME
         value: francisco adonay ferreira do nascimento
       - key: STORE_CPF
@@ -35,7 +35,7 @@ services:
       - key: STORE_ORIGIN_CEP
         value: 61771-880
       - key: API_BASE_URL
-        value: https://mercadodasophia-api.onrender.com
+        value: https://service-api-aliexpress.mercadodasophia.com.br
       - key: MP_ACCESS_TOKEN
         value: TEST-6048716701718688-080816-b095cf4abaa34073116ac070ff38e8f4-1514652489
       - key: MP_PUBLIC_KEY

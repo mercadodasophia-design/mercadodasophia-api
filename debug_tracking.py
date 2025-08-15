@@ -8,7 +8,7 @@ import json
 import time
 
 # URL da API
-API_URL = "https://mercadodasophia-api.onrender.com"
+API_URL = "https://service-api-aliexpress.mercadodasophia.com.br"
 
 def debug_tracking():
     """Debug do tracking com logs detalhados"""

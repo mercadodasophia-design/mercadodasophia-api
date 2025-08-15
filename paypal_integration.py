@@ -97,8 +97,8 @@ class PayPalIntegration:
                 }
             ],
             "application_context": {
-                "return_url": f"{os.getenv('API_BASE_URL', 'https://mercadodasophia-api.onrender.com')}/api/payment/paypal/return",
-                "cancel_url": f"{os.getenv('API_BASE_URL', 'https://mercadodasophia-api.onrender.com')}/api/payment/paypal/cancel"
+                "return_url": f"{os.getenv('API_BASE_URL', 'https://service-api-aliexpress.mercadodasophia.com.br')}/api/payment/paypal/return",
+                "cancel_url": f"{os.getenv('API_BASE_URL', 'https://service-api-aliexpress.mercadodasophia.com.br')}/api/payment/paypal/cancel"
             }
         }
         

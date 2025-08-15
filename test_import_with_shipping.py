@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
-"""
-Teste da importação de produtos com cálculo de frete
-Testa se o sistema calcula frete no momento da importação
-"""
+# -*- coding: utf-8 -*-
 
 import requests
 import json
@@ -11,7 +8,7 @@ def test_import_product_with_shipping():
     """Testa a importação de produto com cálculo de frete"""
     
     # URL do servidor
-    base_url = "https://mercadodasophia-api.onrender.com"
+    base_url = "https://service-api-aliexpress.mercadodasophia.com.br"
     import_url = f"{base_url}/api/aliexpress/import-product"
     
     # Dados de teste
@@ -76,7 +73,7 @@ def test_import_batch():
     """Testa a importação em lote"""
     
     # URL do servidor
-    base_url = "https://mercadodasophia-api.onrender.com"
+    base_url = "https://service-api-aliexpress.mercadodasophia.com.br"
     batch_url = f"{base_url}/api/aliexpress/import-products-batch"
     
     # Dados de teste em lote
@@ -114,10 +111,17 @@ def test_import_batch():
             print("✅ SUCESSO! Importação em lote concluída:")
             print(json.dumps(data, indent=2, ensure_ascii=False))
             
-            # Verificar resumo
-            if 'data' in data and 'summary' in data['data']:
-                summary = data['data']['summary']
-                print(f"📊 Resumo: {summary['success']} sucessos, {summary['error']} erros de {summary['total']} produtos")
+            # Verificar resultados
+            if 'data' in data and 'results' in data['data']:
+                results = data['data']['results']
+                success_count = sum(1 for r in results if r.get('success', False))
+                print(f"📊 Resultado: {success_count}/{len(results)} produtos importados com sucesso")
+                
+                for i, result in enumerate(results):
+                    status = "✅" if result.get('success', False) else "❌"
+                    product_id = result.get('product_id', 'N/A')
+                    error = result.get('error', '')
+                    print(f"  {status} Produto {i+1} ({product_id}): {error if error else 'Sucesso'}")
             
             return True
             
@@ -130,38 +134,101 @@ def test_import_batch():
                 print(f"❌ Erro: {response.text}")
             return False
             
+    except requests.exceptions.Timeout:
+        print("❌ TIMEOUT - Requisição demorou muito")
+        return False
+    except requests.exceptions.ConnectionError:
+        print("❌ CONNECTION ERROR - Não foi possível conectar ao servidor")
+        return False
     except Exception as e:
         print(f"❌ ERRO GERAL: {e}")
         return False
 
-def main():
-    """Função principal de teste"""
+def test_shipping_calculation():
+    """Testa apenas o cálculo de frete"""
     
-    print("=" * 60)
-    print("🧪 TESTE DE IMPORTAÇÃO COM CÁLCULO DE FRETE")
-    print("=" * 60)
+    # URL do servidor
+    base_url = "https://service-api-aliexpress.mercadodasophia.com.br"
+    shipping_url = f"{base_url}/api/aliexpress/freight/calculate"
     
-    # Teste 1: Importação individual
-    print("\n1️⃣ Testando importação individual...")
-    success1 = test_import_product_with_shipping()
+    # Dados de teste
+    test_data = {
+        "product_id": "1005001234567890",
+        "destination_cep": "60731050",
+        "weight": 0.8,
+        "dimensions": {
+            "length": 25.0,
+            "width": 18.0,
+            "height": 8.0
+        }
+    }
     
-    # Teste 2: Importação em lote
-    print("\n2️⃣ Testando importação em lote...")
-    success2 = test_import_batch()
+    print("\n🚀 Testando cálculo de frete...")
+    print(f"📦 Dados de teste: {json.dumps(test_data, indent=2)}")
     
-    # Resumo final
-    print("\n" + "=" * 60)
-    print("📋 RESUMO DOS TESTES")
-    print("=" * 60)
-    print(f"✅ Importação individual: {'SUCESSO' if success1 else 'FALHOU'}")
-    print(f"✅ Importação em lote: {'SUCESSO' if success2 else 'FALHOU'}")
-    
-    if success1 and success2:
-        print("\n🎉 TODOS OS TESTES PASSARAM!")
-        print("🚀 Sistema de importação com frete está funcionando!")
-    else:
-        print("\n⚠️ ALGUNS TESTES FALHARAM!")
-        print("🔧 Verifique os logs acima para identificar problemas")
+    try:
+        # Fazer requisição
+        response = requests.post(shipping_url, json=test_data, timeout=30)
+        
+        print(f"📡 Status Code: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            print("✅ SUCESSO! Frete calculado:")
+            print(json.dumps(data, indent=2, ensure_ascii=False))
+            
+            # Verificar opções de frete
+            if 'data' in data and 'shipping_options' in data['data']:
+                options = data['data']['shipping_options']
+                print(f"🚚 {len(options)} opções de frete encontradas:")
+                
+                for i, option in enumerate(options):
+                    service = option.get('service_name', 'N/A')
+                    price = option.get('price', 0)
+                    days = option.get('estimated_days', 0)
+                    print(f"  {i+1}. {service}: R$ {price:.2f} ({days} dias)")
+            
+            return True
+            
+        else:
+            print(f"❌ ERRO! Status: {response.status_code}")
+            try:
+                error_data = response.json()
+                print(f"❌ Erro: {json.dumps(error_data, indent=2, ensure_ascii=False)}")
+            except:
+                print(f"❌ Erro: {response.text}")
+            return False
+            
+    except requests.exceptions.Timeout:
+        print("❌ TIMEOUT - Requisição demorou muito")
+        return False
+    except requests.exceptions.ConnectionError:
+        print("❌ CONNECTION ERROR - Não foi possível conectar ao servidor")
+        return False
+    except Exception as e:
+        print(f"❌ ERRO GERAL: {e}")
+        return False
 
 if __name__ == "__main__":
-    main()
+    print("🧪 TESTES DE IMPORTACAO COM FRETE")
+    print("=" * 50)
+    
+    # Testar importação individual
+    success1 = test_import_product_with_shipping()
+    
+    # Testar importação em lote
+    success2 = test_import_batch()
+    
+    # Testar cálculo de frete
+    success3 = test_shipping_calculation()
+    
+    print("\n" + "=" * 50)
+    print("📊 RESUMO DOS TESTES:")
+    print(f"  Importação individual: {'✅ PASSOU' if success1 else '❌ FALHOU'}")
+    print(f"  Importação em lote: {'✅ PASSOU' if success2 else '❌ FALHOU'}")
+    print(f"  Cálculo de frete: {'✅ PASSOU' if success3 else '❌ FALHOU'}")
+    
+    if all([success1, success2, success3]):
+        print("\n🎉 TODOS OS TESTES PASSARAM!")
+    else:
+        print("\n⚠️ ALGUNS TESTES FALHARAM!")

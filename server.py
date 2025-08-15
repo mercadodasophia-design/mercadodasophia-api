@@ -12,6 +12,9 @@ from flask import Flask, request, jsonify
 import iop
 from dotenv import load_dotenv
 from flask_cors import CORS
+import firebase_admin
+from firebase_admin import credentials, firestore
+
 
 load_dotenv()  # Carrega variáveis do arquivo .env, se existir
 
@@ -29,6 +32,21 @@ from mercadopago_integration import mp_integration
 
 app = Flask(__name__)
 
+# Inicializar Firebase Admin SDK
+try:
+    # Tentar usar credenciais de arquivo
+    cred = credentials.Certificate('firebase-credentials.json')
+    firebase_admin.initialize_app(cred)
+    print('✅ Firebase Admin SDK inicializado com credenciais de arquivo')
+except Exception as e:
+    try:
+        # Tentar usar variáveis de ambiente
+        firebase_admin.initialize_app()
+        print('✅ Firebase Admin SDK inicializado com variáveis de ambiente')
+    except Exception as e2:
+        print(f'⚠️ Firebase Admin SDK não inicializado: {e2}')
+        print('⚠️ Funcionalidades de pedidos podem não funcionar corretamente')
+
 # Configurar CORS para permitir requisições do navegador
 CORS(app, origins=[
     "http://localhost:3000",
@@ -43,7 +61,7 @@ APP_KEY = os.getenv('APP_KEY', '517616')  # Substitua pela sua APP_KEY
 APP_SECRET = os.getenv('APP_SECRET', 'skAvaPWbGLkkx5TlKf8kvLmILQtTV2sq')
 PORT = int(os.getenv('PORT', 5000))
 
-REDIRECT_URI = "https://mercadodasophia-api.onrender.com/api/aliexpress/oauth-callback"
+REDIRECT_URI = "https://service-api-aliexpress.mercadodasophia.com.br/api/aliexpress/oauth-callback"
 
 TOKENS_FILE = 'tokens.json'
 
@@ -3693,49 +3711,51 @@ def mp_webhook():
                     
                     print(f'💰 Pagamento {payment_id} - Status: {status} - Referência: {external_reference}')
                     
-                    # Se pagamento aprovado, criar pedido no AliExpress
+                    # Se pagamento aprovado, salvar no Firebase para aprovação manual
                     if status == 'approved':
-                        print(f'✅ Pagamento aprovado! Criando pedido AliExpress...')
+                        print(f'✅ Pagamento aprovado! Salvando no Firebase para aprovação manual...')
                         
                         try:
-                            # Buscar dados do pedido original pelo external_reference
-                            order_data = _get_order_data_from_external_reference(external_reference)
+                            # Extrair dados do pagamento
+                            transaction_amount = payment_data.get('transaction_amount', 0)
+                            payer = payment_data.get('payer', {})
                             
-                            if order_data:
-                                # Criar pedido no AliExpress
-                                aliexpress_result = _create_aliexpress_order_from_payment(order_data, payment_data)
-                                
-                                if aliexpress_result['success']:
-                                    print(f'🎉 Pedido AliExpress criado: {aliexpress_result["order_id"]}')
-                                    
-                                    # Salvar relação pagamento → pedido para tracking futuro
-                                    _save_payment_order_relation(payment_id, external_reference, aliexpress_result['order_id'])
-                                    
-                                    return jsonify({
-                                        'success': True,
-                                        'message': 'Pedido AliExpress criado com sucesso',
-                                        'order_id': aliexpress_result['order_id']
-                                    })
-                                else:
-                                    print(f'❌ Falha ao criar pedido AliExpress: {aliexpress_result["error"]}')
-                                    
-                                    # Tentar estorno automático
-                                    refund_result = mp_integration.refund_payment(
-                                        payment_id, 
-                                        reason="Falha na criação do pedido AliExpress"
-                                    )
-                                    
-                                    return jsonify({
-                                        'success': False,
-                                        'message': 'Falha ao criar pedido AliExpress. Estorno iniciado.',
-                                        'refunded': refund_result.get('success', False)
-                                    }), 500
-                            else:
-                                print(f'❌ Dados do pedido não encontrados para: {external_reference}')
-                                return jsonify({
-                                    'success': False,
-                                    'message': 'Dados do pedido não encontrados'
-                                }), 400
+                            # Preparar dados do pedido para salvar no Firebase
+                            order_data = {
+                                'payment_id': str(payment_id),
+                                'external_reference': external_reference,
+                                'customer_email': payer.get('email', ''),
+                                'customer_name': f"{payer.get('name', '')} {payer.get('surname', '')}".strip(),
+                                'items': [],  # Será preenchido pelo frontend quando necessário
+                                'shipping_address': {},  # Será preenchido pelo frontend quando necessário
+                                'total_amount': transaction_amount,
+                                'status': 'aguardando_envio',
+                                'created_at': datetime.now().isoformat(),
+                                'updated_at': datetime.now().isoformat(),
+                                'payment_data': payment_data,
+                                'aliexpress_order_id': None,
+                                'admin_notes': '',
+                                'approved_by': None,
+                                'approved_at': None,
+                            }
+                            
+                            # Salvar no Firebase
+                            try:
+                                db = firestore.client()
+                                order_ref = db.collection('orders').add(order_data)
+                                firebase_order_id = order_ref[1].id
+                                print(f'✅ Pedido salvo no Firebase: {firebase_order_id}')
+                            except Exception as firebase_error:
+                                print(f'❌ Erro ao salvar no Firebase: {firebase_error}')
+                                # Continuar mesmo se falhar no Firebase
+                                firebase_order_id = None
+                            
+                            return jsonify({
+                                'success': True,
+                                'message': 'Pagamento aprovado! Pedido salvo no Firebase para aprovação manual.',
+                                'payment_id': payment_id,
+                                'external_reference': external_reference
+                            })
                                 
                         except Exception as e:
                             print(f'❌ Erro ao processar webhook: {e}')
@@ -3889,7 +3909,7 @@ def process_payment():
 
 @app.route('/api/payment/complete/<payment_id>', methods=['POST'])
 def complete_payment(payment_id):
-    """Completar pagamento após aprovação (verificar + criar pedido AliExpress)"""
+    """Completar pagamento após aprovação (verificar status)"""
     try:
         data = request.get_json()
         
@@ -3911,34 +3931,12 @@ def complete_payment(payment_id):
                 'message': f'Pagamento não aprovado. Status: {status}'
             }), 400
         
-        # 2. Criar pedido no AliExpress
-        aliexpress_data = {
-            'customer_id': data.get('customer_id', 'MP_CUSTOMER'),
-            'items': data['items'],
-            'address': data.get('address', {})
-        }
-        
-        aliexpress_result = create_aliexpress_order(aliexpress_data)
-        
-        if not aliexpress_result['success']:
-            # Se falhar no AliExpress, estornar Mercado Pago
-            refund_result = mp_integration.refund_payment(
-                payment_id,
-                reason="Falha na criação do pedido AliExpress"
-            )
-            
-            return jsonify({
-                'success': False,
-                'message': f'Erro ao criar pedido AliExpress: {aliexpress_result["error"]}. Pagamento estornado.',
-                'refunded': refund_result['success']
-            }), 500
-        
-        # 3. Sucesso completo
+        # 2. Sucesso - pagamento aprovado
         return jsonify({
             'success': True,
             'mp_payment_id': payment_id,
-            'aliexpress_order_id': aliexpress_result['order_id'],
-            'message': 'Pagamento processado e pedido criado com sucesso!'
+            'payment_data': payment_data,
+            'message': 'Pagamento aprovado com sucesso!'
         })
         
     except Exception as e:
@@ -4505,6 +4503,7 @@ def import_products_batch():
     except Exception as e:
         print(f"❌ Erro na importação em lote: {e}")
         return jsonify({'success': False, 'message': f'Erro na importação em lote: {str(e)}'}), 500
+
 
 
 

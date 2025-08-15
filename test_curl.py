@@ -3,7 +3,7 @@ import requests
 import json
 
 def test_shipping_curl():
-    url = "https://mercadodasophia-api.onrender.com/shipping/quote"
+    url = "https://service-api-aliexpress.mercadodasophia.com.br/shipping/quote"
     
     data = {
         "destination_cep": "01001-000",

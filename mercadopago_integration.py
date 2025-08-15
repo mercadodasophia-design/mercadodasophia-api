@@ -56,11 +56,11 @@ class MercadoPagoIntegration:
                     }
                 ],
                 "external_reference": order_data['order_id'],
-                "notification_url": f"{os.getenv('API_BASE_URL', 'https://mercadodasophia-api.onrender.com')}/api/payment/mp/webhook",
+                "notification_url": f"{os.getenv('API_BASE_URL', 'https://service-api-aliexpress.mercadodasophia.com.br')}/api/payment/mp/webhook",
                 "back_urls": {
-                    "success": f"{os.getenv('API_BASE_URL', 'https://mercadodasophia-api.onrender.com')}/api/payment/mp/success",
-                    "failure": f"{os.getenv('API_BASE_URL', 'https://mercadodasophia-api.onrender.com')}/api/payment/mp/failure",
-                    "pending": f"{os.getenv('API_BASE_URL', 'https://mercadodasophia-api.onrender.com')}/api/payment/mp/pending"
+                    "success": f"{os.getenv('API_BASE_URL', 'https://service-api-aliexpress.mercadodasophia.com.br')}/api/payment/mp/success",
+                    "failure": f"{os.getenv('API_BASE_URL', 'https://service-api-aliexpress.mercadodasophia.com.br')}/api/payment/mp/failure",
+                    "pending": f"{os.getenv('API_BASE_URL', 'https://service-api-aliexpress.mercadodasophia.com.br')}/api/payment/mp/pending"
                 },
                 "auto_return": "approved",
                 "expires": True,

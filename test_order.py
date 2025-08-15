@@ -3,7 +3,7 @@ import requests
 import json
 
 def test_order_creation():
-    url = "https://mercadodasophia-api.onrender.com/api/aliexpress/orders/create"
+    url = "https://service-api-aliexpress.mercadodasophia.com.br/api/aliexpress/orders/create"
     
     # Dados do pedido de teste com produto real
     data = {

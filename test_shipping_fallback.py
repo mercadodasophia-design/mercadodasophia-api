@@ -11,7 +11,7 @@ def test_shipping_fallback():
     """Testa o cálculo de frete com fallback"""
     
     # URL do servidor
-    base_url = "https://mercadodasophia-api.onrender.com"
+    base_url = "https://service-api-aliexpress.mercadodasophia.com.br"
     shipping_url = f"{base_url}/shipping/quote"
     
     # Dados de teste
@@ -120,7 +120,7 @@ def test_multiple_ceps():
         
         try:
             response = requests.post(
-                "https://mercadodasophia-api.onrender.com/shipping/quote",
+                "https://service-api-aliexpress.mercadodasophia.com.br/shipping/quote",
                 json=test_data,
                 headers={'Content-Type': 'application/json'},
                 timeout=30

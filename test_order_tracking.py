@@ -7,7 +7,7 @@ import requests
 import json
 
 # URL da API
-API_URL = "https://mercadodasophia-api.onrender.com"
+API_URL = "https://service-api-aliexpress.mercadodasophia.com.br"
 
 def test_order_tracking():
     """Testa o tracking de um pedido"""

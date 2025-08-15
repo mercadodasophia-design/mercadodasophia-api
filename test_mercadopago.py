@@ -1,146 +1,161 @@
 #!/usr/bin/env python3
-"""
-Teste para integração com Mercado Pago
-"""
+# -*- coding: utf-8 -*-
 
 import requests
 import json
 
-# URL da API
-API_URL = "https://mercadodasophia-api.onrender.com"
-
-def test_mp_debug():
-    """Testar debug do Mercado Pago"""
-    
-    print(f"🔍 Testando debug do Mercado Pago...")
-    
-    try:
-        response = requests.get(
-            f"{API_URL}/api/payment/mp/debug",
-            timeout=30
-        )
-        
-        print(f"📡 Status Code: {response.status_code}")
-        print(f"📡 Resposta: {response.text}")
-        
-        if response.status_code == 200:
-            result = response.json()
-            if result.get('success'):
-                sdk_info = result.get('sdk_info', {})
-                print("✅ Debug do Mercado Pago obtido com sucesso!")
-                print(f"🔑 Access Token: {sdk_info.get('access_token', 'N/A')}")
-                print(f"🔑 Public Key: {sdk_info.get('public_key', 'N/A')}")
-                print(f"🔧 Sandbox Mode: {sdk_info.get('sandbox_mode', 'N/A')}")
-            else:
-                print("❌ Erro ao obter debug do Mercado Pago")
-        else:
-            print("❌ Erro HTTP")
-            
-    except Exception as e:
-        print(f"❌ Erro na requisição: {e}")
+# Configurações
+API_URL = "https://service-api-aliexpress.mercadodasophia.com.br"
 
 def test_create_preference():
-    """Testar criação de preferência"""
+    """Testa a criação de preferência de pagamento"""
     
-    print(f"🔍 Testando criação de preferência...")
-    
-    # Dados de teste
-    test_data = {
-        "order_id": "TEST_ORDER_001",
-        "total_amount": 99.90,
-        "payer": {
-            "name": "João Silva",
-            "email": "joao.silva@teste.com"
-        }
-    }
-    
-    try:
-        response = requests.post(
-            f"{API_URL}/api/payment/mp/create-preference",
-            json=test_data,
-            timeout=30
-        )
-        
-        print(f"📡 Status Code: {response.status_code}")
-        print(f"📡 Resposta: {response.text}")
-        
-        if response.status_code == 200:
-            result = response.json()
-            if result.get('success'):
-                print("✅ Preferência criada com sucesso!")
-                print(f"🆔 Preference ID: {result.get('preference_id', 'N/A')}")
-                print(f"🔗 Init Point: {result.get('init_point', 'N/A')}")
-                print(f"🔗 Sandbox Init Point: {result.get('sandbox_init_point', 'N/A')}")
-            else:
-                print("❌ Erro ao criar preferência")
-        else:
-            print("❌ Erro HTTP")
-            
-    except Exception as e:
-        print(f"❌ Erro na requisição: {e}")
-
-def test_process_payment():
-    """Testar processamento de pagamento completo"""
-    
-    print(f"🔍 Testando processamento de pagamento...")
+    url = f"{API_URL}/api/payment/mp/create-preference"
     
     # Dados de teste
     test_data = {
-        "order_id": "TEST_ORDER_002",
-        "total_amount": 149.90,
+        "order_id": "TEST_ORDER_123",
+        "total_amount": 150.00,
+        "customer_email": "teste@exemplo.com",
+        "customer_name": "Cliente Teste",
+        "customer_phone": "+5511999999999",
         "items": [
             {
-                "product_id": "1005007720304124",
-                "quantity": 1,
-                "price": 149.90
+                "title": "Produto Teste",
+                "quantity": 2,
+                "unit_price": 75.00
             }
         ],
-        "customer_info": {
-            "name": "Maria Santos",
-            "email": "maria.santos@teste.com",
-            "phone": "11987654321"
+        "shipping_address": {
+            "cep": "01234-567",
+            "street": "Rua Teste",
+            "number": "123",
+            "complement": "Apto 1",
+            "neighborhood": "Centro",
+            "city": "São Paulo",
+            "state": "SP"
         }
     }
     
+    print("🚀 Testando criação de preferência de pagamento...")
+    print(f"📦 Dados: {json.dumps(test_data, indent=2)}")
+    
     try:
-        response = requests.post(
-            f"{API_URL}/api/payment/process",
-            json=test_data,
-            timeout=30
-        )
+        response = requests.post(url, json=test_data, timeout=30)
         
-        print(f"📡 Status Code: {response.status_code}")
-        print(f"📡 Resposta: {response.text}")
+        print(f"📡 Status: {response.status_code}")
         
         if response.status_code == 200:
-            result = response.json()
-            if result.get('success'):
-                print("✅ Processamento iniciado com sucesso!")
-                print(f"🆔 Preference ID: {result.get('preference_id', 'N/A')}")
-                print(f"🔗 Init Point: {result.get('init_point', 'N/A')}")
-                print(f"🔗 Sandbox Init Point: {result.get('sandbox_init_point', 'N/A')}")
-            else:
-                print("❌ Erro ao processar pagamento")
+            data = response.json()
+            print("✅ SUCESSO! Preferência criada:")
+            print(json.dumps(data, indent=2, ensure_ascii=False))
+            
+            if 'data' in data and 'preference_id' in data['data']:
+                preference_id = data['data']['preference_id']
+                init_point = data['data'].get('init_point', '')
+                print(f"🎯 Preference ID: {preference_id}")
+                print(f"🔗 Init Point: {init_point}")
+            
+            return True
         else:
-            print("❌ Erro HTTP")
+            print(f"❌ ERRO! Status: {response.status_code}")
+            try:
+                error_data = response.json()
+                print(f"❌ Erro: {json.dumps(error_data, indent=2, ensure_ascii=False)}")
+            except:
+                print(f"❌ Erro: {response.text}")
+            return False
             
     except Exception as e:
-        print(f"❌ Erro na requisição: {e}")
+        print(f"❌ ERRO: {e}")
+        return False
+
+def test_debug_endpoint():
+    """Testa o endpoint de debug"""
+    
+    url = f"{API_URL}/api/payment/mp/debug"
+    
+    print("\n🔍 Testando endpoint de debug...")
+    
+    try:
+        response = requests.get(url, timeout=10)
+        
+        print(f"📡 Status: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            print("✅ SUCESSO! Debug info:")
+            print(json.dumps(data, indent=2, ensure_ascii=False))
+            return True
+        else:
+            print(f"❌ ERRO! Status: {response.status_code}")
+            print(f"❌ Erro: {response.text}")
+            return False
+            
+    except Exception as e:
+        print(f"❌ ERRO: {e}")
+        return False
+
+def test_webhook_simulation():
+    """Simula um webhook do Mercado Pago"""
+    
+    url = f"{API_URL}/api/payment/mp/webhook"
+    
+    # Dados simulados de webhook
+    webhook_data = {
+        "type": "payment",
+        "data": {
+            "id": "1234567890"
+        }
+    }
+    
+    print("\n🔄 Testando simulação de webhook...")
+    print(f"📦 Dados: {json.dumps(webhook_data, indent=2)}")
+    
+    try:
+        response = requests.post(url, json=webhook_data, timeout=30)
+        
+        print(f"📡 Status: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            print("✅ SUCESSO! Webhook processado:")
+            print(json.dumps(data, indent=2, ensure_ascii=False))
+            return True
+        else:
+            print(f"❌ ERRO! Status: {response.status_code}")
+            try:
+                error_data = response.json()
+                print(f"❌ Erro: {json.dumps(error_data, indent=2, ensure_ascii=False)}")
+            except:
+                print(f"❌ Erro: {response.text}")
+            return False
+            
+    except Exception as e:
+        print(f"❌ ERRO: {e}")
+        return False
 
 if __name__ == "__main__":
-    print("🚀 Testando Integração Mercado Pago")
+    print("🧪 TESTES DO MERCADO PAGO")
     print("=" * 50)
     
-    # Testar debug
-    test_mp_debug()
-    
-    print("\n" + "=" * 50)
-    
     # Testar criação de preferência
-    test_create_preference()
+    success1 = test_create_preference()
+    
+    # Testar endpoint de debug
+    success2 = test_debug_endpoint()
+    
+    # Testar webhook
+    success3 = test_webhook_simulation()
     
     print("\n" + "=" * 50)
+    print("📊 RESUMO DOS TESTES:")
+    print(f"  Criação de preferência: {'✅ PASSOU' if success1 else '❌ FALHOU'}")
+    print(f"  Endpoint de debug: {'✅ PASSOU' if success2 else '❌ FALHOU'}")
+    print(f"  Simulação de webhook: {'✅ PASSOU' if success3 else '❌ FALHOU'}")
     
-    # Testar processamento de pagamento
-    test_process_payment()
+    if all([success1, success2, success3]):
+        print("\n🎉 TODOS OS TESTES PASSARAM!")
+    else:
+        print("\n⚠️ ALGUNS TESTES FALHARAM!")
 

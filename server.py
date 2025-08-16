@@ -5231,7 +5231,7 @@ def check_multiple_products_status():
 
 @app.route('/api/aliexpress/feeds/complete', methods=['GET'])
 def get_complete_feeds():
-    """Retorna feeds e produtos completos em JSON estruturado"""
+    """Retorna feeds e produtos completos em JSON estruturado usando API oficial AliExpress Dropshipping"""
     tokens = load_tokens()
     if not tokens or not tokens.get('access_token'):
         return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
@@ -5241,10 +5241,10 @@ def get_complete_feeds():
     page_size = int(request.args.get('page_size', 20))
     max_feeds = int(request.args.get('max_feeds', 5))  # Limitar número de feeds para performance
     
-    print(f'🚀 Gerando JSON completo de feeds (página {page}, {page_size} produtos por feed, max {max_feeds} feeds)')
+    print(f'🚀 Gerando JSON completo de feeds usando API oficial AliExpress Dropshipping')
     
     try:
-        # 1. Buscar feeds disponíveis
+        # 1. Buscar feeds disponíveis usando aliexpress.ds.feedname.get
         feeds_params = {
             "method": "aliexpress.ds.feedname.get",
             "app_key": APP_KEY,
@@ -5258,27 +5258,35 @@ def get_complete_feeds():
         feeds_params["sign"] = generate_api_signature(feeds_params, APP_SECRET)
         feeds_response = requests.get('https://api-sg.aliexpress.com/sync', params=feeds_params)
         
+        print(f'📡 Status da busca de feeds: {feeds_response.status_code}')
+        
         if feeds_response.status_code != 200:
             return jsonify({'success': False, 'message': 'Erro ao buscar feeds'}), 500
         
         feeds_data = feeds_response.json()
-        feeds_list = []
+        print(f'📊 Estrutura da resposta de feeds: {list(feeds_data.keys())}')
         
+        feeds_list = []
         if 'aliexpress_ds_feedname_get_response' in feeds_data:
             feed_response = feeds_data['aliexpress_ds_feedname_get_response']
             resp_result = feed_response.get('resp_result', {})
             result = resp_result.get('result', {})
             
-            if 'promos' in result:
+            # Tentar diferentes estruturas possíveis
+            if 'feed_name_list' in result:
+                feeds_list = result['feed_name_list'][:max_feeds]
+            elif 'promos' in result:
                 promos_data = result['promos']
                 if isinstance(promos_data, dict) and 'promo' in promos_data:
                     promos_list = promos_data['promo']
                     if isinstance(promos_list, list):
-                        feeds_list = promos_list[:max_feeds]  # Limitar número de feeds
+                        feeds_list = promos_list[:max_feeds]
                     elif isinstance(promos_list, dict):
                         feeds_list = [promos_list]
         
-        # 2. Para cada feed, buscar produtos
+        print(f'✅ Feeds encontrados: {len(feeds_list)}')
+        
+        # 2. Para cada feed, buscar produtos usando aliexpress.ds.feed.products.get
         complete_data = {
             'success': True,
             'timestamp': datetime.now().isoformat(),
@@ -5291,85 +5299,69 @@ def get_complete_feeds():
         }
         
         for i, feed in enumerate(feeds_list):
-            feed_name = feed.get('promo_name', f'Feed_{i+1}')
-            feed_desc = feed.get('promo_desc', '')
-            product_count = int(feed.get('product_num', 0))
+            # Extrair informações do feed
+            if isinstance(feed, dict):
+                feed_id = feed.get('feed_id', str(i + 1))
+                feed_name = feed.get('feed_name', feed.get('promo_name', f'Feed_{i+1}'))
+                feed_desc = feed.get('feed_desc', feed.get('promo_desc', ''))
+                product_count = int(feed.get('product_num', 0))
+            else:
+                feed_id = str(i + 1)
+                feed_name = f'Feed_{i+1}'
+                feed_desc = ''
+                product_count = 0
             
-            print(f'📦 Processando feed {i+1}/{len(feeds_list)}: {feed_name}')
+            print(f'📦 Processando feed {i+1}/{len(feeds_list)}: {feed_name} (ID: {feed_id})')
             
-            # Buscar produtos para este feed usando termo baseado no nome do feed
-            search_term = "phone" if "phone" in feed_name.lower() else "computer" if "computer" in feed_name.lower() else "electronics"
-            
-            search_params = {
-                "method": "aliexpress.ds.text.search",
+            # Buscar produtos do feed usando aliexpress.ds.feed.products.get
+            products_params = {
+                "method": "aliexpress.ds.feed.products.get",
                 "app_key": APP_KEY,
                 "timestamp": int(time.time() * 1000),
                 "sign_method": "md5",
                 "format": "json",
                 "v": "2.0",
                 "access_token": tokens['access_token'],
-                "keyWord": search_term,
-                "countryCode": "BR",
-                "currency": "BRL",
-                "local": "pt_BR",
-                "pageSize": str(page_size),
-                "pageIndex": str(page),
-                "sortBy": "orders,desc"
+                "feed_id": str(feed_id),
+                "page_size": str(page_size),
+                "page_no": str(page)
             }
             
-            search_params["sign"] = generate_api_signature(search_params, APP_SECRET)
-            search_response = requests.get('https://api-sg.aliexpress.com/sync', params=search_params)
+            products_params["sign"] = generate_api_signature(products_params, APP_SECRET)
+            products_response = requests.get('https://api-sg.aliexpress.com/sync', params=products_params)
             
-            print(f'🔍 Buscando produtos com termo: {search_term}')
-            print(f'📡 Status da busca: {search_response.status_code}')
+            print(f'📡 Status da busca de produtos: {products_response.status_code}')
             
             feed_products = []
-            if search_response.status_code == 200:
-                search_data = search_response.json()
-                print(f'📊 Estrutura da resposta: {list(search_data.keys())}')
+            if products_response.status_code == 200:
+                products_data = products_response.json()
+                print(f'📊 Estrutura da resposta de produtos: {list(products_data.keys())}')
                 
-                if 'aliexpress_ds_text_search_response' in search_data:
-                    search_result = search_data['aliexpress_ds_text_search_response'].get('data', {})
-                    print(f'📦 Dados encontrados: {list(search_result.keys()) if isinstance(search_result, dict) else "N/A"}')
+                if 'aliexpress_ds_feed_products_get_response' in products_data:
+                    products_response_data = products_data['aliexpress_ds_feed_products_get_response']
+                    result = products_response_data.get('result', {})
                     
-                    if 'products' in search_result:
-                        products_data = search_result['products']
-                        print(f'🏷️ Estrutura dos produtos: {list(products_data.keys()) if isinstance(products_data, dict) else "N/A"}')
+                    if 'products' in result:
+                        products = result['products']
+                        print(f'✅ Produtos encontrados no feed: {len(products) if isinstance(products, list) else 1}')
                         
-                        if 'selection_search_product' in products_data:
-                            products = products_data['selection_search_product']
-                            print(f'✅ Produtos encontrados: {len(products) if isinstance(products, list) else 1}')
-                            
-                            # Converter para formato do frontend usando os campos reais da API
+                        # Converter produtos para formato do frontend
+                        if isinstance(products, list):
                             for product in products:
                                 if isinstance(product, dict):
-                                    # Extrair preço formatado
-                                    origin_min_price = product.get('originMinPrice', {})
-                                    if isinstance(origin_min_price, dict):
-                                        price = origin_min_price.get('formatPrice', 'R$0,00')
-                                    else:
-                                        price = 'R$0,00'
-                                    
-                                    # Extrair preço original
-                                    target_original_price = product.get('targetOriginalPrice', 0)
-                                    if target_original_price:
-                                        original_price = f"R${target_original_price:.2f}".replace('.', ',')
-                                    else:
-                                        original_price = 'R$0,00'
-                                    
                                     feed_products.append({
-                                        'product_id': product.get('itemId', ''),
-                                        'title': product.get('title', ''),
-                                        'main_image': product.get('itemMainPic', ''),
-                                        'price': price,
-                                        'currency': 'BRL',
-                                        'rating': float(product.get('evaluateRate', '0')),
-                                        'orders': product.get('orders', '0'),
-                                        'shop_name': 'AliExpress',
+                                        'product_id': product.get('product_id', ''),
+                                        'title': product.get('product_title', ''),
+                                        'main_image': product.get('product_main_image_url', ''),
+                                        'price': product.get('sale_price', '0.00'),
+                                        'currency': product.get('currency', 'BRL'),
+                                        'rating': float(product.get('evaluate_rate', '0')),
+                                        'orders': product.get('sale_count', '0'),
+                                        'shop_name': product.get('store_name', 'AliExpress'),
                                         'shop_url': 'https://www.aliexpress.com',
-                                        'product_url': f"https://www.aliexpress.com{product.get('itemUrl', '')}",
+                                        'product_url': product.get('product_url', ''),
                                         'discount': product.get('discount', '0%'),
-                                        'original_price': original_price,
+                                        'original_price': product.get('original_price', '0.00'),
                                         'shipping_cost': '0.00',
                                         'free_shipping': True,
                                         'wishlist_count': 0,
@@ -5377,20 +5369,37 @@ def get_complete_feeds():
                                         'tags': [],
                                         'attributes': {}
                                     })
-                        else:
-                            print(f'⚠️ Nenhum produto encontrado em selection_search_product')
+                        elif isinstance(products, dict):
+                            feed_products.append({
+                                'product_id': products.get('product_id', ''),
+                                'title': products.get('product_title', ''),
+                                'main_image': products.get('product_main_image_url', ''),
+                                'price': products.get('sale_price', '0.00'),
+                                'currency': products.get('currency', 'BRL'),
+                                'rating': float(products.get('evaluate_rate', '0')),
+                                'orders': products.get('sale_count', '0'),
+                                'shop_name': products.get('store_name', 'AliExpress'),
+                                'shop_url': 'https://www.aliexpress.com',
+                                'product_url': products.get('product_url', ''),
+                                'discount': products.get('discount', '0%'),
+                                'original_price': products.get('original_price', '0.00'),
+                                'shipping_cost': '0.00',
+                                'free_shipping': True,
+                                'wishlist_count': 0,
+                                'review_count': 0,
+                                'tags': [],
+                                'attributes': {}
+                            })
                     else:
-                        print(f'⚠️ Nenhum produto encontrado na resposta')
+                        print(f'⚠️ Nenhum produto encontrado no feed {feed_name}')
                 else:
-                    print(f'⚠️ Estrutura inesperada da resposta: {search_data}')
+                    print(f'⚠️ Estrutura inesperada da resposta de produtos: {list(products_data.keys())}')
             else:
-                print(f'❌ Erro na busca: {search_response.status_code} - {search_response.text}')
-            
-
+                print(f'❌ Erro na busca de produtos: {products_response.status_code} - {products_response.text}')
             
             # Adicionar feed com produtos ao resultado
             complete_data['feeds'].append({
-                'feed_id': str(i + 1),
+                'feed_id': str(feed_id),
                 'feed_name': feed_name,
                 'display_name': feed_name,
                 'description': feed_desc,

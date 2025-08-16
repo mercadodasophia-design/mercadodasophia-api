@@ -5340,28 +5340,42 @@ def get_complete_feeds():
                             products = products_data['selection_search_product']
                             print(f'✅ Produtos encontrados: {len(products) if isinstance(products, list) else 1}')
                             
-                            # Converter para formato do frontend
+                            # Converter para formato do frontend usando os campos reais da API
                             for product in products:
                                 if isinstance(product, dict):
+                                    # Extrair preço formatado
+                                    origin_min_price = product.get('originMinPrice', {})
+                                    if isinstance(origin_min_price, dict):
+                                        price = origin_min_price.get('formatPrice', 'R$0,00')
+                                    else:
+                                        price = 'R$0,00'
+                                    
+                                    # Extrair preço original
+                                    target_original_price = product.get('targetOriginalPrice', 0)
+                                    if target_original_price:
+                                        original_price = f"R${target_original_price:.2f}".replace('.', ',')
+                                    else:
+                                        original_price = 'R$0,00'
+                                    
                                     feed_products.append({
-                                        'product_id': product.get('product_id', ''),
-                                        'title': product.get('product_title', ''),
-                                        'main_image': product.get('product_main_image_url', ''),
-                                        'price': product.get('product_price', '0.00'),
+                                        'product_id': product.get('itemId', ''),
+                                        'title': product.get('title', ''),
+                                        'main_image': product.get('itemMainPic', ''),
+                                        'price': price,
                                         'currency': 'BRL',
-                                        'rating': float(product.get('evaluate_rate', '0')),
-                                        'orders': int(product.get('sale_count', '0')),
-                                        'shop_name': product.get('shop_name', ''),
-                                        'shop_url': product.get('shop_url', ''),
-                                        'product_url': product.get('product_url', ''),
-                                        'discount': product.get('discount', '0'),
-                                        'original_price': product.get('original_price', '0.00'),
-                                        'shipping_cost': product.get('shipping_cost', '0.00'),
-                                        'free_shipping': product.get('free_shipping', False),
-                                        'wishlist_count': product.get('wishlist_count', 0),
-                                        'review_count': product.get('review_count', 0),
-                                        'tags': product.get('tags', []),
-                                        'attributes': product.get('attributes', {})
+                                        'rating': float(product.get('evaluateRate', '0')),
+                                        'orders': product.get('orders', '0'),
+                                        'shop_name': 'AliExpress',
+                                        'shop_url': 'https://www.aliexpress.com',
+                                        'product_url': f"https://www.aliexpress.com{product.get('itemUrl', '')}",
+                                        'discount': product.get('discount', '0%'),
+                                        'original_price': original_price,
+                                        'shipping_cost': '0.00',
+                                        'free_shipping': True,
+                                        'wishlist_count': 0,
+                                        'review_count': 0,
+                                        'tags': [],
+                                        'attributes': {}
                                     })
                         else:
                             print(f'⚠️ Nenhum produto encontrado em selection_search_product')
@@ -5372,51 +5386,7 @@ def get_complete_feeds():
             else:
                 print(f'❌ Erro na busca: {search_response.status_code} - {search_response.text}')
             
-            # Se não encontrou produtos reais, usar produtos de exemplo para teste
-            if not feed_products:
-                print(f'⚠️ Usando produtos de exemplo para feed: {feed_name}')
-                feed_products = [
-                    {
-                        'product_id': '1005009549987605',
-                        'title': 'Smartphone Android 128GB - Preto',
-                        'main_image': 'https://via.placeholder.com/300x300/FF6B6B/FFFFFF?text=Smartphone',
-                        'price': '899.90',
-                        'currency': 'BRL',
-                        'rating': 4.5,
-                        'orders': 1250,
-                        'shop_name': 'TechStore',
-                        'shop_url': 'https://example.com/shop',
-                        'product_url': 'https://example.com/product',
-                        'discount': '15%',
-                        'original_price': '1059.90',
-                        'shipping_cost': '0.00',
-                        'free_shipping': True,
-                        'wishlist_count': 89,
-                        'review_count': 156,
-                        'tags': ['smartphone', 'android', '128gb'],
-                        'attributes': {'color': 'Preto', 'storage': '128GB'}
-                    },
-                    {
-                        'product_id': '1005005855242096',
-                        'title': 'Fone de Ouvido Bluetooth - Branco',
-                        'main_image': 'https://via.placeholder.com/300x300/4ECDC4/FFFFFF?text=Fone',
-                        'price': '89.90',
-                        'currency': 'BRL',
-                        'rating': 4.2,
-                        'orders': 890,
-                        'shop_name': 'AudioTech',
-                        'shop_url': 'https://example.com/shop',
-                        'product_url': 'https://example.com/product',
-                        'discount': '25%',
-                        'original_price': '119.90',
-                        'shipping_cost': '0.00',
-                        'free_shipping': True,
-                        'wishlist_count': 45,
-                        'review_count': 78,
-                        'tags': ['fone', 'bluetooth', 'wireless'],
-                        'attributes': {'color': 'Branco', 'type': 'Bluetooth'}
-                    }
-                ]
+
             
             # Adicionar feed com produtos ao resultado
             complete_data['feeds'].append({

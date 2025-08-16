@@ -2628,16 +2628,15 @@ def test_feed_products():
         
         # Parâmetros para buscar produtos do feed
         products_params = {
-            "method": "aliexpress.ds.feed.products.get",
+            "method": "aliexpress.ds.feed.itemids.get",
             "app_key": APP_KEY,
             "timestamp": int(time.time() * 1000),
             "sign_method": "md5",
             "format": "json",
             "v": "2.0",
             "access_token": tokens['access_token'],
-            "feed_id": str(feed_id),
-            "page_size": "5",
-            "page_no": "1"
+            "feed_name": "AEB_ ComputerAccessories_EG",
+            "page_size": "5"
         }
         
         products_params["sign"] = generate_api_signature(products_params, APP_SECRET)
@@ -5372,18 +5371,17 @@ def get_complete_feeds():
             
             print(f'📦 Processando feed {i+1}/{len(feeds_list)}: {feed_name} (ID: {feed_id})')
             
-            # Buscar produtos do feed usando aliexpress.ds.feed.products.get
+            # Buscar produtos do feed usando aliexpress.ds.feed.itemids.get
             products_params = {
-                "method": "aliexpress.ds.feed.products.get",
+                "method": "aliexpress.ds.feed.itemids.get",
                 "app_key": APP_KEY,
                 "timestamp": int(time.time() * 1000),
                 "sign_method": "md5",
                 "format": "json",
                 "v": "2.0",
                 "access_token": tokens['access_token'],
-                "feed_id": str(feed_id),
-                "page_size": str(page_size),
-                "page_no": str(page)
+                "feed_name": feed_name,
+                "page_size": str(page_size)
             }
             
             products_params["sign"] = generate_api_signature(products_params, APP_SECRET)
@@ -5396,8 +5394,8 @@ def get_complete_feeds():
                 products_data = products_response.json()
                 print(f'📊 Estrutura da resposta de produtos: {list(products_data.keys())}')
                 
-                if 'aliexpress_ds_feed_products_get_response' in products_data:
-                    products_response_data = products_data['aliexpress_ds_feed_products_get_response']
+                if 'aliexpress_ds_feed_itemids_get_response' in products_data:
+                    products_response_data = products_data['aliexpress_ds_feed_itemids_get_response']
                     result = products_response_data.get('result', {})
                     
                     if 'products' in result:

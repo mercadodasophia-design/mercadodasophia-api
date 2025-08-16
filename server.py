@@ -14,8 +14,8 @@ from dotenv import load_dotenv
 from flask_cors import CORS
 # Firebase Admin SDK (opcional)
 try:
-import firebase_admin
-from firebase_admin import credentials, firestore
+    import firebase_admin
+    from firebase_admin import credentials, firestore
     FIREBASE_AVAILABLE = True
 except ImportError:
     FIREBASE_AVAILABLE = False
@@ -40,7 +40,7 @@ app = Flask(__name__)
 
 # Inicializar Firebase Admin SDK (opcional - apenas para funcionalidades locais)
 if FIREBASE_AVAILABLE:
-try:
+    try:
     # Tentar usar credenciais de arquivo
     cred = credentials.Certificate('firebase-credentials.json')
     firebase_admin.initialize_app(cred)
@@ -53,7 +53,7 @@ except Exception as e:
     except Exception as e2:
         print(f'⚠️ Firebase Admin SDK não inicializado: {e2}')
         print('⚠️ Funcionalidades de pedidos podem não funcionar corretamente')
-            print('✅ Feeds do AliExpress funcionarão normalmente')
+        print('✅ Feeds do AliExpress funcionarão normalmente')
 else:
     print('✅ Firebase não disponível - apenas APIs do AliExpress ativas')
 

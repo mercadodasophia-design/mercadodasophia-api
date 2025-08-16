@@ -2615,6 +2615,65 @@ def test_search():
             'error': str(e)
         }), 500
 
+@app.route('/api/aliexpress/test-feed-products', methods=['GET'])
+def test_feed_products():
+    """Endpoint de teste para ver a estrutura da API de produtos dos feeds"""
+    tokens = load_tokens()
+    if not tokens or not tokens.get('access_token'):
+        return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
+    
+    try:
+        # Testar com um feed específico
+        feed_id = request.args.get('feed_id', '1')
+        
+        # Parâmetros para buscar produtos do feed
+        products_params = {
+            "method": "aliexpress.ds.feed.products.get",
+            "app_key": APP_KEY,
+            "timestamp": int(time.time() * 1000),
+            "sign_method": "md5",
+            "format": "json",
+            "v": "2.0",
+            "access_token": tokens['access_token'],
+            "feed_id": str(feed_id),
+            "page_size": "5",
+            "page_no": "1"
+        }
+        
+        products_params["sign"] = generate_api_signature(products_params, APP_SECRET)
+        products_response = requests.get('https://api-sg.aliexpress.com/sync', params=products_params)
+        
+        print(f'🔍 TESTE FEED PRODUTOS - Status: {products_response.status_code}')
+        print(f'🔍 TESTE FEED PRODUTOS - URL: {products_response.url}')
+        
+        if products_response.status_code == 200:
+            products_data = products_response.json()
+            print(f'🔍 TESTE FEED PRODUTOS - JSON COMPLETO:')
+            print(json.dumps(products_data, indent=2, ensure_ascii=False))
+            
+            return jsonify({
+                'success': True,
+                'status_code': products_response.status_code,
+                'feed_id': feed_id,
+                'raw_response': products_data
+            })
+        else:
+            print(f'❌ TESTE FEED PRODUTOS - Erro: {products_response.status_code}')
+            print(f'❌ TESTE FEED PRODUTOS - Resposta: {products_response.text}')
+            
+            return jsonify({
+                'success': False,
+                'status_code': products_response.status_code,
+                'error_response': products_response.text
+            })
+            
+    except Exception as e:
+        print(f'❌ TESTE FEED PRODUTOS - Erro geral: {e}')
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @app.route('/api/aliexpress/translate-attributes', methods=['POST'])
 def translate_attributes():
     """Traduzir atributos de produtos usando nossa documentação"""

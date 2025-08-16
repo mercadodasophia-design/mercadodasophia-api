@@ -5238,7 +5238,9 @@ def get_complete_feeds():
             
             print(f'📦 Processando feed {i+1}/{len(feeds_list)}: {feed_name}')
             
-            # Buscar produtos para este feed
+            # Buscar produtos para este feed usando termo baseado no nome do feed
+            search_term = "phone" if "phone" in feed_name.lower() else "computer" if "computer" in feed_name.lower() else "electronics"
+            
             search_params = {
                 "method": "aliexpress.ds.text.search",
                 "app_key": APP_KEY,
@@ -5247,53 +5249,69 @@ def get_complete_feeds():
                 "format": "json",
                 "v": "2.0",
                 "access_token": tokens['access_token'],
-                "keyWord": "smartphone",  # Termo mais específico para busca
+                "keyWord": search_term,
                 "countryCode": "BR",
                 "currency": "BRL",
                 "local": "pt_BR",
                 "pageSize": str(page_size),
                 "pageIndex": str(page),
-                "sortBy": "orders,desc",
-                "targetCurrency": "BRL",
-                "targetLanguage": "PT"
+                "sortBy": "orders,desc"
             }
             
             search_params["sign"] = generate_api_signature(search_params, APP_SECRET)
             search_response = requests.get('https://api-sg.aliexpress.com/sync', params=search_params)
             
+            print(f'🔍 Buscando produtos com termo: {search_term}')
+            print(f'📡 Status da busca: {search_response.status_code}')
+            
             feed_products = []
             if search_response.status_code == 200:
                 search_data = search_response.json()
+                print(f'📊 Estrutura da resposta: {list(search_data.keys())}')
+                
                 if 'aliexpress_ds_text_search_response' in search_data:
                     search_result = search_data['aliexpress_ds_text_search_response'].get('data', {})
+                    print(f'📦 Dados encontrados: {list(search_result.keys()) if isinstance(search_result, dict) else "N/A"}')
                     
                     if 'products' in search_result:
                         products_data = search_result['products']
+                        print(f'🏷️ Estrutura dos produtos: {list(products_data.keys()) if isinstance(products_data, dict) else "N/A"}')
+                        
                         if 'selection_search_product' in products_data:
                             products = products_data['selection_search_product']
+                            print(f'✅ Produtos encontrados: {len(products) if isinstance(products, list) else 1}')
                             
                             # Converter para formato do frontend
                             for product in products:
-                                feed_products.append({
-                                    'product_id': product.get('product_id', ''),
-                                    'title': product.get('product_title', ''),
-                                    'main_image': product.get('product_main_image_url', ''),
-                                    'price': product.get('product_price', '0.00'),
-                                    'currency': 'BRL',
-                                    'rating': float(product.get('evaluate_rate', '0')),
-                                    'orders': int(product.get('sale_count', '0')),
-                                    'shop_name': product.get('shop_name', ''),
-                                    'shop_url': product.get('shop_url', ''),
-                                    'product_url': product.get('product_url', ''),
-                                    'discount': product.get('discount', '0'),
-                                    'original_price': product.get('original_price', '0.00'),
-                                    'shipping_cost': product.get('shipping_cost', '0.00'),
-                                    'free_shipping': product.get('free_shipping', False),
-                                    'wishlist_count': product.get('wishlist_count', 0),
-                                    'review_count': product.get('review_count', 0),
-                                    'tags': product.get('tags', []),
-                                    'attributes': product.get('attributes', {})
-                                })
+                                if isinstance(product, dict):
+                                    feed_products.append({
+                                        'product_id': product.get('product_id', ''),
+                                        'title': product.get('product_title', ''),
+                                        'main_image': product.get('product_main_image_url', ''),
+                                        'price': product.get('product_price', '0.00'),
+                                        'currency': 'BRL',
+                                        'rating': float(product.get('evaluate_rate', '0')),
+                                        'orders': int(product.get('sale_count', '0')),
+                                        'shop_name': product.get('shop_name', ''),
+                                        'shop_url': product.get('shop_url', ''),
+                                        'product_url': product.get('product_url', ''),
+                                        'discount': product.get('discount', '0'),
+                                        'original_price': product.get('original_price', '0.00'),
+                                        'shipping_cost': product.get('shipping_cost', '0.00'),
+                                        'free_shipping': product.get('free_shipping', False),
+                                        'wishlist_count': product.get('wishlist_count', 0),
+                                        'review_count': product.get('review_count', 0),
+                                        'tags': product.get('tags', []),
+                                        'attributes': product.get('attributes', {})
+                                    })
+                        else:
+                            print(f'⚠️ Nenhum produto encontrado em selection_search_product')
+                    else:
+                        print(f'⚠️ Nenhum produto encontrado na resposta')
+                else:
+                    print(f'⚠️ Estrutura inesperada da resposta: {search_data}')
+            else:
+                print(f'❌ Erro na busca: {search_response.status_code} - {search_response.text}')
             
             # Adicionar feed com produtos ao resultado
             complete_data['feeds'].append({

@@ -5402,51 +5402,146 @@ def get_complete_feeds():
                         products = result['products']
                         print(f'✅ Produtos encontrados no feed: {len(products) if isinstance(products, list) else 1}')
                         
-                        # Converter produtos para formato do frontend
-                        if isinstance(products, list):
-                            for product in products:
-                                if isinstance(product, dict):
-                                    feed_products.append({
-                                        'product_id': product.get('product_id', ''),
-                                        'title': product.get('product_title', ''),
-                                        'main_image': product.get('product_main_image_url', ''),
-                                        'price': product.get('sale_price', '0.00'),
-                                        'currency': product.get('currency', 'BRL'),
-                                        'rating': float(product.get('evaluate_rate', '0')),
-                                        'orders': product.get('sale_count', '0'),
-                                        'shop_name': product.get('store_name', 'AliExpress'),
-                                        'shop_url': 'https://www.aliexpress.com',
-                                        'product_url': product.get('product_url', ''),
-                                        'discount': product.get('discount', '0%'),
-                                        'original_price': product.get('original_price', '0.00'),
-                                        'shipping_cost': '0.00',
-                                        'free_shipping': True,
-                                        'wishlist_count': 0,
-                                        'review_count': 0,
-                                        'tags': [],
-                                        'attributes': {}
-                                    })
-                        elif isinstance(products, dict):
-                            feed_products.append({
-                                'product_id': products.get('product_id', ''),
-                                'title': products.get('product_title', ''),
-                                'main_image': products.get('product_main_image_url', ''),
-                                'price': products.get('sale_price', '0.00'),
-                                'currency': products.get('currency', 'BRL'),
-                                'rating': float(products.get('evaluate_rate', '0')),
-                                'orders': products.get('sale_count', '0'),
-                                'shop_name': products.get('store_name', 'AliExpress'),
-                                'shop_url': 'https://www.aliexpress.com',
-                                'product_url': products.get('product_url', ''),
-                                'discount': products.get('discount', '0%'),
-                                'original_price': products.get('original_price', '0.00'),
-                                'shipping_cost': '0.00',
-                                'free_shipping': True,
-                                'wishlist_count': 0,
-                                'review_count': 0,
-                                'tags': [],
-                                'attributes': {}
-                            })
+                        # A API retorna apenas IDs dos produtos, precisamos buscar os dados completos
+                        if isinstance(products, dict) and 'number' in products:
+                            product_ids = products['number']
+                            if isinstance(product_ids, list):
+                                print(f'📦 Encontrados {len(product_ids)} IDs de produtos, buscando dados completos...')
+                                
+                                # Buscar dados completos para cada produto (limitado para performance)
+                                max_products = min(len(product_ids), page_size)
+                                for i, product_id in enumerate(product_ids[:max_products]):
+                                    try:
+                                        # Buscar dados completos do produto
+                                        product_params = {
+                                            "method": "aliexpress.ds.product.get",
+                                            "app_key": APP_KEY,
+                                            "timestamp": int(time.time() * 1000),
+                                            "sign_method": "md5",
+                                            "format": "json",
+                                            "v": "2.0",
+                                            "access_token": tokens['access_token'],
+                                            "product_id": str(product_id)
+                                        }
+                                        
+                                        product_params["sign"] = generate_api_signature(product_params, APP_SECRET)
+                                        product_response = requests.get('https://api-sg.aliexpress.com/sync', params=product_params)
+                                        
+                                        if product_response.status_code == 200:
+                                            product_data = product_response.json()
+                                            if 'aliexpress_ds_product_get_response' in product_data:
+                                                product_result = product_data['aliexpress_ds_product_get_response'].get('result', {})
+                                                
+                                                # Extrair dados do produto
+                                                feed_products.append({
+                                                    'product_id': str(product_id),
+                                                    'title': product_result.get('product_title', ''),
+                                                    'main_image': product_result.get('product_main_image_url', ''),
+                                                    'price': product_result.get('sale_price', '0.00'),
+                                                    'currency': product_result.get('currency', 'BRL'),
+                                                    'rating': float(product_result.get('evaluate_rate', '0')),
+                                                    'orders': product_result.get('sale_count', '0'),
+                                                    'shop_name': product_result.get('store_name', 'AliExpress'),
+                                                    'shop_url': 'https://www.aliexpress.com',
+                                                    'product_url': product_result.get('product_url', ''),
+                                                    'discount': product_result.get('discount', '0%'),
+                                                    'original_price': product_result.get('original_price', '0.00'),
+                                                    'shipping_cost': '0.00',
+                                                    'free_shipping': True,
+                                                    'wishlist_count': 0,
+                                                    'review_count': 0,
+                                                    'tags': [],
+                                                    'attributes': {}
+                                                })
+                                            else:
+                                                # Se não conseguir dados completos, usar dados básicos
+                                                feed_products.append({
+                                                    'product_id': str(product_id),
+                                                    'title': f'Produto {product_id}',
+                                                    'main_image': '',
+                                                    'price': '0.00',
+                                                    'currency': 'BRL',
+                                                    'rating': 0.0,
+                                                    'orders': '0',
+                                                    'shop_name': 'AliExpress',
+                                                    'shop_url': 'https://www.aliexpress.com',
+                                                    'product_url': '',
+                                                    'discount': '0%',
+                                                    'original_price': '0.00',
+                                                    'shipping_cost': '0.00',
+                                                    'free_shipping': True,
+                                                    'wishlist_count': 0,
+                                                    'review_count': 0,
+                                                    'tags': [],
+                                                    'attributes': {}
+                                                })
+                                        else:
+                                            # Se falhar, usar dados básicos
+                                            feed_products.append({
+                                                'product_id': str(product_id),
+                                                'title': f'Produto {product_id}',
+                                                'main_image': '',
+                                                'price': '0.00',
+                                                'currency': 'BRL',
+                                                'rating': 0.0,
+                                                'orders': '0',
+                                                'shop_name': 'AliExpress',
+                                                'shop_url': 'https://www.aliexpress.com',
+                                                'product_url': '',
+                                                'discount': '0%',
+                                                'original_price': '0.00',
+                                                'shipping_cost': '0.00',
+                                                'free_shipping': True,
+                                                'wishlist_count': 0,
+                                                'review_count': 0,
+                                                'tags': [],
+                                                'attributes': {}
+                                            })
+                                    except Exception as e:
+                                        print(f'❌ Erro ao buscar produto {product_id}: {e}')
+                                        # Usar dados básicos em caso de erro
+                                        feed_products.append({
+                                            'product_id': str(product_id),
+                                            'title': f'Produto {product_id}',
+                                            'main_image': '',
+                                            'price': '0.00',
+                                            'currency': 'BRL',
+                                            'rating': 0.0,
+                                            'orders': '0',
+                                            'shop_name': 'AliExpress',
+                                            'shop_url': 'https://www.aliexpress.com',
+                                            'product_url': '',
+                                            'discount': '0%',
+                                            'original_price': '0.00',
+                                            'shipping_cost': '0.00',
+                                            'free_shipping': True,
+                                            'wishlist_count': 0,
+                                            'review_count': 0,
+                                            'tags': [],
+                                            'attributes': {}
+                                        })
+                            elif isinstance(product_ids, int):
+                                # Se for apenas um ID
+                                feed_products.append({
+                                    'product_id': str(product_ids),
+                                    'title': f'Produto {product_ids}',
+                                    'main_image': '',
+                                    'price': '0.00',
+                                    'currency': 'BRL',
+                                    'rating': 0.0,
+                                    'orders': '0',
+                                    'shop_name': 'AliExpress',
+                                    'shop_url': 'https://www.aliexpress.com',
+                                    'product_url': '',
+                                    'discount': '0%',
+                                    'original_price': '0.00',
+                                    'shipping_cost': '0.00',
+                                    'free_shipping': True,
+                                    'wishlist_count': 0,
+                                    'review_count': 0,
+                                    'tags': [],
+                                    'attributes': {}
+                                })
                     else:
                         print(f'⚠️ Nenhum produto encontrado no feed {feed_name}')
                 else:

@@ -14,8 +14,8 @@ from dotenv import load_dotenv
 from flask_cors import CORS
 # Firebase Admin SDK (opcional)
 try:
-    import firebase_admin
-    from firebase_admin import credentials, firestore
+import firebase_admin
+from firebase_admin import credentials, firestore
     FIREBASE_AVAILABLE = True
 except ImportError:
     FIREBASE_AVAILABLE = False
@@ -40,19 +40,19 @@ app = Flask(__name__)
 
 # Inicializar Firebase Admin SDK (opcional - apenas para funcionalidades locais)
 if FIREBASE_AVAILABLE:
+try:
+    # Tentar usar credenciais de arquivo
+    cred = credentials.Certificate('firebase-credentials.json')
+    firebase_admin.initialize_app(cred)
+    print('✅ Firebase Admin SDK inicializado com credenciais de arquivo')
+except Exception as e:
     try:
-        # Tentar usar credenciais de arquivo
-        cred = credentials.Certificate('firebase-credentials.json')
-        firebase_admin.initialize_app(cred)
-        print('✅ Firebase Admin SDK inicializado com credenciais de arquivo')
-    except Exception as e:
-        try:
-            # Tentar usar variáveis de ambiente
-            firebase_admin.initialize_app()
-            print('✅ Firebase Admin SDK inicializado com variáveis de ambiente')
-        except Exception as e2:
-            print(f'⚠️ Firebase Admin SDK não inicializado: {e2}')
-            print('⚠️ Funcionalidades de pedidos podem não funcionar corretamente')
+        # Tentar usar variáveis de ambiente
+        firebase_admin.initialize_app()
+        print('✅ Firebase Admin SDK inicializado com variáveis de ambiente')
+    except Exception as e2:
+        print(f'⚠️ Firebase Admin SDK não inicializado: {e2}')
+        print('⚠️ Funcionalidades de pedidos podem não funcionar corretamente')
             print('✅ Feeds do AliExpress funcionarão normalmente')
 else:
     print('✅ Firebase não disponível - apenas APIs do AliExpress ativas')
@@ -61,6 +61,8 @@ else:
 CORS(app, origins=[
     "https://mercadodasophia-bbd01.web.app",
     "https://mercadodasophia-bbd01.firebaseapp.com",
+    "https://mercadodasophia.com.br",
+    "https://www.mercadodasophia.com.br",
     "https://service-api-aliexpress.mercadodasophia.com.br",
     "http://localhost:3000",
     "http://localhost:5000",
@@ -69,6 +71,9 @@ CORS(app, origins=[
     "http://127.0.0.1:8080",  # Flutter web porta fixa
     "https://localhost:8080",  # Flutter web porta fixa
     "https://127.0.0.1:8080",  # Flutter web porta fixa
+    "http://localhost:*",  # Qualquer porta local
+    "https://localhost:*",  # Qualquer porta local HTTPS
+    "*"  # Permitir todas as origens em desenvolvimento
 ], methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], allow_headers=["Content-Type", "Authorization"])
 
 # ===================== CONFIGURAÇÕES =====================

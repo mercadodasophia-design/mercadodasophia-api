@@ -5247,13 +5247,15 @@ def get_complete_feeds():
                 "format": "json",
                 "v": "2.0",
                 "access_token": tokens['access_token'],
-                "keyWord": "electronics",  # Termo base para busca
+                "keyWord": "smartphone",  # Termo mais específico para busca
                 "countryCode": "BR",
                 "currency": "BRL",
                 "local": "pt_BR",
                 "pageSize": str(page_size),
                 "pageIndex": str(page),
-                "sortBy": "orders,desc"
+                "sortBy": "orders,desc",
+                "targetCurrency": "BRL",
+                "targetLanguage": "PT"
             }
             
             search_params["sign"] = generate_api_signature(search_params, APP_SECRET)

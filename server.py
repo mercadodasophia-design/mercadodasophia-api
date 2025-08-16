@@ -248,10 +248,10 @@ def generate_gop_signature(params, app_secret):
 
 def generate_api_signature(params, app_secret):
     """Gerar assinatura para APIs de negócios do AliExpress"""
-    # 1´©ÅÔâú Ordenar e concatenar key+value
-    sorted_params = "".join(f"{k}{v}" for k, v in sorted(params.items()))
+    # 1. Ordenar e concatenar key+value
+    sorted_params = "".join(f"{k}{str(v)}" for k, v in sorted(params.items()))
     
-    # 2´©ÅÔâú Concatenar secret + params + secret
+    # 2. Concatenar secret + params + secret
     to_sign = f"{app_secret}{sorted_params}{app_secret}"
     
     # 3. Gerar MD5 maiúsculo

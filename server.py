@@ -14,8 +14,8 @@ from dotenv import load_dotenv
 from flask_cors import CORS
 # Firebase Admin SDK (opcional)
 try:
-    import firebase_admin
-    from firebase_admin import credentials, firestore
+import firebase_admin
+from firebase_admin import credentials, firestore
     FIREBASE_AVAILABLE = True
 except ImportError:
     FIREBASE_AVAILABLE = False
@@ -35,7 +35,7 @@ if not os.getenv('MP_SANDBOX'):
 
 # Importar integração Mercado Pago (DEPOIS de definir as variáveis)
 try:
-    from mercadopago_integration import mp_integration
+from mercadopago_integration import mp_integration
     MP_AVAILABLE = True
 except ImportError:
     MP_AVAILABLE = False
@@ -45,19 +45,19 @@ app = Flask(__name__)
 
 # Inicializar Firebase Admin SDK (opcional - apenas para funcionalidades locais)
 if FIREBASE_AVAILABLE:
+try:
+    # Tentar usar credenciais de arquivo
+    cred = credentials.Certificate('firebase-credentials.json')
+    firebase_admin.initialize_app(cred)
+    print('✅ Firebase Admin SDK inicializado com credenciais de arquivo')
+except Exception as e:
     try:
-        # Tentar usar credenciais de arquivo
-        cred = credentials.Certificate('firebase-credentials.json')
-        firebase_admin.initialize_app(cred)
-        print('✅ Firebase Admin SDK inicializado com credenciais de arquivo')
-    except Exception as e:
-        try:
-            # Tentar usar variáveis de ambiente
-            firebase_admin.initialize_app()
-            print('✅ Firebase Admin SDK inicializado com variáveis de ambiente')
-        except Exception as e2:
-            print(f'⚠️ Firebase Admin SDK não inicializado: {e2}')
-            print('⚠️ Funcionalidades de pedidos podem não funcionar corretamente')
+        # Tentar usar variáveis de ambiente
+        firebase_admin.initialize_app()
+        print('✅ Firebase Admin SDK inicializado com variáveis de ambiente')
+    except Exception as e2:
+        print(f'⚠️ Firebase Admin SDK não inicializado: {e2}')
+        print('⚠️ Funcionalidades de pedidos podem não funcionar corretamente')
             print('✅ Feeds do AliExpress funcionarão normalmente')
 else:
     print('✅ Firebase não disponível - apenas APIs do AliExpress ativas')
@@ -71,20 +71,15 @@ CORS(app, origins=[
     "https://service-api-aliexpress.mercadodasophia.com.br",
     "http://localhost:3000",
     "http://localhost:5000",
-    "http://localhost:8000",
-    "http://localhost:8080",  # Flutter web porta fixa
-    "http://127.0.0.1:8080",  # Flutter web porta fixa
-    "https://localhost:8080",  # Flutter web porta fixa
-    "https://127.0.0.1:8080",  # Flutter web porta fixa
-    "http://localhost:*",  # Qualquer porta local
-    "https://localhost:*",  # Qualquer porta local HTTPS
+    "http://localhost:8000",  # Flutter web porta fixa
+    "http://127.0.0.1:8080"  # Flutter web porta fixa,  # Flutter web porta fixa  # Flutter web porta fixa # Qualquer porta local # Qualquer porta local HTTPS
     "*"  # Permitir todas as origens em desenvolvimento
 ], methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], allow_headers=["Content-Type", "Authorization"])
 
 # ===================== CONFIGURAÇÕES =====================
 APP_KEY = os.getenv('APP_KEY', '517616')  # Substitua pela sua APP_KEY
 APP_SECRET = os.getenv('APP_SECRET', 'skAvaPWbGLkkx5TlKf8kvLmILQtTV2sq')
-PORT = int(os.getenv('PORT', 5000))
+PORT = int(os.getenv('PORT', 5000
 
 REDIRECT_URI = "https://service-api-aliexpress.mercadodasophia.com.br/api/aliexpress/oauth-callback"
 
@@ -102,14 +97,49 @@ STORE_COUNTRY = os.getenv('STORE_COUNTRY', 'BR')
 
 # ===================== FUNÇÕES AUXILIARES =====================
 def save_tokens(tokens):
-    with open(TOKENS_FILE, 'w') as f:
-        json.dump(tokens, f)
-    print('­ƒÆ¥ Tokens salvos com sucesso!')
+    # Salvar em arquivo local
+    try:
+        with open(TOKENS_FILE, 'w') as f:
+            json.dump(tokens, f)
+        print('✅ Tokens salvos em arquivo local!')
+    except Exception as e:
+        print(f'⚠️ Erro ao salvar tokens em arquivo: {e}')
+    
+    # Salvar também em variáveis de ambiente para Cloud Run
+    try:
+        os.environ['ALIEXPRESS_ACCESS_TOKEN'] = tokens.get('access_token', '')
+        os.environ['ALIEXPRESS_REFRESH_TOKEN'] = tokens.get('refresh_token', '')
+        os.environ['ALIEXPRESS_EXPIRES_IN'] = str(tokens.get('expires_in', ''))
+        os.environ['ALIEXPRESS_TOKEN_TYPE'] = tokens.get('token_type', 'Bearer')
+        print('✅ Tokens salvos em variáveis de ambiente!')
+    except Exception as e:
+        print(f'⚠️ Erro ao salvar tokens em variáveis de ambiente: {e}')
 
 def load_tokens():
+    # Primeiro tentar carregar do arquivo
     if os.path.exists(TOKENS_FILE):
-        with open(TOKENS_FILE, 'r') as f:
-            return json.load(f)
+        try:
+            with open(TOKENS_FILE, 'r') as f:
+                return json.load(f)
+        except Exception as e:
+            print(f'⚠️ Erro ao carregar tokens do arquivo: {e}')
+    
+    # Se não encontrar arquivo, tentar carregar das variáveis de ambiente
+    access_token = os.getenv('ALIEXPRESS_ACCESS_TOKEN')
+    refresh_token = os.getenv('ALIEXPRESS_REFRESH_TOKEN')
+    expires_in = os.getenv('ALIEXPRESS_EXPIRES_IN')
+    token_type = os.getenv('ALIEXPRESS_TOKEN_TYPE', 'Bearer')
+    
+    if access_token and refresh_token:
+        tokens = {
+            'access_token': access_token,
+            'refresh_token': refresh_token,
+            'expires_in': expires_in,
+            'token_type': token_type
+        }
+        print('✅ Tokens carregados das variáveis de ambiente!')
+        return tokens
+    
     return None
 
 def refresh_access_token():

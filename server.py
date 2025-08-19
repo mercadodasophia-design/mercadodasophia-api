@@ -72,22 +72,24 @@ else:
     print('✅ Firebase não disponível - apenas APIs do AliExpress ativas')
 
 # Configurar CORS para permitir requisições do navegador
-CORS(app,
-     origins=[
-        "https://mercadodasophia-bbd01.web.app",
-        "https://mercadodasophia-bbd01.firebaseapp.com",
-        "https://admin-mercadodasophia.firebaseapp.com",
-        "https://admin.mercadodasophia.com.br",
-        "https://mercadodasophia.com.br",
-        "https://www.mercadodasophia.com.br",
-        "https://service-api-aliexpress.mercadodasophia.com.br",
-        "http://localhost:8080",
-        "http://localhost:5000",
-     ],
-     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-     allow_headers=["Content-Type", "Authorization", "Origin", "Accept", "X-Requested-With"],
-     supports_credentials=True
-)
+CORS(app, origins=[
+    "https://mercadodasophia-bbd01.web.app",
+    "https://mercadodasophia-bbd01.firebaseapp.com",
+    "https://admin-mercadodasophia.firebaseapp.com",
+    "https://admin.mercadodasophia.com.br",
+    "https://mercadodasophia.com.br",
+    "https://www.mercadodasophia.com.br",
+    "https://service-api-aliexpress.mercadodasophia.com.br",
+    "http://localhost:3000",
+    "http://localhost:5000",
+    "http://localhost:8000",
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5000",
+    "http://127.0.0.1:8000",
+    "*"  # Permitir todas as origens em desenvolvimento
+], methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], allow_headers=["Content-Type", "Authorization", "Origin", "Accept", "X-Requested-With"], supports_credentials=True)
 
 # ===================== CONFIGURAÇÕES =====================
 APP_KEY = os.getenv('APP_KEY', '517616')  # Substitua pela sua APP_KEY
@@ -112,8 +114,8 @@ STORE_COUNTRY = os.getenv('STORE_COUNTRY', 'BR')
 def save_tokens(tokens):
     # Salvar em arquivo local
     try:
-        with open(TOKENS_FILE, 'w') as f:
-            json.dump(tokens, f)
+    with open(TOKENS_FILE, 'w') as f:
+        json.dump(tokens, f)
         print('✅ Tokens salvos em arquivo local!')
     except Exception as e:
         print(f'⚠️ Erro ao salvar tokens em arquivo: {e}')
@@ -132,8 +134,8 @@ def load_tokens():
     # Primeiro tentar carregar do arquivo
     if os.path.exists(TOKENS_FILE):
         try:
-            with open(TOKENS_FILE, 'r') as f:
-                return json.load(f)
+        with open(TOKENS_FILE, 'r') as f:
+            return json.load(f)
         except Exception as e:
             print(f'⚠️ Erro ao carregar tokens do arquivo: {e}')
     

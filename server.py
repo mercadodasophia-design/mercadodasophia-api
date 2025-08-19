@@ -43,6 +43,15 @@ except ImportError:
 
 app = Flask(__name__)
 
+# Middleware CORS adicional para garantir headers
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,Origin,Accept,X-Requested-With')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
+
 # Inicializar Firebase Admin SDK (opcional - apenas para funcionalidades locais)
 if FIREBASE_AVAILABLE:
 try:
@@ -71,10 +80,14 @@ CORS(app, origins=[
     "https://service-api-aliexpress.mercadodasophia.com.br",
     "http://localhost:3000",
     "http://localhost:5000",
-    "http://localhost:8000",  # Flutter web porta fixa
-    "http://127.0.0.1:8080"  # Flutter web porta fixa,  # Flutter web porta fixa  # Flutter web porta fixa # Qualquer porta local # Qualquer porta local HTTPS
+    "http://localhost:8000",
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5000",
+    "http://127.0.0.1:8000",
     "*"  # Permitir todas as origens em desenvolvimento
-], methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], allow_headers=["Content-Type", "Authorization"])
+], methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], allow_headers=["Content-Type", "Authorization", "Origin", "Accept", "X-Requested-With"], supports_credentials=True)
 
 # ===================== CONFIGURAÇÕES =====================
 APP_KEY = os.getenv('APP_KEY', '517616')  # Substitua pela sua APP_KEY

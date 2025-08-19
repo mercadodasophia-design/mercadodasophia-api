@@ -75,6 +75,7 @@ else:
 CORS(app, origins=[
     "https://mercadodasophia-bbd01.web.app",
     "https://mercadodasophia-bbd01.firebaseapp.com",
+    "ttps://admin-mercadodasophia.firebaseapp.com/",
     "https://admin.mercadodasophia.com.br",
     "https://mercadodasophia.com.br",
     "https://www.mercadodasophia.com.br",

@@ -43,15 +43,6 @@ except ImportError:
 
 app = Flask(__name__)
 
-# Middleware CORS adicional para garantir headers
-@app.after_request
-def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,Origin,Accept,X-Requested-With')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
-    return response
-
 # Inicializar Firebase Admin SDK (opcional - apenas para funcionalidades locais)
 if FIREBASE_AVAILABLE:
 try:
@@ -75,26 +66,25 @@ else:
 CORS(app, origins=[
     "https://mercadodasophia-bbd01.web.app",
     "https://mercadodasophia-bbd01.firebaseapp.com",
-    "https://admin-mercadodasophia.firebaseapp.com",
-    "https://admin.mercadodasophia.com.br",
     "https://mercadodasophia.com.br",
     "https://www.mercadodasophia.com.br",
     "https://service-api-aliexpress.mercadodasophia.com.br",
     "http://localhost:3000",
     "http://localhost:5000",
     "http://localhost:8000",
-    "http://localhost:8080",
-    "http://127.0.0.1:8080",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:5000",
-    "http://127.0.0.1:8000",
+    "http://localhost:8080",  # Flutter web porta fixa
+    "http://127.0.0.1:8080",  # Flutter web porta fixa
+    "https://localhost:8080",  # Flutter web porta fixa
+    "https://127.0.0.1:8080",  # Flutter web porta fixa
+    "http://localhost:*",  # Qualquer porta local
+    "https://localhost:*",  # Qualquer porta local HTTPS
     "*"  # Permitir todas as origens em desenvolvimento
-], methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], allow_headers=["Content-Type", "Authorization", "Origin", "Accept", "X-Requested-With"], supports_credentials=True)
+], methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], allow_headers=["Content-Type", "Authorization"])
 
 # ===================== CONFIGURAÇÕES =====================
 APP_KEY = os.getenv('APP_KEY', '517616')  # Substitua pela sua APP_KEY
 APP_SECRET = os.getenv('APP_SECRET', 'skAvaPWbGLkkx5TlKf8kvLmILQtTV2sq')
-PORT = int(os.getenv('PORT', 5000
+PORT = int(os.getenv('PORT', 5000))
 
 REDIRECT_URI = "https://service-api-aliexpress.mercadodasophia.com.br/api/aliexpress/oauth-callback"
 
@@ -112,49 +102,14 @@ STORE_COUNTRY = os.getenv('STORE_COUNTRY', 'BR')
 
 # ===================== FUNÇÕES AUXILIARES =====================
 def save_tokens(tokens):
-    # Salvar em arquivo local
-    try:
     with open(TOKENS_FILE, 'w') as f:
         json.dump(tokens, f)
-        print('✅ Tokens salvos em arquivo local!')
-    except Exception as e:
-        print(f'⚠️ Erro ao salvar tokens em arquivo: {e}')
-    
-    # Salvar também em variáveis de ambiente para Cloud Run
-    try:
-        os.environ['ALIEXPRESS_ACCESS_TOKEN'] = tokens.get('access_token', '')
-        os.environ['ALIEXPRESS_REFRESH_TOKEN'] = tokens.get('refresh_token', '')
-        os.environ['ALIEXPRESS_EXPIRES_IN'] = str(tokens.get('expires_in', ''))
-        os.environ['ALIEXPRESS_TOKEN_TYPE'] = tokens.get('token_type', 'Bearer')
-        print('✅ Tokens salvos em variáveis de ambiente!')
-    except Exception as e:
-        print(f'⚠️ Erro ao salvar tokens em variáveis de ambiente: {e}')
+    print('­ƒÆ¥ Tokens salvos com sucesso!')
 
 def load_tokens():
-    # Primeiro tentar carregar do arquivo
     if os.path.exists(TOKENS_FILE):
-        try:
         with open(TOKENS_FILE, 'r') as f:
             return json.load(f)
-        except Exception as e:
-            print(f'⚠️ Erro ao carregar tokens do arquivo: {e}')
-    
-    # Se não encontrar arquivo, tentar carregar das variáveis de ambiente
-    access_token = os.getenv('ALIEXPRESS_ACCESS_TOKEN')
-    refresh_token = os.getenv('ALIEXPRESS_REFRESH_TOKEN')
-    expires_in = os.getenv('ALIEXPRESS_EXPIRES_IN')
-    token_type = os.getenv('ALIEXPRESS_TOKEN_TYPE', 'Bearer')
-    
-    if access_token and refresh_token:
-        tokens = {
-            'access_token': access_token,
-            'refresh_token': refresh_token,
-            'expires_in': expires_in,
-            'token_type': token_type
-        }
-        print('✅ Tokens carregados das variáveis de ambiente!')
-        return tokens
-    
     return None
 
 def refresh_access_token():

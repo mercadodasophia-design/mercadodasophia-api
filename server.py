@@ -594,6 +594,22 @@ def create_test_page():
             </div>
 
             <div class="section">
+                <h2>📡 Feeds AliExpress</h2>
+                <div class="endpoint-grid">
+                    <div class="endpoint-card">
+                        <h3>Listar Feeds</h3>
+                        <p>GET /api/aliexpress/feeds/list</p>
+                        <a href="''' + base_url + '''/api/aliexpress/feeds/list" target="_blank" class="btn btn-secondary">📄 Ver Feeds</a>
+                    </div>
+                    <div class="endpoint-card">
+                        <h3>Feeds Completos</h3>
+                        <p>GET /api/aliexpress/feeds/complete?page=1&page_size=10&max_feeds=3</p>
+                        <a href="''' + base_url + '''/api/aliexpress/feeds/complete?page=1&page_size=10&max_feeds=3" target="_blank" class="btn">🚀 Ver Feeds Completos</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
                 <h2>🚚 Frete Próprio (Loja)</h2>
                 <div class="endpoint-grid">
                     <div class="endpoint-card">

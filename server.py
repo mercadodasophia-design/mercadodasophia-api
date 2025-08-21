@@ -82,7 +82,7 @@ ALLOWED_ORIGINS = [
     "https://127.0.0.1:8080",  # Flutter web porta fixa
     "http://localhost:*",  # Qualquer porta local
     "https://localhost:*",  # Qualquer porta local HTTPS
-    "*"  # Permitir todas as origens em desenvolvimento
+    "*"  
 ]
 
 CORS(
@@ -2404,12 +2404,16 @@ def sku_attributes_batch():
 @app.route('/api/aliexpress/feeds/list', methods=['GET'])
 def get_available_feeds():
     """Obter lista de feeds disponíveis do AliExpress"""
+    ensure_fresh_token()
     tokens = load_tokens()
     if not tokens or not tokens.get('access_token'):
         return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
-    
-    # Retornar feeds padrão para teste (sem chamar API do AliExpress)
-    print(f'🧪 Retornando feeds padrão para teste...')
+
+    # Parametrização para a etapa 2 (IDs)
+    page = int(request.args.get('page', 1))
+    page_size = int(request.args.get('page_size', 20))
+
+    # Etapa 1 já concluída: nomes dos feeds (usando lista conhecida/testada)
     default_feeds = [
         {
             "feed_name": "DS_Brazil_topsellers",
@@ -2419,7 +2423,7 @@ def get_available_feeds():
             "product_count": 14544
         },
         {
-            "feed_name": "DS_NewArrivals", 
+            "feed_name": "DS_NewArrivals",
             "feed_id": "2",
             "display_name": "Novidades",
             "description": "Produtos recém-chegados",
@@ -2427,7 +2431,7 @@ def get_available_feeds():
         },
         {
             "feed_name": "DS_ConsumerElectronics_bestsellers",
-            "feed_id": "3", 
+            "feed_id": "3",
             "display_name": "Eletrônicos",
             "description": "Eletrônicos mais vendidos",
             "product_count": 20633
@@ -2435,15 +2439,41 @@ def get_available_feeds():
         {
             "feed_name": "DS_Home&Kitchen_bestsellers",
             "feed_id": "4",
-            "display_name": "Casa e Cozinha", 
+            "display_name": "Casa e Cozinha",
             "description": "Produtos para casa e cozinha",
             "product_count": 12751
         }
     ]
-    
+
+    # Etapa 2: para cada feed, buscar IDs (sample) e imprimir estrutura
+    for feed in default_feeds:
+        fname = feed.get('feed_name')
+        try:
+            with app.test_request_context(f'/api/aliexpress/feeds/{fname}/ids?page={page}&page_size={page_size}'):
+                ids_resp = get_feed_item_ids(fname)
+            payload = ids_resp.get_json() if hasattr(ids_resp, 'get_json') else ids_resp[0].get_json()
+            item_ids = payload.get('item_ids', []) if isinstance(payload, dict) else []
+
+            # guardar amostra no feed e logar para documentação
+            feed['sample_item_ids'] = item_ids
+            print('\n🧾 FEED → IDS (amostra)')
+            print(json.dumps({
+                'feed_name': fname,
+                'page': page,
+                'page_size': page_size,
+                'item_ids': item_ids
+            }, indent=2, ensure_ascii=False))
+        except Exception as e:
+            print(f"⚠️ Falha ao buscar IDs para feed {fname}: {e}")
+            feed['sample_item_ids'] = []
+
     return jsonify({
         'success': True,
-        'feeds': default_feeds
+        'feeds': default_feeds,
+        'pagination': {
+            'page': page,
+            'page_size': page_size
+        }
     })
 
     try:

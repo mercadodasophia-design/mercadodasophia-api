@@ -2698,6 +2698,96 @@ def get_feed_products(feed_name):
             'message': str(e)
         }), 500
 
+
+@app.route('/api/aliexpress/feeds/<feed_name>/details', methods=['GET'])
+def get_feed_details(feed_name):
+    """Retorna item_ids e detalhes de até 'limit' itens do feed especificado.
+
+    Params: page, page_size (para coletar ids) e limit (qtd de itens a detalhar).
+    """
+    ensure_fresh_token()
+    tokens = load_tokens()
+    if not tokens or not tokens.get('access_token'):
+        return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
+
+    page = int(request.args.get('page', 1))
+    page_size = int(request.args.get('page_size', 20))
+    limit = int(request.args.get('limit', 5))
+
+    try:
+        # 1) Buscar item_ids do feed
+        params = {
+            "method": "aliexpress.ds.feed.itemids.get",
+            "app_key": APP_KEY,
+            "timestamp": int(time.time() * 1000),
+            "sign_method": "md5",
+            "format": "json",
+            "v": "2.0",
+            "access_token": tokens['access_token'],
+            "feed_name": feed_name,
+            "page_no": page,
+            "page_size": page_size
+        }
+        params["sign"] = generate_api_signature(params, APP_SECRET)
+        ids_resp = requests.get('https://api-sg.aliexpress.com/sync', params=params)
+        ids = []
+        if ids_resp.status_code == 200:
+            ids_json = ids_resp.json()
+            # extrair genericamente
+            def walk(obj):
+                nonlocal ids
+                if isinstance(obj, dict):
+                    for k, v in obj.items():
+                        if k in ('item_id', 'product_id', 'itemId') and v:
+                            ids.append(str(v))
+                        walk(v)
+                elif isinstance(obj, list):
+                    for x in obj:
+                        walk(x)
+            walk(ids_json)
+        ids = list(dict.fromkeys(ids))  # unique, preserve order
+
+        # 2) Buscar detalhes para até 'limit' ids
+        detailed = []
+        for product_id in ids[:limit]:
+            try:
+                p = {
+                    "method": "aliexpress.ds.product.get",
+                    "app_key": APP_KEY,
+                    "timestamp": int(time.time() * 1000),
+                    "sign_method": "md5",
+                    "format": "json",
+                    "v": "2.0",
+                    "access_token": tokens['access_token'],
+                    "product_id": str(product_id)
+                }
+                p["sign"] = generate_api_signature(p, APP_SECRET)
+                r = requests.get('https://api-sg.aliexpress.com/sync', params=p)
+                if r.status_code == 200:
+                    j = r.json()
+                    res = j.get('aliexpress_ds_product_get_response', {}).get('result', {})
+                    detailed.append({
+                        'product_id': str(product_id),
+                        'title': res.get('product_title') or res.get('ae_item_base_info_dto', {}).get('subject', ''),
+                        'main_image': res.get('product_main_image_url') or res.get('ae_multimedia_info_dto', {}).get('image_urls', ''),
+                        'price': res.get('sale_price', '0.00'),
+                        'currency': res.get('currency', 'BRL')
+                    })
+            except Exception as e:
+                print(f'⚠️ Falha ao detalhar {product_id}: {e}')
+                continue
+
+        return jsonify({
+            'success': True,
+            'feed_name': feed_name,
+            'item_ids': ids[:page_size],
+            'products': detailed,
+            'products_found': len(detailed)
+        })
+    except Exception as e:
+        print(f'❌ Erro em get_feed_details: {e}')
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 @app.route('/api/aliexpress/test-search', methods=['GET'])
 def test_search():
     """Endpoint de teste para ver a estrutura da API de busca"""
@@ -5731,8 +5821,16 @@ def sync_feeds_to_firebase():
         return jsonify({'success': False, 'message': 'Firebase não configurado no servidor.'}), 500
 
     try:
-        # 1) Obter JSON completo
-        with app.test_request_context('/api/aliexpress/feeds/complete'):
+        # 1) Ler parâmetros de controle (defaults seguros)
+        req = request.get_json(silent=True) or {}
+        page = int(req.get('page', 1))
+        page_size = int(req.get('page_size', 20))
+        max_feeds = int(req.get('max_feeds', 3))
+        details_max = int(req.get('details_max', 5))
+
+        # 2) Obter JSON completo com detalhes limitados (evita timeout/OOM)
+        complete_path = f"/api/aliexpress/feeds/complete?page={page}&page_size={page_size}&max_feeds={max_feeds}&details=true&details_max={details_max}"
+        with app.test_request_context(complete_path):
             complete_resp = get_complete_feeds()
         if isinstance(complete_resp, tuple):
             complete_data = complete_resp[0].json
@@ -5748,7 +5846,7 @@ def sync_feeds_to_firebase():
         db = firestore.client()
         saved = 0
 
-        # 2) Iterar feeds e produtos
+        # 3) Iterar feeds e produtos
         for feed in complete_data.get('feeds', []):
             feed_name = feed.get('feed_name')
             for product in feed.get('products', []):

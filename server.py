@@ -2801,7 +2801,11 @@ def get_feed_details(feed_name):
                     "format": "json",
                     "v": "2.0",
                     "access_token": tokens['access_token'],
-                    "product_id": str(product_id)
+                    "product_id": str(product_id),
+                    "ship_to_country": "BR",
+                    "target_currency": "BRL",
+                    "target_language": "pt",
+                    "remove_personal_benefit": "false"
                 }
                 p["sign"] = generate_api_signature(p, APP_SECRET)
                 r = requests.get('https://api-sg.aliexpress.com/sync', params=p)
@@ -5806,7 +5810,11 @@ def get_complete_feeds():
                                                 "format": "json",
                                                 "v": "2.0",
                                                 "access_token": tokens['access_token'],
-                                                "product_id": str(product_id)
+                                                "product_id": str(product_id),
+                                                "ship_to_country": "BR",
+                                                "target_currency": "BRL",
+                                                "target_language": "pt",
+                                                "remove_personal_benefit": "false"
                                             }
                                             product_params["sign"] = generate_api_signature(product_params, APP_SECRET)
                                             product_response = requests.get('https://api-sg.aliexpress.com/sync', params=product_params)

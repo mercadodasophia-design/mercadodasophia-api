@@ -64,7 +64,7 @@ else:
     print('✅ Firebase não disponível - apenas APIs do AliExpress ativas')
 
 # Configurar CORS para permitir requisições do navegador
-CORS(app, origins=[
+ALLOWED_ORIGINS = [
     "https://mercadodasophia-bbd01.web.app",
     "https://mercadodasophia-bbd01.firebaseapp.com",
     "https://mercadodasophia.com.br",
@@ -80,7 +80,33 @@ CORS(app, origins=[
     "http://localhost:*",  # Qualquer porta local
     "https://localhost:*",  # Qualquer porta local HTTPS
     "*"  # Permitir todas as origens em desenvolvimento
-], methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], allow_headers=["Content-Type", "Authorization"])
+]
+
+CORS(
+    app,
+    origins=ALLOWED_ORIGINS,
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
+    supports_credentials=True
+)
+
+# Garantir resposta 2xx para preflight em qualquer rota /api/*
+@app.route('/api/<path:subpath>', methods=['OPTIONS'])
+def cors_preflight(subpath):
+    return ('', 204)
+
+@app.after_request
+def add_cors_headers(response):
+    origin = request.headers.get('Origin')
+    if origin and (origin in ALLOWED_ORIGINS or '*' in ALLOWED_ORIGINS):
+        response.headers['Access-Control-Allow-Origin'] = origin
+    else:
+        response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Vary'] = 'Origin'
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    return response
 
 # ===================== CONFIGURAÇÕES =====================
 APP_KEY = os.getenv('APP_KEY', '517616')  # Substitua pela sua APP_KEY

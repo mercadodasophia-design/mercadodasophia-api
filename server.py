@@ -719,7 +719,7 @@ def create_test_page():
     <script>
         async function syncFirebase() {
             try {
-                const resp = await fetch('''' + base_url + '''/api/aliexpress/feeds/sync-to-firebase', {
+                const resp = await fetch("''' + base_url + '''/api/aliexpress/feeds/sync-to-firebase", {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ page: 1, page_size: 10, max_feeds: 3, details_max: 5 })

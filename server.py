@@ -10,7 +10,6 @@ import time
 import urllib.parse
 from datetime import datetime
 from flask import Flask, request, jsonify
-import iop
 from dotenv import load_dotenv
 from flask_cors import CORS
 # Firebase Admin SDK (opcional)
@@ -201,6 +200,11 @@ def ensure_fresh_token(min_valid_seconds: int = 300):
 
 def refresh_access_token():
     """Função auxiliar para fazer refresh do access token"""
+    try:
+        import iop  # Import lazy para evitar falha de boot
+    except Exception as e:
+        print(f'❌ SDK iop não disponível para refresh: {e}')
+        return None, 'SDK iop não disponível'
     tokens = load_tokens()
     
     if not tokens or not tokens.get('refresh_token'):

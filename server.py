@@ -5683,7 +5683,8 @@ def get_complete_feeds():
     page = int(request.args.get('page', 1))
     page_size = int(request.args.get('page_size', 20))
     max_feeds = int(request.args.get('max_feeds', 5))  # Limitar número de feeds para performance
-    details = str(request.args.get('details', 'false')).lower() == 'true'
+    # Por padrão, já incluir detalhes por ID; o cliente pode desativar com details=false
+    details = str(request.args.get('details', 'true')).lower() != 'false'
     details_max = int(request.args.get('details_max', 2))
     # Limites de segurança para evitar timeout/OOM
     if details_max > 3:

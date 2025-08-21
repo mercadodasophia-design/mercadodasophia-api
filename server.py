@@ -5774,6 +5774,7 @@ def get_complete_feeds():
             
             feed_products = []
             item_ids_only = []
+            item_ids_details_map = {}  # quando details=true, preenche id -> [dados]
             if products_response.status_code == 200:
                 products_data = products_response.json()
                 print(f'📊 Estrutura da resposta de produtos: {list(products_data.keys())}')
@@ -5820,6 +5821,8 @@ def get_complete_feeds():
                                                         'price': product_result.get('sale_price', '0.00'),
                                                         'currency': product_result.get('currency', 'BRL')
                                                     })
+                                                    # Embutir detalhes também em item_ids conforme solicitado
+                                                    item_ids_details_map[str(product_id)] = [product_result]
                                         except Exception as e:
                                             print(f'⚠️ Falha ao detalhar {product_id}: {e}')
                             elif isinstance(product_ids, int):
@@ -5838,7 +5841,7 @@ def get_complete_feeds():
                 'display_name': feed_name,
                 'description': feed_desc,
                 'product_count': product_count,
-                'item_ids': item_ids_only,
+                'item_ids': (item_ids_details_map if details else item_ids_only),
                 'products': feed_products if details else [],
                 'products_found': len(feed_products) if details else 0
             })

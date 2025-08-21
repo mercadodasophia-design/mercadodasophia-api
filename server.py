@@ -46,19 +46,19 @@ app = Flask(__name__)
 
 # Inicializar Firebase Admin SDK (opcional - apenas para funcionalidades locais)
 if FIREBASE_AVAILABLE:
-try:
-    # Tentar usar credenciais de arquivo
-    cred = credentials.Certificate('firebase-credentials.json')
-    firebase_admin.initialize_app(cred)
-    print('✅ Firebase Admin SDK inicializado com credenciais de arquivo')
-except Exception as e:
     try:
-        # Tentar usar variáveis de ambiente
-        firebase_admin.initialize_app()
-        print('✅ Firebase Admin SDK inicializado com variáveis de ambiente')
-    except Exception as e2:
-        print(f'⚠️ Firebase Admin SDK não inicializado: {e2}')
-        print('⚠️ Funcionalidades de pedidos podem não funcionar corretamente')
+        # Tentar usar credenciais de arquivo
+        cred = credentials.Certificate('firebase-credentials.json')
+        firebase_admin.initialize_app(cred)
+        print('✅ Firebase Admin SDK inicializado com credenciais de arquivo')
+    except Exception as e:
+        try:
+            # Tentar usar variáveis de ambiente
+            firebase_admin.initialize_app()
+            print('✅ Firebase Admin SDK inicializado com variáveis de ambiente')
+        except Exception as e2:
+            print(f'⚠️ Firebase Admin SDK não inicializado: {e2}')
+            print('⚠️ Funcionalidades de pedidos podem não funcionar corretamente')
             print('✅ Feeds do AliExpress funcionarão normalmente')
 else:
     print('✅ Firebase não disponível - apenas APIs do AliExpress ativas')

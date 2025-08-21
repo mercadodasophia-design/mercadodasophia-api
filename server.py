@@ -5582,6 +5582,138 @@ def get_complete_feeds():
         }), 500
 
 
+# ===================== SYNC FEEDS TO FIREBASE =====================
+@app.route('/api/aliexpress/feeds/sync-to-firebase', methods=['POST'])
+def sync_feeds_to_firebase():
+    """Gera JSON completo de feeds e salva produtos no Firebase, organizados por categoria."""
+    if not FIREBASE_AVAILABLE:
+        return jsonify({'success': False, 'message': 'Firebase não configurado no servidor.'}), 500
+
+    try:
+        # 1) Obter JSON completo
+        with app.test_request_context('/api/aliexpress/feeds/complete'):
+            complete_resp = get_complete_feeds()
+        if isinstance(complete_resp, tuple):
+            complete_data = complete_resp[0].json
+            status = complete_resp[1]
+            if status != 200:
+                return jsonify({'success': False, 'message': 'Falha ao obter feeds completos'}), status
+        else:
+            complete_data = complete_resp.json
+
+        if not complete_data.get('success'):
+            return jsonify({'success': False, 'message': 'Resposta inválida de feeds completos'}), 500
+
+        db = firestore.client()
+        saved = 0
+
+        # 2) Iterar feeds e produtos
+        for feed in complete_data.get('feeds', []):
+            feed_name = feed.get('feed_name')
+            for product in feed.get('products', []):
+                aliexpress_id = str(product.get('product_id'))
+
+                # Documento por aliexpress_id (idempotente)
+                doc_ref = db.collection('products').document(aliexpress_id)
+
+                # Construir payload básico
+                payload = {
+                    'name': product.get('title', ''),
+                    'price': _parse_price(product.get('price')),
+                    'original_price': _parse_price(product.get('original_price')),
+                    'images': [product.get('main_image')] if product.get('main_image') else [],
+                    'main_image': product.get('main_image'),
+                    'aliexpress_id': aliexpress_id,
+                    'aliexpress_url': product.get('product_url') or f"https://www.aliexpress.com/item/{aliexpress_id}.html",
+                    'aliexpress_rating': float(product.get('rating') or 0.0),
+                    'aliexpress_reviews_count': int(product.get('review_count') or 0),
+                    'aliexpress_sales_count': int(str(product.get('orders') or '0').replace(',', '')),
+                    'feed_name': feed_name,
+                    'category': {
+                        'detected_category': feed.get('display_name', feed_name),
+                        'source': 'aliexpress_feed',
+                        'detection_timestamp': datetime.utcnow()
+                    },
+                    'status': 'active',
+                    'source': 'aliexpress_feed_sync',
+                    'updated_at': datetime.utcnow(),
+                }
+
+                # Upsert
+                doc_ref.set(payload, merge=True)
+                saved += 1
+
+        return jsonify({'success': True, 'saved': saved})
+    except Exception as e:
+        print(f'❌ Erro ao sincronizar feeds no Firebase: {e}')
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+def _parse_price(value):
+    try:
+        if value is None:
+            return 0.0
+        if isinstance(value, (int, float)):
+            return float(value)
+        s = str(value)
+        s = s.replace('R$', '').replace('$', '').replace(',', '.').strip()
+        return float(s)
+    except Exception:
+        return 0.0
+
+
+# ===================== CRON: UPDATE PRICE/STOCK =====================
+@app.route('/api/aliexpress/cron/update-price-stock', methods=['POST'])
+def cron_update_price_stock():
+    """Atualiza preço e estoque dos produtos importados no Firebase.
+    Espera opcionalmente lista de aliexpress_ids no body. Se ausente, atualiza os mais recentes.
+    """
+    if not FIREBASE_AVAILABLE:
+        return jsonify({'success': False, 'message': 'Firebase não configurado no servidor.'}), 500
+
+    try:
+        req = request.get_json(silent=True) or {}
+        ids = req.get('aliexpress_ids')
+        db = firestore.client()
+
+        # Seleção de produtos
+        if ids:
+            docs = [db.collection('products').document(str(pid)).get() for pid in ids]
+        else:
+            docs = db.collection('products').orderBy('updated_at', direction=firestore.Query.DESCENDING).limit(100).stream()
+
+        updated = 0
+        for doc in docs:
+            data = doc.to_dict() if hasattr(doc, 'to_dict') else (doc._data if hasattr(doc, '_data') else None)
+            if not data:
+                continue
+            aliexpress_id = str(data.get('aliexpress_id') or doc.id)
+            product_url = data.get('aliexpress_url') or f"https://www.aliexpress.com/item/{aliexpress_id}.html"
+
+            # Buscar detalhes atuais
+            try:
+                details_resp = requests.get(f"{request.host_url.rstrip('/')}/api/aliexpress/product/{aliexpress_id}")
+                if details_resp.status_code == 200:
+                    details = details_resp.json().get('product') or details_resp.json().get('data') or {}
+                    price = _parse_price(details.get('price'))
+                    stock_available = True if details else True
+
+                    db.collection('products').document(aliexpress_id).set({
+                        'price': price,
+                        'stockAvailable': stock_available,
+                        'updated_at': datetime.utcnow()
+                    }, merge=True)
+                    updated += 1
+            except Exception as e:
+                print(f"⚠️ Falha ao atualizar {aliexpress_id}: {e}")
+                continue
+
+        return jsonify({'success': True, 'updated': updated})
+    except Exception as e:
+        print(f'❌ Erro no cron de atualização: {e}')
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
 
 
 if __name__ == '__main__':

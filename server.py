@@ -44,14 +44,17 @@ except ImportError:
 
 app = Flask(__name__)
 
-# Inicializar Firebase Admin SDK (opcional - apenas para funcionalidades locais)
-if FIREBASE_AVAILABLE:
+# Inicialização do Firebase movida para função para evitar problemas de indentação
+def init_firebase():
+    if not FIREBASE_AVAILABLE:
+        print('✅ Firebase não disponível - apenas APIs do AliExpress ativas')
+        return
     try:
         # Tentar usar credenciais de arquivo
         cred = credentials.Certificate('firebase-credentials.json')
         firebase_admin.initialize_app(cred)
         print('✅ Firebase Admin SDK inicializado com credenciais de arquivo')
-    except Exception as e:
+    except Exception:
         try:
             # Tentar usar variáveis de ambiente
             firebase_admin.initialize_app()
@@ -60,8 +63,9 @@ if FIREBASE_AVAILABLE:
             print(f'⚠️ Firebase Admin SDK não inicializado: {e2}')
             print('⚠️ Funcionalidades de pedidos podem não funcionar corretamente')
             print('✅ Feeds do AliExpress funcionarão normalmente')
-else:
-    print('✅ Firebase não disponível - apenas APIs do AliExpress ativas')
+
+# Chamar inicialização
+init_firebase()
 
 # Configurar CORS para permitir requisições do navegador
 ALLOWED_ORIGINS = [

@@ -129,15 +129,71 @@ STORE_COUNTRY = os.getenv('STORE_COUNTRY', 'BR')
 
 # ===================== FUNÇÕES AUXILIARES =====================
 def save_tokens(tokens):
-    with open(TOKENS_FILE, 'w') as f:
-        json.dump(tokens, f)
-    print('­ƒÆ¥ Tokens salvos com sucesso!')
+    """Persiste tokens. Usa Firestore quando disponível, senão arquivo local."""
+    tokens = tokens or {}
+    tokens['saved_at'] = datetime.utcnow().isoformat()
+    # Persistir em Firestore (recomendado no Cloud Run)
+    if FIREBASE_AVAILABLE:
+        try:
+            db = firestore.client()
+            db.collection('config').document('aliexpress_tokens').set(tokens, merge=True)
+            print('✅ Tokens salvos no Firestore com sucesso!')
+            return
+        except Exception as e:
+            print(f'⚠️ Falha ao salvar tokens no Firestore: {e}. Fallback para arquivo.')
+    # Fallback para arquivo local (apenas para dev/local)
+    try:
+        with open(TOKENS_FILE, 'w') as f:
+            json.dump(tokens, f)
+        print('✅ Tokens salvos em arquivo com sucesso!')
+    except Exception as e:
+        print(f'❌ Falha ao salvar tokens no arquivo: {e}')
 
 def load_tokens():
-    if os.path.exists(TOKENS_FILE):
-        with open(TOKENS_FILE, 'r') as f:
-            return json.load(f)
+    """Carrega tokens do Firestore quando disponível, senão do arquivo local."""
+    # Tentar Firestore primeiro
+    if FIREBASE_AVAILABLE:
+        try:
+            db = firestore.client()
+            doc = db.collection('config').document('aliexpress_tokens').get()
+            if doc and doc.exists:
+                data = doc.to_dict()
+                # Normalizar estrutura esperada por endpoints
+                return data
+        except Exception as e:
+            print(f'⚠️ Falha ao carregar tokens do Firestore: {e}. Tentando arquivo.')
+    # Fallback arquivo
+    try:
+        if os.path.exists(TOKENS_FILE):
+            with open(TOKENS_FILE, 'r') as f:
+                return json.load(f)
+    except Exception as e:
+        print(f'⚠️ Falha ao carregar tokens do arquivo: {e}')
     return None
+
+
+def ensure_fresh_token(min_valid_seconds: int = 300):
+    """Garante que o access_token tenha ao menos min_valid_seconds de validade.
+    Se estiver perto de expirar ou faltar, tenta refresh.
+    """
+    tokens = load_tokens() or {}
+    now_ms = int(time.time() * 1000)
+    expire_time = tokens.get('expire_time') or tokens.get('expires_at')
+    access_token = tokens.get('access_token')
+    if not access_token:
+        print('⚠️ Sem access_token. Tentando refresh...')
+        refresh_access_token()
+        return
+    if expire_time:
+        # expire_time em ms
+        remaining_ms = expire_time - now_ms
+        if remaining_ms < (min_valid_seconds * 1000):
+            print(f'⏰ Token expira em {remaining_ms/1000:.0f}s. Fazendo refresh...')
+            refresh_access_token()
+    else:
+        # Se não temos expire_time, tentar refresh preventivo
+        print('⚠️ Sem expire_time. Fazendo refresh preventivo...')
+        refresh_access_token()
 
 def refresh_access_token():
     """Função auxiliar para fazer refresh do access token"""
@@ -159,6 +215,9 @@ def refresh_access_token():
         
         if response.code == '0':
             new_tokens = response.body
+            # Preserva refresh_token caso não retorne novamente
+            if 'refresh_token' not in new_tokens:
+                new_tokens['refresh_token'] = refresh_token
             save_tokens(new_tokens)
             print(f'✅ Refresh token realizado com sucesso!')
             return new_tokens, None

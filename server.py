@@ -14,8 +14,8 @@ from dotenv import load_dotenv
 from flask_cors import CORS
 # Firebase Admin SDK (opcional)
 try:
-    import firebase_admin
-    from firebase_admin import credentials, firestore
+import firebase_admin
+from firebase_admin import credentials, firestore
     FIREBASE_AVAILABLE = True
 except ImportError:
     FIREBASE_AVAILABLE = False
@@ -35,7 +35,7 @@ if not os.getenv('MP_SANDBOX'):
 
 # Importar integração Mercado Pago (DEPOIS de definir as variáveis)
 try:
-    from mercadopago_integration import mp_integration
+from mercadopago_integration import mp_integration
     MP_AVAILABLE = True
 except ImportError:
     MP_AVAILABLE = False
@@ -48,19 +48,19 @@ def init_firebase():
     if not FIREBASE_AVAILABLE:
         print('✅ Firebase não disponível - apenas APIs do AliExpress ativas')
         return
-    try:
-        # Tentar usar credenciais de arquivo
-        cred = credentials.Certificate('firebase-credentials.json')
-        firebase_admin.initialize_app(cred)
-        print('✅ Firebase Admin SDK inicializado com credenciais de arquivo')
+try:
+    # Tentar usar credenciais de arquivo
+    cred = credentials.Certificate('firebase-credentials.json')
+    firebase_admin.initialize_app(cred)
+    print('✅ Firebase Admin SDK inicializado com credenciais de arquivo')
     except Exception:
-        try:
-            # Tentar usar variáveis de ambiente
-            firebase_admin.initialize_app()
-            print('✅ Firebase Admin SDK inicializado com variáveis de ambiente')
-        except Exception as e2:
-            print(f'⚠️ Firebase Admin SDK não inicializado: {e2}')
-            print('⚠️ Funcionalidades de pedidos podem não funcionar corretamente')
+    try:
+        # Tentar usar variáveis de ambiente
+        firebase_admin.initialize_app()
+        print('✅ Firebase Admin SDK inicializado com variáveis de ambiente')
+    except Exception as e2:
+        print(f'⚠️ Firebase Admin SDK não inicializado: {e2}')
+        print('⚠️ Funcionalidades de pedidos podem não funcionar corretamente')
             print('✅ Feeds do AliExpress funcionarão normalmente')
 #feff
 # Chamar inicialização
@@ -2451,7 +2451,7 @@ def get_available_feeds():
     tokens = load_tokens()
     if not tokens or not tokens.get('access_token'):
         return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
-
+    
     # Parametrização para a etapa 2 (IDs)
     page = int(request.args.get('page', 1))
     page_size = int(request.args.get('page_size', 20))
@@ -2466,7 +2466,7 @@ def get_available_feeds():
             "product_count": 14544
         },
         {
-            "feed_name": "DS_NewArrivals",
+            "feed_name": "DS_NewArrivals", 
             "feed_id": "2",
             "display_name": "Novidades",
             "description": "Produtos recém-chegados",
@@ -2474,7 +2474,7 @@ def get_available_feeds():
         },
         {
             "feed_name": "DS_ConsumerElectronics_bestsellers",
-            "feed_id": "3",
+            "feed_id": "3", 
             "display_name": "Eletrônicos",
             "description": "Eletrônicos mais vendidos",
             "product_count": 20633
@@ -2482,12 +2482,12 @@ def get_available_feeds():
         {
             "feed_name": "DS_Home&Kitchen_bestsellers",
             "feed_id": "4",
-            "display_name": "Casa e Cozinha",
+            "display_name": "Casa e Cozinha", 
             "description": "Produtos para casa e cozinha",
             "product_count": 12751
         }
     ]
-
+    
     # Etapa 2: para cada feed, buscar IDs (sample) e imprimir estrutura
     for feed in default_feeds:
         fname = feed.get('feed_name')
@@ -5776,7 +5776,8 @@ def get_complete_feeds():
                 "v": "2.0",
                 "access_token": tokens['access_token'],
                 "feed_name": feed_name,
-                "page_size": str(page_size)
+                "page_size": str(page_size),
+                "page_no": str(page)  # Adicionar paginação
             }
             
             products_params["sign"] = generate_api_signature(products_params, APP_SECRET)
@@ -5814,36 +5815,36 @@ def get_complete_feeds():
                                             print('⏱️ Orçamento de tempo atingido para detalhes; retornando parcialmente')
                                             break
                                         try:
-                                            product_params = {
-                                                "method": "aliexpress.ds.product.get",
-                                                "app_key": APP_KEY,
-                                                "timestamp": int(time.time() * 1000),
-                                                "sign_method": "md5",
-                                                "format": "json",
-                                                "v": "2.0",
-                                                "access_token": tokens['access_token'],
+                                        product_params = {
+                                            "method": "aliexpress.ds.product.get",
+                                            "app_key": APP_KEY,
+                                            "timestamp": int(time.time() * 1000),
+                                            "sign_method": "md5",
+                                            "format": "json",
+                                            "v": "2.0",
+                                            "access_token": tokens['access_token'],
                                                 "product_id": str(product_id),
                                                 "ship_to_country": "BR",
                                                 "target_currency": "BRL",
                                                 "target_language": "pt",
                                                 "remove_personal_benefit": "false"
                                             }
-                                            product_params["sign"] = generate_api_signature(product_params, APP_SECRET)
+                                        product_params["sign"] = generate_api_signature(product_params, APP_SECRET)
                                             product_response = requests.get('https://api-sg.aliexpress.com/sync', params=product_params, timeout=8)
-                                            if product_response.status_code == 200:
-                                                product_data = product_response.json()
-                                                if 'aliexpress_ds_product_get_response' in product_data:
-                                                    product_result = product_data['aliexpress_ds_product_get_response'].get('result', {})
-                                                    feed_products.append({
-                                                        'product_id': str(product_id),
-                                                        'title': product_result.get('product_title', ''),
-                                                        'main_image': product_result.get('product_main_image_url', ''),
-                                                        'price': product_result.get('sale_price', '0.00'),
+                                        if product_response.status_code == 200:
+                                            product_data = product_response.json()
+                                            if 'aliexpress_ds_product_get_response' in product_data:
+                                                product_result = product_data['aliexpress_ds_product_get_response'].get('result', {})
+                                                feed_products.append({
+                                                    'product_id': str(product_id),
+                                                    'title': product_result.get('product_title', ''),
+                                                    'main_image': product_result.get('product_main_image_url', ''),
+                                                    'price': product_result.get('sale_price', '0.00'),
                                                         'currency': product_result.get('currency', 'BRL')
                                                     })
                                                     # Embutir detalhes também em item_ids conforme solicitado
                                                     item_ids_details_map[str(product_id)] = [product_result]
-                                        except Exception as e:
+                                    except Exception as e:
                                             print(f'⚠️ Falha ao detalhar {product_id}: {e}')
                             elif isinstance(product_ids, int):
                                 item_ids_only = [str(product_ids)]

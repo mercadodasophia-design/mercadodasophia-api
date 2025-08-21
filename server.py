@@ -14,8 +14,8 @@ from dotenv import load_dotenv
 from flask_cors import CORS
 # Firebase Admin SDK (opcional)
 try:
-    import firebase_admin
-    from firebase_admin import credentials, firestore
+import firebase_admin
+from firebase_admin import credentials, firestore
     FIREBASE_AVAILABLE = True
 except ImportError:
     FIREBASE_AVAILABLE = False
@@ -35,7 +35,7 @@ if not os.getenv('MP_SANDBOX'):
 
 # Importar integração Mercado Pago (DEPOIS de definir as variáveis)
 try:
-    from mercadopago_integration import mp_integration
+from mercadopago_integration import mp_integration
     MP_AVAILABLE = True
 except ImportError:
     MP_AVAILABLE = False
@@ -48,19 +48,19 @@ def init_firebase():
     if not FIREBASE_AVAILABLE:
         print('✅ Firebase não disponível - apenas APIs do AliExpress ativas')
         return
-    try:
-        # Tentar usar credenciais de arquivo
-        cred = credentials.Certificate('firebase-credentials.json')
-        firebase_admin.initialize_app(cred)
-        print('✅ Firebase Admin SDK inicializado com credenciais de arquivo')
+try:
+    # Tentar usar credenciais de arquivo
+    cred = credentials.Certificate('firebase-credentials.json')
+    firebase_admin.initialize_app(cred)
+    print('✅ Firebase Admin SDK inicializado com credenciais de arquivo')
     except Exception:
-        try:
-            # Tentar usar variáveis de ambiente
-            firebase_admin.initialize_app()
-            print('✅ Firebase Admin SDK inicializado com variáveis de ambiente')
-        except Exception as e2:
-            print(f'⚠️ Firebase Admin SDK não inicializado: {e2}')
-            print('⚠️ Funcionalidades de pedidos podem não funcionar corretamente')
+    try:
+        # Tentar usar variáveis de ambiente
+        firebase_admin.initialize_app()
+        print('✅ Firebase Admin SDK inicializado com variáveis de ambiente')
+    except Exception as e2:
+        print(f'⚠️ Firebase Admin SDK não inicializado: {e2}')
+        print('⚠️ Funcionalidades de pedidos podem não funcionar corretamente')
             print('✅ Feeds do AliExpress funcionarão normalmente')
 
 # Chamar inicialização
@@ -5196,6 +5196,105 @@ def check_product_status(product_id):
     tokens = load_tokens()
     if not tokens or not tokens.get('access_token'):
         return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
+
+# ===================== FEEDS: IDS POR FEED =====================
+@app.route('/api/aliexpress/feeds/<feed_name>/ids', methods=['GET'])
+def get_feed_item_ids(feed_name):
+    """Retorna apenas os item_ids de um feed específico (para documentação/estudo)."""
+    ensure_fresh_token()
+    tokens = load_tokens()
+    if not tokens or not tokens.get('access_token'):
+        return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
+
+    page = int(request.args.get('page', 1))
+    page_size = int(request.args.get('page_size', 20))
+
+    try:
+        params = {
+            "method": "aliexpress.ds.feed.items.get",
+            "app_key": APP_KEY,
+            "timestamp": int(time.time() * 1000),
+            "sign_method": "md5",
+            "format": "json",
+            "v": "2.0",
+            "access_token": tokens['access_token'],
+            "feed_name": feed_name,
+            "page_no": page,
+            "page_size": page_size
+        }
+        params["sign"] = generate_api_signature(params, APP_SECRET)
+        response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
+
+        if response.status_code != 200:
+            return jsonify({'success': False, 'status': response.status_code, 'error': response.text}), response.status_code
+
+        data = response.json()
+        # Tentar múltiplas estruturas possíveis
+        item_ids = []
+        # 1) Estrutura direta
+        if 'aliexpress_ds_feed_items_get_response' in data:
+            resp = data['aliexpress_ds_feed_items_get_response']
+            result = resp.get('resp_result', {}).get('result', {})
+            # Alguns retornos podem listar "items" ou "products"
+            possible_lists = []
+            if isinstance(result.get('items'), dict):
+                possible_lists.append(result['items'].get('item'))
+            if result.get('products'):
+                possible_lists.append(result.get('products'))
+            for lst in possible_lists:
+                if isinstance(lst, list):
+                    for it in lst:
+                        iid = str(it.get('item_id') or it.get('product_id') or it.get('itemId') or '')
+                        if iid:
+                            item_ids.append(iid)
+        # 2) Fallback: procurar em toda a árvore
+        if not item_ids:
+            def walk(obj):
+                nonlocal item_ids
+                if isinstance(obj, dict):
+                    for k, v in obj.items():
+                        if k in ('item_id', 'product_id', 'itemId') and v:
+                            item_ids.append(str(v))
+                        walk(v)
+                elif isinstance(obj, list):
+                    for x in obj:
+                        walk(x)
+            walk(data)
+
+        # Log para documentação
+        print(f"\n📄 FEED: {feed_name} | page={page} page_size={page_size}")
+        print(json.dumps({"feed": feed_name, "item_ids": item_ids[:50]}, indent=2, ensure_ascii=False))
+
+        return jsonify({'success': True, 'feed_name': feed_name, 'item_ids': item_ids})
+    except Exception as e:
+        print(f'❌ Erro ao obter IDs do feed {feed_name}: {e}')
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/api/aliexpress/feeds/ids', methods=['GET'])
+def get_all_feeds_item_ids():
+    """Percorre os feeds disponíveis e retorna os primeiros IDs de cada feed (para documentação)."""
+    ensure_fresh_token()
+    try:
+        with app.test_request_context('/api/aliexpress/feeds/list'):
+            list_resp = get_available_feeds()
+        feeds_data = list_resp.get_json() if hasattr(list_resp, 'get_json') else list_resp[0].get_json()
+        feeds = feeds_data.get('feeds', [])
+        max_feeds = int(request.args.get('max_feeds', 4))
+        page_size = int(request.args.get('page_size', 20))
+        result = {}
+        for feed in feeds[:max_feeds]:
+            fname = feed.get('feed_name')
+            with app.test_request_context(f'/api/aliexpress/feeds/{fname}/ids?page=1&page_size={page_size}'):
+                ids_resp = get_feed_item_ids(fname)
+            payload = ids_resp.get_json() if hasattr(ids_resp, 'get_json') else ids_resp[0].get_json()
+            result[fname] = payload.get('item_ids', [])
+        print('\n📄 FEEDS → ITEM IDS (sample):')
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+        return jsonify({'success': True, 'feeds_item_ids': result})
+    except Exception as e:
+        print(f'❌ Erro ao obter IDs de todos os feeds: {e}')
+        return jsonify({'success': False, 'message': str(e)}), 500
     
     try:
         # Parâmetros para verificar status do produto

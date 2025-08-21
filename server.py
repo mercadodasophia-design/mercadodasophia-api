@@ -62,7 +62,7 @@ def init_firebase():
             print(f'⚠️ Firebase Admin SDK não inicializado: {e2}')
             print('⚠️ Funcionalidades de pedidos podem não funcionar corretamente')
             print('✅ Feeds do AliExpress funcionarão normalmente')
-
+#feff
 # Chamar inicialização
 init_firebase()
 
@@ -605,6 +605,35 @@ def create_test_page():
                         <p>GET /api/aliexpress/feeds/complete?page=1&page_size=10&max_feeds=3</p>
                         <a href="''' + base_url + '''/api/aliexpress/feeds/complete?page=1&page_size=10&max_feeds=3" target="_blank" class="btn">🚀 Ver Feeds Completos</a>
                     </div>
+                    <div class="endpoint-card">
+                        <h3>IDs por Feed (exemplos)</h3>
+                        <p>GET /api/aliexpress/feeds/{feed}/ids?page=1&page_size=20</p>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                            <a href="''' + base_url + '''/api/aliexpress/feeds/AEB_%20ComputerAccessories_EG/ids?page=1&page_size=20" target="_blank" class="btn btn-secondary">ComputerAccessories</a>
+                            <a href="''' + base_url + '''/api/aliexpress/feeds/AEB_%20PhoneAccessories_EG/ids?page=1&page_size=20" target="_blank" class="btn btn-secondary">PhoneAccessories</a>
+                            <a href="''' + base_url + '''/api/aliexpress/feeds/AEB_%20SummerProducts_EG/ids?page=1&page_size=20" target="_blank" class="btn btn-secondary">SummerProducts</a>
+                        </div>
+                    </div>
+                    <div class="endpoint-card">
+                        <h3>Detalhes por Feed (limit=5)</h3>
+                        <p>GET /api/aliexpress/feeds/{feed}/details?page=1&page_size=20&limit=5</p>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                            <a href="''' + base_url + '''/api/aliexpress/feeds/AEB_%20ComputerAccessories_EG/details?page=1&page_size=20&limit=5" target="_blank" class="btn">ComputerAccessories</a>
+                            <a href="''' + base_url + '''/api/aliexpress/feeds/AEB_%20PhoneAccessories_EG/details?page=1&page_size=20&limit=5" target="_blank" class="btn">PhoneAccessories</a>
+                            <a href="''' + base_url + '''/api/aliexpress/feeds/AEB_%20SummerProducts_EG/details?page=1&page_size=20&limit=5" target="_blank" class="btn">SummerProducts</a>
+                        </div>
+                    </div>
+                    <div class="endpoint-card">
+                        <h3>Sync → Firebase (detalhes limitados)</h3>
+                        <p>POST /api/aliexpress/feeds/sync-to-firebase</p>
+                        <button class="btn btn-warning" onclick="syncFirebase()">⚡ Rodar Sync</button>
+                        <pre style="margin-top:10px; font-size:12px; background:#f8f9fa; padding:10px; border-radius:6px;">{
+  "page": 1,
+  "page_size": 10,
+  "max_feeds": 3,
+  "details_max": 5
+}</pre>
+                    </div>
                 </div>
             </div>
 
@@ -688,6 +717,19 @@ def create_test_page():
     </div>
     
     <script>
+        async function syncFirebase() {
+            try {
+                const resp = await fetch('''' + base_url + '''/api/aliexpress/feeds/sync-to-firebase', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ page: 1, page_size: 10, max_feeds: 3, details_max: 5 })
+                });
+                const data = await resp.json();
+                alert('Sync: ' + JSON.stringify(data));
+            } catch (e) {
+                alert('Erro no sync: ' + e.message);
+            }
+        }
         // Adiciona funcionalidade de abrir links em nova aba
         document.addEventListener('DOMContentLoaded', function() {
             const links = document.querySelectorAll('a[target="_blank"]');

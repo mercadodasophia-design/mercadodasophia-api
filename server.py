@@ -15,8 +15,8 @@ from dotenv import load_dotenv
 from flask_cors import CORS
 # Firebase Admin SDK (opcional)
 try:
-    import firebase_admin
-    from firebase_admin import credentials, firestore
+import firebase_admin
+from firebase_admin import credentials, firestore
     FIREBASE_AVAILABLE = True
 except ImportError:
     FIREBASE_AVAILABLE = False
@@ -36,7 +36,7 @@ if not os.getenv('MP_SANDBOX'):
 
 # Importar integração Mercado Pago (DEPOIS de definir as variáveis)
 try:
-    from mercadopago_integration import mp_integration
+from mercadopago_integration import mp_integration
     MP_AVAILABLE = True
 except ImportError:
     MP_AVAILABLE = False
@@ -46,19 +46,19 @@ app = Flask(__name__)
 
 # Inicializar Firebase Admin SDK (opcional - apenas para funcionalidades locais)
 if FIREBASE_AVAILABLE:
+try:
+    # Tentar usar credenciais de arquivo
+    cred = credentials.Certificate('firebase-credentials.json')
+    firebase_admin.initialize_app(cred)
+    print('✅ Firebase Admin SDK inicializado com credenciais de arquivo')
+except Exception as e:
     try:
-        # Tentar usar credenciais de arquivo
-        cred = credentials.Certificate('firebase-credentials.json')
-        firebase_admin.initialize_app(cred)
-        print('✅ Firebase Admin SDK inicializado com credenciais de arquivo')
-    except Exception as e:
-        try:
-            # Tentar usar variáveis de ambiente
-            firebase_admin.initialize_app()
-            print('✅ Firebase Admin SDK inicializado com variáveis de ambiente')
-        except Exception as e2:
-            print(f'⚠️ Firebase Admin SDK não inicializado: {e2}')
-            print('⚠️ Funcionalidades de pedidos podem não funcionar corretamente')
+        # Tentar usar variáveis de ambiente
+        firebase_admin.initialize_app()
+        print('✅ Firebase Admin SDK inicializado com variáveis de ambiente')
+    except Exception as e2:
+        print(f'⚠️ Firebase Admin SDK não inicializado: {e2}')
+        print('⚠️ Funcionalidades de pedidos podem não funcionar corretamente')
             print('✅ Feeds do AliExpress funcionarão normalmente')
 else:
     print('✅ Firebase não disponível - apenas APIs do AliExpress ativas')
@@ -143,8 +143,8 @@ def save_tokens(tokens):
             print(f'⚠️ Falha ao salvar tokens no Firestore: {e}. Fallback para arquivo.')
     # Fallback para arquivo local (apenas para dev/local)
     try:
-        with open(TOKENS_FILE, 'w') as f:
-            json.dump(tokens, f)
+    with open(TOKENS_FILE, 'w') as f:
+        json.dump(tokens, f)
         print('✅ Tokens salvos em arquivo com sucesso!')
     except Exception as e:
         print(f'❌ Falha ao salvar tokens no arquivo: {e}')
@@ -164,9 +164,9 @@ def load_tokens():
             print(f'⚠️ Falha ao carregar tokens do Firestore: {e}. Tentando arquivo.')
     # Fallback arquivo
     try:
-        if os.path.exists(TOKENS_FILE):
-            with open(TOKENS_FILE, 'r') as f:
-                return json.load(f)
+    if os.path.exists(TOKENS_FILE):
+        with open(TOKENS_FILE, 'r') as f:
+            return json.load(f)
     except Exception as e:
         print(f'⚠️ Falha ao carregar tokens do arquivo: {e}')
     return None
@@ -2560,6 +2560,7 @@ def get_available_feeds():
 
 @app.route('/api/aliexpress/feeds/<feed_name>/products', methods=['GET'])
 def get_feed_products(feed_name):
+    ensure_fresh_token()
     """Obter produtos de um feed específico"""
     tokens = load_tokens()
     if not tokens or not tokens.get('access_token'):
@@ -5386,6 +5387,7 @@ def check_multiple_products_status():
 @app.route('/api/aliexpress/feeds/complete', methods=['GET'])
 def get_complete_feeds():
     """Retorna feeds e produtos completos em JSON estruturado usando API oficial AliExpress Dropshipping"""
+    ensure_fresh_token()
     tokens = load_tokens()
     if not tokens or not tokens.get('access_token'):
         return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401

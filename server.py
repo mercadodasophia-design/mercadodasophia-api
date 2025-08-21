@@ -144,13 +144,8 @@ def save_tokens(tokens):
             return
         except Exception as e:
             print(f'⚠️ Falha ao salvar tokens no Firestore: {e}. Fallback para arquivo.')
-    # Fallback para arquivo local (apenas para dev/local)
-    try:
-        with open(TOKENS_FILE, 'w') as f:
-            json.dump(tokens, f)
-        print('✅ Tokens salvos em arquivo com sucesso!')
-    except Exception as e:
-        print(f'❌ Falha ao salvar tokens no arquivo: {e}')
+    # Fallback desativado no Cloud Run para evitar erros de filesystem
+    print('ℹ️ Salvamento local de tokens desativado neste ambiente.')
 
 def load_tokens():
     """Carrega tokens do Firestore quando disponível, senão do arquivo local."""
@@ -165,13 +160,8 @@ def load_tokens():
                 return data
         except Exception as e:
             print(f'⚠️ Falha ao carregar tokens do Firestore: {e}. Tentando arquivo.')
-    # Fallback arquivo
-    try:
-        if os.path.exists(TOKENS_FILE):
-            with open(TOKENS_FILE, 'r') as f:
-                return json.load(f)
-    except Exception as e:
-        print(f'⚠️ Falha ao carregar tokens do arquivo: {e}')
+    # Fallback desativado no Cloud Run
+    print('ℹ️ Leitura local de tokens desativada neste ambiente.')
     return None
 
 

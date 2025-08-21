@@ -2771,7 +2771,7 @@ def get_feed_details(feed_name):
             "page_size": page_size
         }
         params["sign"] = generate_api_signature(params, APP_SECRET)
-        ids_resp = requests.get('https://api-sg.aliexpress.com/sync', params=params)
+        ids_resp = requests.get('https://api-sg.aliexpress.com/sync', params=params, timeout=15)
         ids = []
         if ids_resp.status_code == 200:
             ids_json = ids_resp.json()
@@ -2808,7 +2808,7 @@ def get_feed_details(feed_name):
                     "remove_personal_benefit": "false"
                 }
                 p["sign"] = generate_api_signature(p, APP_SECRET)
-                r = requests.get('https://api-sg.aliexpress.com/sync', params=p)
+                r = requests.get('https://api-sg.aliexpress.com/sync', params=p, timeout=15)
                 if r.status_code == 200:
                     j = r.json()
                     res = j.get('aliexpress_ds_product_get_response', {}).get('result', {})
@@ -5684,7 +5684,14 @@ def get_complete_feeds():
     page_size = int(request.args.get('page_size', 20))
     max_feeds = int(request.args.get('max_feeds', 5))  # Limitar número de feeds para performance
     details = str(request.args.get('details', 'false')).lower() == 'true'
-    details_max = int(request.args.get('details_max', 3))
+    details_max = int(request.args.get('details_max', 2))
+    # Limites de segurança para evitar timeout/OOM
+    if details_max > 3:
+        details_max = 3
+    if details and page_size > 10:
+        page_size = 10
+    details_budget_sec = int(request.args.get('details_budget_sec', 12))
+    started_at = time.time()
     
     print(f'🚀 Gerando JSON completo de feeds usando API oficial AliExpress Dropshipping')
     
@@ -5701,7 +5708,7 @@ def get_complete_feeds():
         }
         
         feeds_params["sign"] = generate_api_signature(feeds_params, APP_SECRET)
-        feeds_response = requests.get('https://api-sg.aliexpress.com/sync', params=feeds_params)
+        feeds_response = requests.get('https://api-sg.aliexpress.com/sync', params=feeds_params, timeout=8)
         
         print(f'📡 Status da busca de feeds: {feeds_response.status_code}')
         
@@ -5772,7 +5779,7 @@ def get_complete_feeds():
             }
             
             products_params["sign"] = generate_api_signature(products_params, APP_SECRET)
-            products_response = requests.get('https://api-sg.aliexpress.com/sync', params=products_params)
+            products_response = requests.get('https://api-sg.aliexpress.com/sync', params=products_params, timeout=8)
             
             print(f'📡 Status da busca de produtos: {products_response.status_code}')
             
@@ -5801,6 +5808,10 @@ def get_complete_feeds():
                                     print(f'🔎 details=true → buscando detalhes de até {details_max} itens por feed...')
                                     max_products = min(len(item_ids_only), details_max)
                                     for product_id in item_ids_only[:max_products]:
+                                        # Orçamento de tempo por requisição
+                                        if (time.time() - started_at) > details_budget_sec:
+                                            print('⏱️ Orçamento de tempo atingido para detalhes; retornando parcialmente')
+                                            break
                                         try:
                                             product_params = {
                                                 "method": "aliexpress.ds.product.get",
@@ -5817,7 +5828,7 @@ def get_complete_feeds():
                                                 "remove_personal_benefit": "false"
                                             }
                                             product_params["sign"] = generate_api_signature(product_params, APP_SECRET)
-                                            product_response = requests.get('https://api-sg.aliexpress.com/sync', params=product_params)
+                                            product_response = requests.get('https://api-sg.aliexpress.com/sync', params=product_params, timeout=8)
                                             if product_response.status_code == 200:
                                                 product_data = product_response.json()
                                                 if 'aliexpress_ds_product_get_response' in product_data:

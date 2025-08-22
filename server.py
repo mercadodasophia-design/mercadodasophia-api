@@ -5766,9 +5766,10 @@ def get_complete_feeds():
             
             print(f'📦 Processando feed {i+1}/{len(feeds_list)}: {feed_name} (ID: {feed_id})')
             
-            # Buscar produtos do feed com paginação CORRETA
+            # PASSO 2: Buscar IDs dos produtos do feed
+            print(f'🔍 PASSO 2: Buscando IDs dos produtos do feed {feed_name}...')
             products_params = {
-                "method": "aliexpress.ds.feed.itemids.get",
+                "method": "aliexpress.ds.feed.itemids.get",  # PASSO 2: Retorna apenas IDs
                 "app_key": APP_KEY,
                 "timestamp": int(time.time() * 1000),
                 "sign_method": "md5",
@@ -5799,21 +5800,24 @@ def get_complete_feeds():
                     
                     if 'products' in result:
                         products = result['products']
-                        print(f'✅ Produtos encontrados no feed: {len(products) if isinstance(products, list) else 1}')
+                        print(f'✅ PASSO 2: IDs encontrados no feed: {len(products) if isinstance(products, list) else 1}')
                         
-                        # A API retorna apenas IDs dos produtos
+                        # PASSO 2: Extrair IDs dos produtos
                         if isinstance(products, dict) and 'number' in products:
                             product_ids = products['number']
-                            print(f'🔍 DEBUG: product_ids type: {type(product_ids)}, length: {len(product_ids) if isinstance(product_ids, list) else "N/A"}')
+                            print(f'🔍 PASSO 2: product_ids type: {type(product_ids)}, length: {len(product_ids) if isinstance(product_ids, list) else "N/A"}')
                             if isinstance(product_ids, list):
-                                # Usar todos os IDs retornados (a API já deve ter paginado)
+                                # Usar todos os IDs retornados
                                 item_ids_only = [str(pid) for pid in product_ids]
-                                print(f'📦 IDs coletados: {len(item_ids_only)} produtos da página {page}')
-                                print(f'📦 IDs coletados (amostra): {item_ids_only[:10]}')
-                                if details:
-                                    print(f'🔎 details=true → buscando detalhes de até {details_max} itens por feed...')
+                                print(f'📦 PASSO 2: IDs coletados: {len(item_ids_only)} produtos da página {page}')
+                                print(f'📦 PASSO 2: IDs coletados (amostra): {item_ids_only[:10]}')
+                                
+                                # PASSO 3: Buscar dados de cada ID
+                                if details and len(item_ids_only) > 0:
+                                    print(f'🔎 PASSO 3: Buscando dados de até {details_max} produtos...')
                                     max_products = min(len(item_ids_only), details_max)
                                     for product_id in item_ids_only[:max_products]:
+                                        print(f'🔍 PASSO 3: Buscando dados do produto {product_id}...')
                                         # Orçamento de tempo por requisição
                                         if (time.time() - started_at) > details_budget_sec:
                                             print('⏱️ Orçamento de tempo atingido para detalhes; retornando parcialmente')
@@ -5848,12 +5852,13 @@ def get_complete_feeds():
                                                     })
                                                     # Embutir detalhes também em item_ids conforme solicitado
                                                     item_ids_details_map[str(product_id)] = [product_result]
+                                                    print(f'✅ PASSO 3: Dados do produto {product_id} carregados com sucesso')
                                         except Exception as e:
-                                            print(f'⚠️ Falha ao detalhar {product_id}: {e}')
+                                            print(f'⚠️ PASSO 3: Falha ao detalhar {product_id}: {e}')
                             elif isinstance(product_ids, int):
                                 item_ids_only = [str(product_ids)]
                     else:
-                        print(f'⚠️ Nenhum produto encontrado no feed {feed_name}')
+                        print(f'⚠️ PASSO 2: Nenhum ID encontrado no feed {feed_name}')
                 else:
                     print(f'⚠️ Estrutura inesperada da resposta de produtos: {list(products_data.keys())}')
             else:

@@ -14,8 +14,8 @@ from dotenv import load_dotenv
 from flask_cors import CORS
 # Firebase Admin SDK (opcional)
 try:
-    import firebase_admin
-    from firebase_admin import credentials, firestore
+import firebase_admin
+from firebase_admin import credentials, firestore
     FIREBASE_AVAILABLE = True
 except ImportError:
     FIREBASE_AVAILABLE = False
@@ -35,7 +35,7 @@ if not os.getenv('MP_SANDBOX'):
 
 # Importar integração Mercado Pago (DEPOIS de definir as variáveis)
 try:
-    from mercadopago_integration import mp_integration
+from mercadopago_integration import mp_integration
     MP_AVAILABLE = True
 except ImportError:
     MP_AVAILABLE = False
@@ -48,19 +48,19 @@ def init_firebase():
     if not FIREBASE_AVAILABLE:
         print('✅ Firebase não disponível - apenas APIs do AliExpress ativas')
         return
-    try:
-        # Tentar usar credenciais de arquivo
-        cred = credentials.Certificate('firebase-credentials.json')
-        firebase_admin.initialize_app(cred)
-        print('✅ Firebase Admin SDK inicializado com credenciais de arquivo')
+try:
+    # Tentar usar credenciais de arquivo
+    cred = credentials.Certificate('firebase-credentials.json')
+    firebase_admin.initialize_app(cred)
+    print('✅ Firebase Admin SDK inicializado com credenciais de arquivo')
     except Exception:
-        try:
-            # Tentar usar variáveis de ambiente
-            firebase_admin.initialize_app()
-            print('✅ Firebase Admin SDK inicializado com variáveis de ambiente')
-        except Exception as e2:
-            print(f'⚠️ Firebase Admin SDK não inicializado: {e2}')
-            print('⚠️ Funcionalidades de pedidos podem não funcionar corretamente')
+    try:
+        # Tentar usar variáveis de ambiente
+        firebase_admin.initialize_app()
+        print('✅ Firebase Admin SDK inicializado com variáveis de ambiente')
+    except Exception as e2:
+        print(f'⚠️ Firebase Admin SDK não inicializado: {e2}')
+        print('⚠️ Funcionalidades de pedidos podem não funcionar corretamente')
             print('✅ Feeds do AliExpress funcionarão normalmente')
 #feff
 # Chamar inicialização
@@ -2509,7 +2509,7 @@ def get_available_feeds():
         except Exception as e:
             print(f"⚠️ Falha ao buscar IDs para feed {fname}: {e}")
             feed['sample_item_ids'] = []
-
+    
     return jsonify({
         'success': True,
         'feeds': default_feeds,
@@ -5666,13 +5666,43 @@ def check_multiple_products_status():
 
 @app.route('/api/aliexpress/feeds/complete', methods=['GET'])
 def get_complete_feeds():
-    """Retorna feeds (etapas progressivas) usando a API oficial AliExpress Dropshipping.
-
-    Por padrão (details=false):
-      - Lista feeds e inclui apenas uma amostra de item_ids por feed (rápido, ideal para documentação/estudo).
-
-    Quando details=true:
-      - Além dos ids, busca detalhes de até details_max itens por feed (limitado para evitar timeout/OOM).
+    """Retorna feeds completos com produtos detalhados usando o fluxo de 3 etapas.
+    
+    FLUXO DE 3 ETAPAS:
+    1. ETAPA 1: aliexpress.ds.feedname.get - Buscar nomes dos feeds disponíveis
+    2. ETAPA 2: aliexpress.ds.feed.itemids.get - Buscar IDs dos produtos em cada feed
+    3. ETAPA 3: aliexpress.ds.product.get - Buscar detalhes completos de cada produto
+    
+    ESTRUTURA DE RETORNO:
+    {
+      "feeds": [
+        {
+          "feed_name": "Nome do feed",
+          "item_ids": {
+            "PRODUCT_ID": { DADOS_COMPLETOS_DO_PRODUTO }
+          },
+          "products": [
+            {
+              "product_id": "ID",
+              "title": "Título",
+              "price": "Preço",
+              "currency": "BRL",
+              "main_image": "URL"
+            }
+          ]
+        }
+      ]
+    }
+    
+    CAMPOS ESSENCIAIS PARA DROPSHIPPING:
+    - ae_item_base_info_dto.subject: Título do produto
+    - ae_item_sku_info_dtos[].offer_sale_price: Preço de venda
+    - ae_multimedia_info_dto.image_urls: Lista de imagens
+    - ae_item_sku_info_dtos[].sku_available_stock: Estoque disponível
+    - ae_store_info.store_name: Nome da loja
+    - logistics_info_dto.delivery_time: Tempo de entrega
+    
+    Ver documentação completa em: ALIEXPRESS_API_DOCUMENTATION.md
     """
     ensure_fresh_token()
     tokens = load_tokens()

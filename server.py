@@ -5779,6 +5779,7 @@ def get_complete_feeds():
                 "page_size": str(page_size),
                 "page_no": str(page)  # Adicionar paginação
             }
+            print(f'🔍 DEBUG: Enviando para AliExpress - page_size: {page_size}, page_no: {page}, feed_name: {feed_name}')
             
             products_params["sign"] = generate_api_signature(products_params, APP_SECRET)
             products_response = requests.get('https://api-sg.aliexpress.com/sync', params=products_params, timeout=8)
@@ -5803,8 +5804,10 @@ def get_complete_feeds():
                         # A API retorna apenas IDs dos produtos
                         if isinstance(products, dict) and 'number' in products:
                             product_ids = products['number']
+                            print(f'🔍 DEBUG: product_ids type: {type(product_ids)}, length: {len(product_ids) if isinstance(product_ids, list) else "N/A"}')
                             if isinstance(product_ids, list):
                                 item_ids_only = [str(pid) for pid in product_ids[:page_size]]
+                                print(f'📦 IDs coletados: {len(item_ids_only)} de {len(product_ids)} disponíveis (page_size: {page_size})')
                                 print(f'📦 IDs coletados (amostra): {item_ids_only[:10]}')
                                 if details:
                                     print(f'🔎 details=true → buscando detalhes de até {details_max} itens por feed...')

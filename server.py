@@ -5679,10 +5679,10 @@ def get_complete_feeds():
     if not tokens or not tokens.get('access_token'):
         return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
     
-    # Parâmetros - limitar para evitar timeout
+    # Parâmetros - MÍNIMOS para evitar timeout
     page = int(request.args.get('page', 1))
-    page_size = int(request.args.get('page_size', 5))  # Reduzir para 5 produtos por página
-    max_feeds = int(request.args.get('max_feeds', 3))  # Máximo 3 feeds
+    page_size = int(request.args.get('page_size', 1))  # Apenas 1 produto por página
+    max_feeds = int(request.args.get('max_feeds', 1))  # Apenas 1 feed
     
     print(f'🚀 ETAPA 1: Buscando todos os nomes de feeds disponíveis')
     
@@ -5802,10 +5802,10 @@ def get_complete_feeds():
                                 print(f'📦 ETAPA 2: IDs coletados (amostra): {item_ids_only[:10]}')
                                 
                                 # ETAPA 3: Buscar dados de cada ID (limitado para evitar timeout)
-                                print(f'🔎 ETAPA 3: Buscando dados de {len(item_ids_only)} produtos...')
+                                print(f'🔎 ETAPA 3: Buscando dados de até 1 produto...')
                                 for idx, product_id in enumerate(item_ids_only):
-                                    if idx >= 3:  # Limitar a 3 produtos por feed para evitar timeout
-                                        print(f'⚠️ ETAPA 3: Limitando a 3 produtos por feed para evitar timeout')
+                                    if idx >= 1:  # Apenas 1 produto por feed para evitar timeout
+                                        print(f'⚠️ ETAPA 3: Limitando a 1 produto por feed para evitar timeout')
                                         break
                                     print(f'🔍 ETAPA 3: Buscando dados do produto {product_id}...')
                                     try:

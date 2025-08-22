@@ -5766,7 +5766,7 @@ def get_complete_feeds():
             
             print(f'📦 Processando feed {i+1}/{len(feeds_list)}: {feed_name} (ID: {feed_id})')
             
-            # Buscar produtos do feed usando aliexpress.ds.feed.itemids.get
+            # Buscar produtos do feed com paginação CORRETA
             products_params = {
                 "method": "aliexpress.ds.feed.itemids.get",
                 "app_key": APP_KEY,
@@ -5777,9 +5777,9 @@ def get_complete_feeds():
                 "access_token": tokens['access_token'],
                 "feed_name": feed_name,
                 "page_size": str(page_size),
-                "page_no": str(page)  # Adicionar paginação
+                "page_no": str(page)
             }
-            print(f'🔍 DEBUG: Enviando para AliExpress - page_size: {page_size}, page_no: {page}, feed_name: {feed_name}')
+            print(f'🔍 DEBUG: Página {page} - page_size: {page_size}, page_no: {page}')
             
             products_params["sign"] = generate_api_signature(products_params, APP_SECRET)
             products_response = requests.get('https://api-sg.aliexpress.com/sync', params=products_params, timeout=8)
@@ -5806,8 +5806,9 @@ def get_complete_feeds():
                             product_ids = products['number']
                             print(f'🔍 DEBUG: product_ids type: {type(product_ids)}, length: {len(product_ids) if isinstance(product_ids, list) else "N/A"}')
                             if isinstance(product_ids, list):
-                                item_ids_only = [str(pid) for pid in product_ids[:page_size]]
-                                print(f'📦 IDs coletados: {len(item_ids_only)} de {len(product_ids)} disponíveis (page_size: {page_size})')
+                                # Usar todos os IDs retornados (a API já deve ter paginado)
+                                item_ids_only = [str(pid) for pid in product_ids]
+                                print(f'📦 IDs coletados: {len(item_ids_only)} produtos da página {page}')
                                 print(f'📦 IDs coletados (amostra): {item_ids_only[:10]}')
                                 if details:
                                     print(f'🔎 details=true → buscando detalhes de até {details_max} itens por feed...')

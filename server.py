@@ -5679,10 +5679,10 @@ def get_complete_feeds():
     if not tokens or not tokens.get('access_token'):
         return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
     
-    # Parâmetros - 100 produtos por página como solicitado
+    # Parâmetros - limitar para evitar timeout
     page = int(request.args.get('page', 1))
-    page_size = int(request.args.get('page_size', 100))  # 100 produtos por página
-    max_feeds = int(request.args.get('max_feeds', 10))  # 10 feeds máximo
+    page_size = int(request.args.get('page_size', 5))  # Reduzir para 5 produtos por página
+    max_feeds = int(request.args.get('max_feeds', 3))  # Máximo 3 feeds
     
     print(f'🚀 ETAPA 1: Buscando todos os nomes de feeds disponíveis')
     
@@ -5801,9 +5801,12 @@ def get_complete_feeds():
                                 print(f'📦 ETAPA 2: IDs coletados: {len(item_ids_only)} produtos da página {page}')
                                 print(f'📦 ETAPA 2: IDs coletados (amostra): {item_ids_only[:10]}')
                                 
-                                # ETAPA 3: Buscar dados de cada ID
+                                # ETAPA 3: Buscar dados de cada ID (limitado para evitar timeout)
                                 print(f'🔎 ETAPA 3: Buscando dados de {len(item_ids_only)} produtos...')
-                                for product_id in item_ids_only:
+                                for idx, product_id in enumerate(item_ids_only):
+                                    if idx >= 3:  # Limitar a 3 produtos por feed para evitar timeout
+                                        print(f'⚠️ ETAPA 3: Limitando a 3 produtos por feed para evitar timeout')
+                                        break
                                     print(f'🔍 ETAPA 3: Buscando dados do produto {product_id}...')
                                     try:
                                         product_params = {
@@ -5821,7 +5824,7 @@ def get_complete_feeds():
                                             "remove_personal_benefit": "false"
                                         }
                                         product_params["sign"] = generate_api_signature(product_params, APP_SECRET)
-                                        product_response = requests.get('https://api-sg.aliexpress.com/sync', params=product_params, timeout=8)
+                                        product_response = requests.get('https://api-sg.aliexpress.com/sync', params=product_params, timeout=5)
                                         if product_response.status_code == 200:
                                             product_data = product_response.json()
                                             if 'aliexpress_ds_product_get_response' in product_data:

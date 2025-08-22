@@ -5681,11 +5681,11 @@ def get_complete_feeds():
     
     # Parâmetros de paginação
     page = int(request.args.get('page', 1))
-    page_size = int(request.args.get('page_size', 50))  # Aumentar para 50 produtos por página
+    page_size = int(request.args.get('page_size', 20))  # Paginação sob demanda - 20 produtos por página
     max_feeds = int(request.args.get('max_feeds', 5))  # Limitar número de feeds para performance
     # Por padrão, já incluir detalhes por ID; o cliente pode desativar com details=false
     details = str(request.args.get('details', 'true')).lower() != 'false'
-    details_max = int(request.args.get('details_max', 10))  # Aumentar para 10 produtos detalhados
+    details_max = int(request.args.get('details_max', 10))  # 10 produtos detalhados por feed
     # Limites de segurança para evitar timeout/OOM
     if details_max > 20:
         details_max = 20

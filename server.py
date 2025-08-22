@@ -5679,22 +5679,12 @@ def get_complete_feeds():
     if not tokens or not tokens.get('access_token'):
         return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
     
-    # Parâmetros de paginação
+    # Parâmetros - 100 produtos por página como solicitado
     page = int(request.args.get('page', 1))
-    page_size = int(request.args.get('page_size', 20))  # Paginação sob demanda - 20 produtos por página
-    max_feeds = int(request.args.get('max_feeds', 5))  # Limitar número de feeds para performance
-    # Por padrão, já incluir detalhes por ID; o cliente pode desativar com details=false
-    details = str(request.args.get('details', 'true')).lower() != 'false'
-    details_max = int(request.args.get('details_max', 10))  # 10 produtos detalhados por feed
-    # Limites de segurança para evitar timeout/OOM
-    if details_max > 5:
-        details_max = 5
-    if details and page_size > 5:
-        page_size = 5
-    details_budget_sec = int(request.args.get('details_budget_sec', 15))
-    started_at = time.time()
+    page_size = int(request.args.get('page_size', 100))  # 100 produtos por página
+    max_feeds = int(request.args.get('max_feeds', 10))  # 10 feeds máximo
     
-    print(f'🚀 Gerando JSON completo de feeds usando API oficial AliExpress Dropshipping')
+    print(f'🚀 ETAPA 1: Buscando todos os nomes de feeds disponíveis')
     
     try:
         # 1. Buscar feeds disponíveis usando aliexpress.ds.feedname.get
@@ -5711,13 +5701,13 @@ def get_complete_feeds():
         feeds_params["sign"] = generate_api_signature(feeds_params, APP_SECRET)
         feeds_response = requests.get('https://api-sg.aliexpress.com/sync', params=feeds_params, timeout=8)
         
-        print(f'📡 Status da busca de feeds: {feeds_response.status_code}')
+        print(f'📡 ETAPA 1: Status da busca de feeds: {feeds_response.status_code}')
         
         if feeds_response.status_code != 200:
             return jsonify({'success': False, 'message': 'Erro ao buscar feeds'}), 500
         
         feeds_data = feeds_response.json()
-        print(f'📊 Estrutura da resposta de feeds: {list(feeds_data.keys())}')
+        print(f'📊 ETAPA 1: Estrutura da resposta de feeds: {list(feeds_data.keys())}')
         
         feeds_list = []
         if 'aliexpress_ds_feedname_get_response' in feeds_data:
@@ -5737,7 +5727,7 @@ def get_complete_feeds():
                     elif isinstance(promos_list, dict):
                         feeds_list = [promos_list]
         
-        print(f'✅ Feeds encontrados: {len(feeds_list)}')
+        print(f'✅ ETAPA 1: Feeds encontrados: {len(feeds_list)}')
         
         # 2. Para cada feed, buscar produtos usando aliexpress.ds.feed.products.get
         complete_data = {
@@ -5766,8 +5756,8 @@ def get_complete_feeds():
             
             print(f'📦 Processando feed {i+1}/{len(feeds_list)}: {feed_name} (ID: {feed_id})')
             
-            # PASSO 2: Buscar IDs dos produtos do feed
-            print(f'🔍 PASSO 2: Buscando IDs dos produtos do feed {feed_name}...')
+            # ETAPA 2: Buscar IDs dos produtos do feed
+            print(f'🔍 ETAPA 2: Buscando IDs dos produtos do feed {feed_name}...')
             products_params = {
                 "method": "aliexpress.ds.feed.itemids.get",  # PASSO 2: Retorna apenas IDs
                 "app_key": APP_KEY,
@@ -5780,19 +5770,19 @@ def get_complete_feeds():
                 "page_size": str(page_size),
                 "page_no": str(page)
             }
-            print(f'🔍 DEBUG: Página {page} - page_size: {page_size}, page_no: {page}')
+            print(f'🔍 ETAPA 2: Página {page} - page_size: {page_size}, page_no: {page}')
             
             products_params["sign"] = generate_api_signature(products_params, APP_SECRET)
             products_response = requests.get('https://api-sg.aliexpress.com/sync', params=products_params, timeout=8)
             
-            print(f'📡 Status da busca de produtos: {products_response.status_code}')
+            print(f'📡 ETAPA 2: Status da busca de produtos: {products_response.status_code}')
             
             feed_products = []
-            item_ids_only = []
-            item_ids_details_map = {}  # quando details=true, preenche id -> [dados]
+            item_ids_details_map = {}
+            
             if products_response.status_code == 200:
                 products_data = products_response.json()
-                print(f'📊 Estrutura da resposta de produtos: {list(products_data.keys())}')
+                print(f'📊 ETAPA 2: Estrutura da resposta de produtos: {list(products_data.keys())}')
                 
                 if 'aliexpress_ds_feed_itemids_get_response' in products_data:
                     products_response_data = products_data['aliexpress_ds_feed_itemids_get_response']
@@ -5800,83 +5790,76 @@ def get_complete_feeds():
                     
                     if 'products' in result:
                         products = result['products']
-                        print(f'✅ PASSO 2: IDs encontrados no feed: {len(products) if isinstance(products, list) else 1}')
+                        print(f'✅ ETAPA 2: IDs encontrados no feed: {len(products) if isinstance(products, list) else 1}')
                         
-                        # PASSO 2: Extrair IDs dos produtos
+                        # ETAPA 2: Extrair IDs dos produtos
                         if isinstance(products, dict) and 'number' in products:
                             product_ids = products['number']
-                            print(f'🔍 PASSO 2: product_ids type: {type(product_ids)}, length: {len(product_ids) if isinstance(product_ids, list) else "N/A"}')
+                            print(f'🔍 ETAPA 2: product_ids type: {type(product_ids)}, length: {len(product_ids) if isinstance(product_ids, list) else "N/A"}')
                             if isinstance(product_ids, list):
-                                # Usar todos os IDs retornados
                                 item_ids_only = [str(pid) for pid in product_ids]
-                                print(f'📦 PASSO 2: IDs coletados: {len(item_ids_only)} produtos da página {page}')
-                                print(f'📦 PASSO 2: IDs coletados (amostra): {item_ids_only[:10]}')
+                                print(f'📦 ETAPA 2: IDs coletados: {len(item_ids_only)} produtos da página {page}')
+                                print(f'📦 ETAPA 2: IDs coletados (amostra): {item_ids_only[:10]}')
                                 
-                                # PASSO 3: Buscar dados de cada ID
-                                if details and len(item_ids_only) > 0:
-                                    print(f'🔎 PASSO 3: Buscando dados de até {details_max} produtos...')
-                                    max_products = min(len(item_ids_only), details_max)
-                                    for product_id in item_ids_only[:max_products]:
-                                        print(f'🔍 PASSO 3: Buscando dados do produto {product_id}...')
-                                        # Orçamento de tempo por requisição
-                                        if (time.time() - started_at) > details_budget_sec:
-                                            print('⏱️ Orçamento de tempo atingido para detalhes; retornando parcialmente')
-                                            break
-                                        try:
-                                            product_params = {
-                                                "method": "aliexpress.ds.product.get",
-                                                "app_key": APP_KEY,
-                                                "timestamp": int(time.time() * 1000),
-                                                "sign_method": "md5",
-                                                "format": "json",
-                                                "v": "2.0",
-                                                "access_token": tokens['access_token'],
-                                                "product_id": str(product_id),
-                                                "ship_to_country": "BR",
-                                                "target_currency": "BRL",
-                                                "target_language": "pt",
-                                                "remove_personal_benefit": "false"
-                                            }
-                                            product_params["sign"] = generate_api_signature(product_params, APP_SECRET)
-                                            product_response = requests.get('https://api-sg.aliexpress.com/sync', params=product_params, timeout=5)
-                                            if product_response.status_code == 200:
-                                                product_data = product_response.json()
-                                                if 'aliexpress_ds_product_get_response' in product_data:
-                                                    product_result = product_data['aliexpress_ds_product_get_response'].get('result', {})
-                                                    feed_products.append({
-                                                        'product_id': str(product_id),
-                                                        'title': product_result.get('product_title', ''),
-                                                        'main_image': product_result.get('product_main_image_url', ''),
-                                                        'price': product_result.get('sale_price', '0.00'),
-                                                        'currency': product_result.get('currency', 'BRL')
-                                                    })
-                                                    # Embutir detalhes também em item_ids conforme solicitado
-                                                    item_ids_details_map[str(product_id)] = [product_result]
-                                                    print(f'✅ PASSO 3: Dados do produto {product_id} carregados com sucesso')
-                                        except Exception as e:
-                                            print(f'⚠️ PASSO 3: Falha ao detalhar {product_id}: {e}')
+                                # ETAPA 3: Buscar dados de cada ID
+                                print(f'🔎 ETAPA 3: Buscando dados de {len(item_ids_only)} produtos...')
+                                for product_id in item_ids_only:
+                                    print(f'🔍 ETAPA 3: Buscando dados do produto {product_id}...')
+                                    try:
+                                        product_params = {
+                                            "method": "aliexpress.ds.product.get",
+                                            "app_key": APP_KEY,
+                                            "timestamp": int(time.time() * 1000),
+                                            "sign_method": "md5",
+                                            "format": "json",
+                                            "v": "2.0",
+                                            "access_token": tokens['access_token'],
+                                            "product_id": str(product_id),
+                                            "ship_to_country": "BR",
+                                            "target_currency": "BRL",
+                                            "target_language": "pt",
+                                            "remove_personal_benefit": "false"
+                                        }
+                                        product_params["sign"] = generate_api_signature(product_params, APP_SECRET)
+                                        product_response = requests.get('https://api-sg.aliexpress.com/sync', params=product_params, timeout=8)
+                                        if product_response.status_code == 200:
+                                            product_data = product_response.json()
+                                            if 'aliexpress_ds_product_get_response' in product_data:
+                                                product_result = product_data['aliexpress_ds_product_get_response'].get('result', {})
+                                                feed_products.append({
+                                                    'product_id': str(product_id),
+                                                    'title': product_result.get('product_title', ''),
+                                                    'main_image': product_result.get('product_main_image_url', ''),
+                                                    'price': product_result.get('sale_price', '0.00'),
+                                                    'currency': product_result.get('currency', 'BRL')
+                                                })
+                                                # Estrutura: feedName{ idProduct{ DADOS} }
+                                                item_ids_details_map[str(product_id)] = product_result
+                                                print(f'✅ ETAPA 3: Dados do produto {product_id} carregados com sucesso')
+                                    except Exception as e:
+                                        print(f'⚠️ ETAPA 3: Falha ao detalhar {product_id}: {e}')
                             elif isinstance(product_ids, int):
                                 item_ids_only = [str(product_ids)]
                     else:
-                        print(f'⚠️ PASSO 2: Nenhum ID encontrado no feed {feed_name}')
+                        print(f'⚠️ ETAPA 2: Nenhum ID encontrado no feed {feed_name}')
                 else:
                     print(f'⚠️ Estrutura inesperada da resposta de produtos: {list(products_data.keys())}')
             else:
                 print(f'❌ Erro na busca de produtos: {products_response.status_code} - {products_response.text}')
             
-            # Adicionar feed com resultado (ids sempre; detalhes só quando solicitado)
+            # Adicionar feed com estrutura: feedName{ idProduct{ DADOS} }
             complete_data['feeds'].append({
                 'feed_id': str(feed_id),
                 'feed_name': feed_name,
                 'display_name': feed_name,
                 'description': feed_desc,
                 'product_count': product_count,
-                'item_ids': (item_ids_details_map if details else item_ids_only),
-                'products': feed_products if details else [],
-                'products_found': len(feed_products) if details else 0
+                'item_ids': item_ids_details_map,  # feedName{ idProduct{ DADOS} }
+                'products': feed_products,
+                'products_found': len(feed_products)
             })
         
-        print(f'✅ JSON completo gerado com {len(complete_data["feeds"])} feeds e {sum(len(feed["products"]) for feed in complete_data["feeds"])} produtos')
+        print(f'✅ Estrutura final gerada: {len(complete_data["feeds"])} feeds com {sum(len(feed["products"]) for feed in complete_data["feeds"])} produtos')
         
         return jsonify(complete_data)
         

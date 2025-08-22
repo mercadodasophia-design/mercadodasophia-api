@@ -5815,36 +5815,36 @@ def get_complete_feeds():
                                             print('⏱️ Orçamento de tempo atingido para detalhes; retornando parcialmente')
                                             break
                                         try:
-                                        product_params = {
-                                            "method": "aliexpress.ds.product.get",
-                                            "app_key": APP_KEY,
-                                            "timestamp": int(time.time() * 1000),
-                                            "sign_method": "md5",
-                                            "format": "json",
-                                            "v": "2.0",
-                                            "access_token": tokens['access_token'],
+                                            product_params = {
+                                                "method": "aliexpress.ds.product.get",
+                                                "app_key": APP_KEY,
+                                                "timestamp": int(time.time() * 1000),
+                                                "sign_method": "md5",
+                                                "format": "json",
+                                                "v": "2.0",
+                                                "access_token": tokens['access_token'],
                                                 "product_id": str(product_id),
                                                 "ship_to_country": "BR",
                                                 "target_currency": "BRL",
                                                 "target_language": "pt",
                                                 "remove_personal_benefit": "false"
                                             }
-                                        product_params["sign"] = generate_api_signature(product_params, APP_SECRET)
+                                            product_params["sign"] = generate_api_signature(product_params, APP_SECRET)
                                             product_response = requests.get('https://api-sg.aliexpress.com/sync', params=product_params, timeout=8)
-                                        if product_response.status_code == 200:
-                                            product_data = product_response.json()
-                                            if 'aliexpress_ds_product_get_response' in product_data:
-                                                product_result = product_data['aliexpress_ds_product_get_response'].get('result', {})
-                                                feed_products.append({
-                                                    'product_id': str(product_id),
-                                                    'title': product_result.get('product_title', ''),
-                                                    'main_image': product_result.get('product_main_image_url', ''),
-                                                    'price': product_result.get('sale_price', '0.00'),
+                                            if product_response.status_code == 200:
+                                                product_data = product_response.json()
+                                                if 'aliexpress_ds_product_get_response' in product_data:
+                                                    product_result = product_data['aliexpress_ds_product_get_response'].get('result', {})
+                                                    feed_products.append({
+                                                        'product_id': str(product_id),
+                                                        'title': product_result.get('product_title', ''),
+                                                        'main_image': product_result.get('product_main_image_url', ''),
+                                                        'price': product_result.get('sale_price', '0.00'),
                                                         'currency': product_result.get('currency', 'BRL')
                                                     })
                                                     # Embutir detalhes também em item_ids conforme solicitado
                                                     item_ids_details_map[str(product_id)] = [product_result]
-                                    except Exception as e:
+                                        except Exception as e:
                                             print(f'⚠️ Falha ao detalhar {product_id}: {e}')
                             elif isinstance(product_ids, int):
                                 item_ids_only = [str(product_ids)]

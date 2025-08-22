@@ -5687,11 +5687,11 @@ def get_complete_feeds():
     details = str(request.args.get('details', 'true')).lower() != 'false'
     details_max = int(request.args.get('details_max', 10))  # 10 produtos detalhados por feed
     # Limites de segurança para evitar timeout/OOM
-    if details_max > 20:
-        details_max = 20
-    if details and page_size > 50:
-        page_size = 50
-    details_budget_sec = int(request.args.get('details_budget_sec', 12))
+    if details_max > 5:
+        details_max = 5
+    if details and page_size > 5:
+        page_size = 5
+    details_budget_sec = int(request.args.get('details_budget_sec', 15))
     started_at = time.time()
     
     print(f'🚀 Gerando JSON completo de feeds usando API oficial AliExpress Dropshipping')
@@ -5838,7 +5838,7 @@ def get_complete_feeds():
                                                 "remove_personal_benefit": "false"
                                             }
                                             product_params["sign"] = generate_api_signature(product_params, APP_SECRET)
-                                            product_response = requests.get('https://api-sg.aliexpress.com/sync', params=product_params, timeout=8)
+                                            product_response = requests.get('https://api-sg.aliexpress.com/sync', params=product_params, timeout=5)
                                             if product_response.status_code == 200:
                                                 product_data = product_response.json()
                                                 if 'aliexpress_ds_product_get_response' in product_data:

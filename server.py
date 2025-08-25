@@ -4729,36 +4729,7 @@ def mp_webhook():
             'message': f'Erro no webhook: {str(e)}'
         }), 500
 
-@app.route('/api/admin/orders/<order_id>/approve', methods=['POST'])
-def approve_order(order_id):
-    """Endpoint para aprovar pedido e marcar como 'em andamento'"""
-    try:
-        db = firestore.client()
-        order_ref = db.collection('orders').document(order_id)
-        
-        # Atualizar status para "em andamento"
-        order_ref.update({
-            'status': 'em_andamento',
-            'updated_at': datetime.now().isoformat(),
-            'approved_by': 'admin',  # Pode ser o ID do admin logado
-            'approved_at': datetime.now().isoformat(),
-        })
-        
-        print(f'✅ Pedido {order_id} aprovado e marcado como "em andamento"')
-        
-        return jsonify({
-            'success': True,
-            'message': 'Pedido aprovado e marcado como em andamento',
-            'order_id': order_id,
-            'status': 'em_andamento'
-        })
-        
-    except Exception as e:
-        print(f'❌ Erro ao aprovar pedido: {e}')
-        return jsonify({
-            'success': False,
-            'message': f'Erro ao aprovar pedido: {str(e)}'
-        }), 500
+
 
 @app.route('/api/mercadopago/status', methods=['GET'])
 def mp_status():

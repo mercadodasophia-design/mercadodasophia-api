@@ -4519,7 +4519,7 @@ def retry_payment(order_id):
         
         # Buscar pedido no Firebase
         db = firestore.client()
-        order_doc = db.collection('orders').doc(order_id).get()
+        order_doc = db.collection('orders').document(order_id).get()
         
         if not order_doc.exists:
             return jsonify({
@@ -4553,7 +4553,7 @@ def retry_payment(order_id):
         
         if result['success']:
             # Atualizar pedido com nova preferência
-            db.collection('orders').doc(order_id).update({
+            db.collection('orders').document(order_id).update({
                 'updatedAt': datetime.now().isoformat(),
                 'lastPaymentAttempt': datetime.now().isoformat(),
                 'paymentAttempts': order_data.get('paymentAttempts', 0) + 1,
@@ -4576,6 +4576,86 @@ def retry_payment(order_id):
             
     except Exception as e:
         print(f'❌ Erro ao tentar pagamento novamente: {e}')
+        return jsonify({
+            'success': False,
+            'message': f'Erro interno: {str(e)}'
+        }), 500
+
+@app.route('/api/orders/<order_id>/cancel', methods=['POST'])
+def cancel_order(order_id):
+    """Cancelar pedido"""
+    try:
+        data = request.get_json() or {}
+        reason = data.get('reason', 'Cancelado pelo usuário')
+        
+        # Buscar pedido no Firebase
+        db = firestore.client()
+        order_doc = db.collection('orders').document(order_id).get()
+        
+        if not order_doc.exists:
+            return jsonify({
+                'success': False,
+                'message': 'Pedido não encontrado'
+            }), 404
+        
+        order_data = order_doc.to_dict()
+        
+        # Verificar se o pedido pode ser cancelado
+        if order_data.get('status') in ['pago', 'pedido_criado', 'em_andamento']:
+            return jsonify({
+                'success': False,
+                'message': 'Pedido não pode ser cancelado neste status'
+            }), 400
+        
+        # Cancelar pedido
+        db.collection('orders').document(order_id).update({
+            'status': 'cancelado',
+            'cancelReason': reason,
+            'canceledAt': datetime.now().isoformat(),
+            'updatedAt': datetime.now().isoformat(),
+        })
+        
+        print(f'✅ Pedido cancelado: {order_id} - Motivo: {reason}')
+        
+        return jsonify({
+            'success': True,
+            'message': 'Pedido cancelado com sucesso'
+        })
+        
+    except Exception as e:
+        print(f'❌ Erro ao cancelar pedido: $e')
+        return jsonify({
+            'success': False,
+            'message': f'Erro interno: {str(e)}'
+        }), 500
+
+@app.route('/api/orders/<order_id>/items', methods=['GET'])
+def get_order_items(order_id):
+    """Obter itens de um pedido"""
+    try:
+        # Buscar pedido no Firebase
+        db = firestore.client()
+        order_doc = db.collection('orders').document(order_id).get()
+        
+        if not order_doc.exists:
+            return jsonify({
+                'success': False,
+                'message': 'Pedido não encontrado'
+            }), 404
+        
+        order_data = order_doc.to_dict()
+        items = order_data.get('items', [])
+        
+        return jsonify({
+            'success': True,
+            'orderId': order_id,
+            'items': items,
+            'total': order_data.get('total', 0),
+            'status': order_data.get('status', ''),
+        })
+        
+    except Exception as e:
+        print(f'❌ Erro ao buscar itens do pedido: $e')
         return jsonify({
             'success': False,
             'message': f'Erro interno: {str(e)}'

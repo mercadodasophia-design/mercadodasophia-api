@@ -14,8 +14,8 @@ from dotenv import load_dotenv
 from flask_cors import CORS
 # Firebase Admin SDK (opcional)
 try:
-import firebase_admin
-from firebase_admin import credentials, firestore
+    import firebase_admin
+    from firebase_admin import credentials, firestore
     FIREBASE_AVAILABLE = True
 except ImportError:
     FIREBASE_AVAILABLE = False
@@ -55,7 +55,7 @@ else:
 
 # Importar integração Mercado Pago (DEPOIS de definir as variáveis)
 try:
-from mercadopago_integration import mp_integration
+    from mercadopago_integration import mp_integration
     MP_AVAILABLE = True
 except ImportError:
     MP_AVAILABLE = False
@@ -68,21 +68,22 @@ def init_firebase():
     if not FIREBASE_AVAILABLE:
         print('✅ Firebase não disponível - apenas APIs do AliExpress ativas')
         return
-try:
-    # Tentar usar credenciais de arquivo
-    cred = credentials.Certificate('firebase-credentials.json')
-    firebase_admin.initialize_app(cred)
-    print('✅ Firebase Admin SDK inicializado com credenciais de arquivo')
-    except Exception:
+    
     try:
-        # Tentar usar variáveis de ambiente
-        firebase_admin.initialize_app()
-        print('✅ Firebase Admin SDK inicializado com variáveis de ambiente')
-    except Exception as e2:
-        print(f'⚠️ Firebase Admin SDK não inicializado: {e2}')
-        print('⚠️ Funcionalidades de pedidos podem não funcionar corretamente')
+        # Tentar usar credenciais de arquivo
+        cred = credentials.Certificate('firebase-credentials.json')
+        firebase_admin.initialize_app(cred)
+        print('✅ Firebase Admin SDK inicializado com credenciais de arquivo')
+    except Exception:
+        try:
+            # Tentar usar variáveis de ambiente
+            firebase_admin.initialize_app()
+            print('✅ Firebase Admin SDK inicializado com variáveis de ambiente')
+        except Exception as e2:
+            print(f'⚠️ Firebase Admin SDK não inicializado: {e2}')
+            print('⚠️ Funcionalidades de pedidos podem não funcionar corretamente')
             print('✅ Feeds do AliExpress funcionarão normalmente')
-#feff
+
 # Chamar inicialização
 init_firebase()
 
@@ -104,7 +105,6 @@ ALLOWED_ORIGINS = [
     "https://localhost:*",  # Qualquer porta local HTTPS
     "*"  
 ]
-#smjdkdk
 
 CORS(
     app,
@@ -4718,6 +4718,13 @@ def mp_webhook():
             'success': True,
             'message': 'Webhook recebido'
         })
+        
+    except Exception as e:
+        print(f'❌ Erro no webhook: {e}')
+        return jsonify({
+            'success': False,
+            'message': f'Erro no webhook: {str(e)}'
+        }), 500
 
 @app.route('/api/admin/orders/<order_id>/approve', methods=['POST'])
 def approve_order(order_id):
@@ -4777,13 +4784,6 @@ def mp_status():
         return jsonify({
             'success': False,
             'error': str(e)
-        }), 500
-        
-    except Exception as e:
-        print(f'❌ Erro no webhook: {e}')
-        return jsonify({
-            'success': False,
-            'message': f'Erro no webhook: {str(e)}'
         }), 500
 
 @app.route('/api/payment/mp/success')

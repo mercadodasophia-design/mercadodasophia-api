@@ -24,14 +24,34 @@ except ImportError:
 
 load_dotenv()  # Carrega variáveis do arquivo .env, se existir
 
-# ===================== MERCADO PAGO FALLBACK =====================
-# Se as variáveis MP não estiverem definidas, usar valores padrão
-if not os.getenv('MP_ACCESS_TOKEN'):
-    os.environ['MP_ACCESS_TOKEN'] = 'TEST-6048716701718688-080816-b095cf4abaa34073116ac070ff38e8f4-1514652489'
-if not os.getenv('MP_PUBLIC_KEY'):
-    os.environ['MP_PUBLIC_KEY'] = 'TEST-ce63c4af-fb50-4bef-b3dd-f0003f16cea3'
-if not os.getenv('MP_SANDBOX'):
+# ===================== MERCADO PAGO CONFIGURATION =====================
+# Configuração do Mercado Pago - Suporte para Teste e Produção
+MP_MODE = os.getenv('MP_MODE', 'sandbox')  # 'sandbox' ou 'production'
+
+if MP_MODE == 'production':
+    # Credenciais de PRODUÇÃO
+    if not os.getenv('MP_ACCESS_TOKEN'):
+        os.environ['MP_ACCESS_TOKEN'] = 'APP_USR-6048716701718688-080816-ccba418de4c43b693e377903478dcd79-1514652489'
+    if not os.getenv('MP_PUBLIC_KEY'):
+        os.environ['MP_PUBLIC_KEY'] = 'APP_USR-145ec693-11d0-464b-8a18-b06b0e66006c'
+    if not os.getenv('MP_CLIENT_ID'):
+        os.environ['MP_CLIENT_ID'] = '6048716701718688'
+    if not os.getenv('MP_CLIENT_SECRET'):
+        os.environ['MP_CLIENT_SECRET'] = 'YUC3Q0GxRueSrVQTHidGk7bMt9MJq7Sg'
+    os.environ['MP_SANDBOX'] = 'false'
+    print('🚀 Mercado Pago configurado para PRODUÇÃO')
+else:
+    # Credenciais de SANDBOX/TESTE
+    if not os.getenv('MP_ACCESS_TOKEN'):
+        os.environ['MP_ACCESS_TOKEN'] = 'TEST-6048716701718688-080816-b095cf4abaa34073116ac070ff38e8f4-1514652489'
+    if not os.getenv('MP_PUBLIC_KEY'):
+        os.environ['MP_PUBLIC_KEY'] = 'TEST-ce63c4af-fb50-4bef-b3dd-f0003f16cea3'
+    if not os.getenv('MP_CLIENT_ID'):
+        os.environ['MP_CLIENT_ID'] = '6048716701718688'
+    if not os.getenv('MP_CLIENT_SECRET'):
+        os.environ['MP_CLIENT_SECRET'] = 'YUC3Q0GxRueSrVQTHidGk7bMt9MJq7Sg'
     os.environ['MP_SANDBOX'] = 'true'
+    print('🧪 Mercado Pago configurado para SANDBOX/TESTE')
 
 # Importar integração Mercado Pago (DEPOIS de definir as variáveis)
 try:
@@ -4728,6 +4748,35 @@ def approve_order(order_id):
         return jsonify({
             'success': False,
             'message': f'Erro ao aprovar pedido: {str(e)}'
+        }), 500
+
+@app.route('/api/mercadopago/status', methods=['GET'])
+def mp_status():
+    """Endpoint para verificar status das credenciais do Mercado Pago"""
+    try:
+        mode = os.getenv('MP_MODE', 'sandbox')
+        access_token = os.getenv('MP_ACCESS_TOKEN', '')
+        public_key = os.getenv('MP_PUBLIC_KEY', '')
+        sandbox = os.getenv('MP_SANDBOX', 'true').lower() == 'true'
+        
+        # Mascarar credenciais para segurança
+        masked_token = access_token[:20] + '...' + access_token[-10:] if len(access_token) > 30 else '***'
+        masked_key = public_key[:20] + '...' + public_key[-10:] if len(public_key) > 30 else '***'
+        
+        return jsonify({
+            'success': True,
+            'mode': mode,
+            'sandbox': sandbox,
+            'access_token': masked_token,
+            'public_key': masked_key,
+            'client_id': os.getenv('MP_CLIENT_ID', ''),
+            'status': 'active' if access_token and public_key else 'inactive'
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
         }), 500
         
     except Exception as e:

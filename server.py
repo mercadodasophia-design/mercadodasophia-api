@@ -14,8 +14,8 @@ from dotenv import load_dotenv
 from flask_cors import CORS
 # Firebase Admin SDK (opcional)
 try:
-    import firebase_admin
-    from firebase_admin import credentials, firestore
+import firebase_admin
+from firebase_admin import credentials, firestore
     FIREBASE_AVAILABLE = True
 except ImportError:
     FIREBASE_AVAILABLE = False
@@ -35,7 +35,7 @@ if not os.getenv('MP_SANDBOX'):
 
 # Importar integração Mercado Pago (DEPOIS de definir as variáveis)
 try:
-    from mercadopago_integration import mp_integration
+from mercadopago_integration import mp_integration
     MP_AVAILABLE = True
 except ImportError:
     MP_AVAILABLE = False
@@ -48,19 +48,19 @@ def init_firebase():
     if not FIREBASE_AVAILABLE:
         print('✅ Firebase não disponível - apenas APIs do AliExpress ativas')
         return
-    try:
-        # Tentar usar credenciais de arquivo
-        cred = credentials.Certificate('firebase-credentials.json')
-        firebase_admin.initialize_app(cred)
-        print('✅ Firebase Admin SDK inicializado com credenciais de arquivo')
+try:
+    # Tentar usar credenciais de arquivo
+    cred = credentials.Certificate('firebase-credentials.json')
+    firebase_admin.initialize_app(cred)
+    print('✅ Firebase Admin SDK inicializado com credenciais de arquivo')
     except Exception:
-        try:
-            # Tentar usar variáveis de ambiente
-            firebase_admin.initialize_app()
-            print('✅ Firebase Admin SDK inicializado com variáveis de ambiente')
-        except Exception as e2:
-            print(f'⚠️ Firebase Admin SDK não inicializado: {e2}')
-            print('⚠️ Funcionalidades de pedidos podem não funcionar corretamente')
+    try:
+        # Tentar usar variáveis de ambiente
+        firebase_admin.initialize_app()
+        print('✅ Firebase Admin SDK inicializado com variáveis de ambiente')
+    except Exception as e2:
+        print(f'⚠️ Firebase Admin SDK não inicializado: {e2}')
+        print('⚠️ Funcionalidades de pedidos podem não funcionar corretamente')
             print('✅ Feeds do AliExpress funcionarão normalmente')
 #feff
 # Chamar inicialização
@@ -4549,6 +4549,11 @@ def mp_webhook():
         
         print(f'📡 Webhook Mercado Pago recebido: {json.dumps(data, indent=2)}')
         
+        # Validar assinatura do webhook (opcional, mas recomendado)
+        # signature = request.headers.get('X-Signature')
+        # if not validate_webhook_signature(request.data, signature):
+        #     return jsonify({'error': 'Invalid signature'}), 401
+        
         # Verificar tipo de notificação
         if data.get('type') == 'payment':
             payment_id = data.get('data', {}).get('id')
@@ -4573,42 +4578,77 @@ def mp_webhook():
                             transaction_amount = payment_data.get('transaction_amount', 0)
                             payer = payment_data.get('payer', {})
                             
-                            # Preparar dados do pedido para salvar no Firebase
-                            order_data = {
-                                'payment_id': str(payment_id),
-                                'external_reference': external_reference,
-                                'customer_email': payer.get('email', ''),
-                                'customer_name': f"{payer.get('name', '')} {payer.get('surname', '')}".strip(),
-                                'items': [],  # Será preenchido pelo frontend quando necessário
-                                'shipping_address': {},  # Será preenchido pelo frontend quando necessário
-                                'total_amount': transaction_amount,
-                                'status': 'aguardando_envio',
-                                'created_at': datetime.now().isoformat(),
-                                'updated_at': datetime.now().isoformat(),
-                                'payment_data': payment_data,
-                                'aliexpress_order_id': None,
-                                'admin_notes': '',
-                                'approved_by': None,
-                                'approved_at': None,
-                            }
+                            # Buscar pedido existente no Firebase pelo payment_id
+                            db = firestore.client()
+                            orders_ref = db.collection('orders')
+                            existing_order = orders_ref.where('payment_id', '==', str(payment_id)).limit(1).get()
                             
-                            # Salvar no Firebase
-                            try:
-                                db = firestore.client()
-                                order_ref = db.collection('orders').add(order_data)
-                                firebase_order_id = order_ref[1].id
-                                print(f'✅ Pedido salvo no Firebase: {firebase_order_id}')
-                            except Exception as firebase_error:
-                                print(f'❌ Erro ao salvar no Firebase: {firebase_error}')
-                                # Continuar mesmo se falhar no Firebase
-                                firebase_order_id = None
-                            
-                            return jsonify({
-                                'success': True,
-                                'message': 'Pagamento aprovado! Pedido salvo no Firebase para aprovação manual.',
-                                'payment_id': payment_id,
-                                'external_reference': external_reference
-                            })
+                            if existing_order:
+                                # Atualizar pedido existente
+                                order_doc = existing_order[0]
+                                order_id = order_doc.id
+                                
+                                # Atualizar status para "pago" e dados do pagamento
+                                order_doc.reference.update({
+                                    'status': 'pago',
+                                    'payment_data': payment_data,
+                                    'updated_at': datetime.now().isoformat(),
+                                    'customer_email': payer.get('email', ''),
+                                    'customer_name': f"{payer.get('name', '')} {payer.get('surname', '')}".strip(),
+                                    'total_amount': transaction_amount,
+                                    'payment_status': 'approved',
+                                })
+                                
+                                print(f'✅ Pedido atualizado no Firebase: {order_id} - Status: pago')
+                                
+                                return jsonify({
+                                    'success': True,
+                                    'message': 'Pagamento aprovado! Pedido marcado como pago.',
+                                    'payment_id': payment_id,
+                                    'order_id': order_id,
+                                    'external_reference': external_reference
+                                })
+                            else:
+                                # Criar novo pedido se não existir
+                                order_data = {
+                                    'payment_id': str(payment_id),
+                                    'external_reference': external_reference,
+                                    'customer_email': payer.get('email', ''),
+                                    'customer_name': f"{payer.get('name', '')} {payer.get('surname', '')}".strip(),
+                                    'items': [],  # Será preenchido pelo frontend quando necessário
+                                    'shipping_address': {},  # Será preenchido pelo frontend quando necessário
+                                    'total_amount': transaction_amount,
+                                    'status': 'pago',
+                                    'created_at': datetime.now().isoformat(),
+                                    'updated_at': datetime.now().isoformat(),
+                                    'payment_data': payment_data,
+                                    'payment_status': 'approved',
+                                    'aliexpress_order_id': None,
+                                    'admin_notes': '',
+                                    'approved_by': None,
+                                    'approved_at': None,
+                                }
+                                
+                                # Salvar no Firebase
+                                try:
+                                    order_ref = db.collection('orders').add(order_data)
+                                    firebase_order_id = order_ref[1].id
+                                    print(f'✅ Novo pedido salvo no Firebase: {firebase_order_id}')
+                                    
+                                    return jsonify({
+                                        'success': True,
+                                        'message': 'Pagamento aprovado! Novo pedido salvo no Firebase.',
+                                        'payment_id': payment_id,
+                                        'order_id': firebase_order_id,
+                                        'external_reference': external_reference
+                                    })
+                                    
+                                except Exception as firebase_error:
+                                    print(f'❌ Erro ao salvar no Firebase: {firebase_error}')
+                                    return jsonify({
+                                        'success': False,
+                                        'message': f'Erro ao salvar pedido: {str(firebase_error)}'
+                                    }), 500
                                 
                         except Exception as e:
                             print(f'❌ Erro ao processar webhook: {e}')
@@ -4616,11 +4656,36 @@ def mp_webhook():
                                 'success': False,
                                 'message': f'Erro interno: {str(e)}'
                             }), 500
-                    else:
-                        print(f'⚠️ Pagamento não aprovado: {status}')
+                            
+                    elif status == 'rejected':
+                        # Atualizar status para pagamento recusado
+                        try:
+                            db = firestore.client()
+                            orders_ref = db.collection('orders')
+                            existing_order = orders_ref.where('payment_id', '==', str(payment_id)).limit(1).get()
+                            
+                            if existing_order:
+                                order_doc = existing_order[0]
+                                order_doc.reference.update({
+                                    'status': 'pagamento_recusado',
+                                    'payment_data': payment_data,
+                                    'updated_at': datetime.now().isoformat(),
+                                })
+                                print(f'❌ Pedido marcado como pagamento recusado: {order_doc.id}')
+                            
+                        except Exception as e:
+                            print(f'❌ Erro ao atualizar status de pagamento recusado: {e}')
+                        
                         return jsonify({
                             'success': True,
-                            'message': f'Pagamento não aprovado: {status}'
+                            'message': f'Pagamento recusado: {status}'
+                        })
+                        
+                    else:
+                        print(f'⚠️ Pagamento com status: {status}')
+                        return jsonify({
+                            'success': True,
+                            'message': f'Pagamento com status: {status}'
                         })
                 else:
                     print(f'❌ Erro ao obter pagamento: {payment_result["error"]}')
@@ -4633,6 +4698,37 @@ def mp_webhook():
             'success': True,
             'message': 'Webhook recebido'
         })
+
+@app.route('/api/admin/orders/<order_id>/approve', methods=['POST'])
+def approve_order(order_id):
+    """Endpoint para aprovar pedido e marcar como 'em andamento'"""
+    try:
+        db = firestore.client()
+        order_ref = db.collection('orders').document(order_id)
+        
+        # Atualizar status para "em andamento"
+        order_ref.update({
+            'status': 'em_andamento',
+            'updated_at': datetime.now().isoformat(),
+            'approved_by': 'admin',  # Pode ser o ID do admin logado
+            'approved_at': datetime.now().isoformat(),
+        })
+        
+        print(f'✅ Pedido {order_id} aprovado e marcado como "em andamento"')
+        
+        return jsonify({
+            'success': True,
+            'message': 'Pedido aprovado e marcado como em andamento',
+            'order_id': order_id,
+            'status': 'em_andamento'
+        })
+        
+    except Exception as e:
+        print(f'❌ Erro ao aprovar pedido: {e}')
+        return jsonify({
+            'success': False,
+            'message': f'Erro ao aprovar pedido: {str(e)}'
+        }), 500
         
     except Exception as e:
         print(f'❌ Erro no webhook: {e}')
@@ -4813,6 +4909,209 @@ def debug_mp():
         return jsonify({
             'success': False,
             'message': f'Erro ao obter informações do SDK: {str(e)}'
+        }), 500
+
+# ============================================================================
+# ENDPOINTS PARA ADMIN APROVAR PEDIDOS
+# ============================================================================
+
+@app.route('/api/admin/orders/<order_id>/approve', methods=['POST'])
+def approve_order(order_id):
+    """Aprovar pedido e criar no AliExpress"""
+    try:
+        # Verificar se o pedido existe
+        db = firestore.client()
+        order_ref = db.collection('orders').document(order_id)
+        order_doc = order_ref.get()
+        
+        if not order_doc.exists:
+            return jsonify({
+                'success': False,
+                'message': 'Pedido não encontrado'
+            }), 404
+        
+        order_data = order_doc.to_dict()
+        
+        # Verificar se o pedido está com pagamento aprovado
+        if order_data.get('status') != 'pagamento_aprovado':
+            return jsonify({
+                'success': False,
+                'message': f'Pedido não pode ser aprovado. Status atual: {order_data.get("status")}'
+            }), 400
+        
+        # Verificar se já tem pedido AliExpress
+        if order_data.get('aliexpress_order_id'):
+            return jsonify({
+                'success': False,
+                'message': 'Pedido já foi aprovado e criado no AliExpress'
+            }), 400
+        
+        # Verificar se tem itens no pedido
+        if not order_data.get('items') or len(order_data['items']) == 0:
+            return jsonify({
+                'success': False,
+                'message': 'Pedido não possui itens'
+            }), 400
+        
+        # Verificar se tem endereço de entrega
+        if not order_data.get('shipping_address'):
+            return jsonify({
+                'success': False,
+                'message': 'Pedido não possui endereço de entrega'
+            }), 400
+        
+        print(f'🚀 Aprovando pedido {order_id} e criando no AliExpress...')
+        
+        # Criar pedido no AliExpress
+        try:
+            aliexpress_result = _create_aliexpress_order_from_payment(order_data, order_data.get('payment_data', {}))
+            
+            if aliexpress_result.get('success'):
+                aliexpress_order_id = aliexpress_result.get('order_id')
+                
+                # Atualizar pedido no Firebase
+                order_ref.update({
+                    'status': 'pedido_criado',
+                    'aliexpress_order_id': aliexpress_order_id,
+                    'approved_by': 'admin',  # Em produção, usar ID do admin logado
+                    'approved_at': datetime.now().isoformat(),
+                    'updated_at': datetime.now().isoformat(),
+                    'admin_notes': request.json.get('notes', '') if request.json else '',
+                })
+                
+                print(f'✅ Pedido {order_id} aprovado e criado no AliExpress: {aliexpress_order_id}')
+                
+                return jsonify({
+                    'success': True,
+                    'message': 'Pedido aprovado e criado no AliExpress com sucesso!',
+                    'order_id': order_id,
+                    'aliexpress_order_id': aliexpress_order_id
+                })
+            else:
+                # Falha ao criar no AliExpress
+                error_msg = aliexpress_result.get('error', 'Erro desconhecido')
+                print(f'❌ Erro ao criar pedido no AliExpress: {error_msg}')
+                
+                # Atualizar status para erro
+                order_ref.update({
+                    'status': 'erro_criacao_aliexpress',
+                    'admin_notes': f'Erro ao criar no AliExpress: {error_msg}',
+                    'updated_at': datetime.now().isoformat(),
+                })
+                
+                return jsonify({
+                    'success': False,
+                    'message': f'Erro ao criar pedido no AliExpress: {error_msg}'
+                }), 500
+                
+        except Exception as e:
+            print(f'❌ Erro ao criar pedido no AliExpress: {e}')
+            
+            # Atualizar status para erro
+            order_ref.update({
+                'status': 'erro_criacao_aliexpress',
+                'admin_notes': f'Erro ao criar no AliExpress: {str(e)}',
+                'updated_at': datetime.now().isoformat(),
+            })
+            
+            return jsonify({
+                'success': False,
+                'message': f'Erro ao criar pedido no AliExpress: {str(e)}'
+            }), 500
+            
+    except Exception as e:
+        print(f'❌ Erro ao aprovar pedido: {e}')
+        return jsonify({
+            'success': False,
+            'message': f'Erro interno: {str(e)}'
+        }), 500
+
+@app.route('/api/admin/orders/<order_id>/reject', methods=['POST'])
+def reject_order(order_id):
+    """Rejeitar pedido"""
+    try:
+        # Verificar se o pedido existe
+        db = firestore.client()
+        order_ref = db.collection('orders').document(order_id)
+        order_doc = order_ref.get()
+        
+        if not order_doc.exists:
+            return jsonify({
+                'success': False,
+                'message': 'Pedido não encontrado'
+            }), 404
+        
+        order_data = order_doc.to_dict()
+        
+        # Verificar se o pedido pode ser rejeitado
+        if order_data.get('status') not in ['pagamento_aprovado', 'aguardando_envio']:
+            return jsonify({
+                'success': False,
+                'message': f'Pedido não pode ser rejeitado. Status atual: {order_data.get("status")}'
+            }), 400
+        
+        # Atualizar status para rejeitado
+        order_ref.update({
+            'status': 'rejeitado',
+            'admin_notes': request.json.get('notes', 'Pedido rejeitado pelo admin') if request.json else 'Pedido rejeitado pelo admin',
+            'updated_at': datetime.now().isoformat(),
+        })
+        
+        print(f'❌ Pedido {order_id} rejeitado pelo admin')
+        
+        return jsonify({
+            'success': True,
+            'message': 'Pedido rejeitado com sucesso',
+            'order_id': order_id
+        })
+        
+    except Exception as e:
+        print(f'❌ Erro ao rejeitar pedido: {e}')
+        return jsonify({
+            'success': False,
+            'message': f'Erro interno: {str(e)}'
+        }), 500
+
+@app.route('/api/admin/orders/<order_id>/status', methods=['GET'])
+def get_order_status(order_id):
+    """Obter status detalhado do pedido"""
+    try:
+        db = firestore.client()
+        order_ref = db.collection('orders').document(order_id)
+        order_doc = order_ref.get()
+        
+        if not order_doc.exists:
+            return jsonify({
+                'success': False,
+                'message': 'Pedido não encontrado'
+            }), 404
+        
+        order_data = order_doc.to_dict()
+        
+        return jsonify({
+            'success': True,
+            'order': {
+                'id': order_id,
+                'status': order_data.get('status'),
+                'payment_id': order_data.get('payment_id'),
+                'customer_name': order_data.get('customer_name'),
+                'customer_email': order_data.get('customer_email'),
+                'total_amount': order_data.get('total_amount'),
+                'items_count': len(order_data.get('items', [])),
+                'aliexpress_order_id': order_data.get('aliexpress_order_id'),
+                'created_at': order_data.get('created_at'),
+                'updated_at': order_data.get('updated_at'),
+                'admin_notes': order_data.get('admin_notes'),
+                'approved_by': order_data.get('approved_by'),
+                'approved_at': order_data.get('approved_at'),
+            }
+        })
+        
+    except Exception as e:
+        print(f'❌ Erro ao obter status do pedido: {e}')
+        return jsonify({
+            'success': False,
+            'message': f'Erro interno: {str(e)}'
         }), 500
 
 # ============================================================================

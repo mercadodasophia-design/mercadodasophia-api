@@ -4939,7 +4939,7 @@ def debug_mp():
 # ============================================================================
 
 @app.route('/api/admin/orders/<order_id>/approve', methods=['POST'])
-def approve_order(order_id):
+def admin_approve_order(order_id):
     """Aprovar pedido e criar no AliExpress"""
     try:
         # Verificar se o pedido existe

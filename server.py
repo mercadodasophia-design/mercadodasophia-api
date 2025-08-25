@@ -4519,7 +4519,7 @@ def retry_payment(order_id):
         
         # Buscar pedido no Firebase
         db = firestore.client()
-        order_doc = db.collection('orders').document(order_id).get()
+        order_doc = db.collection('orders').doc(order_id).get()
         
         if not order_doc.exists:
             return jsonify({
@@ -4553,7 +4553,7 @@ def retry_payment(order_id):
         
         if result['success']:
             # Atualizar pedido com nova preferência
-            db.collection('orders').document(order_id).update({
+            db.collection('orders').doc(order_id).update({
                 'updatedAt': datetime.now().isoformat(),
                 'lastPaymentAttempt': datetime.now().isoformat(),
                 'paymentAttempts': order_data.get('paymentAttempts', 0) + 1,
@@ -4590,7 +4590,7 @@ def cancel_order(order_id):
         
         # Buscar pedido no Firebase
         db = firestore.client()
-        order_doc = db.collection('orders').document(order_id).get()
+        order_doc = db.collection('orders').doc(order_id).get()
         
         if not order_doc.exists:
             return jsonify({
@@ -4608,7 +4608,7 @@ def cancel_order(order_id):
             }), 400
         
         # Cancelar pedido
-        db.collection('orders').document(order_id).update({
+        db.collection('orders').doc(order_id).update({
             'status': 'cancelado',
             'cancelReason': reason,
             'canceledAt': datetime.now().isoformat(),
@@ -4635,7 +4635,7 @@ def get_order_items(order_id):
     try:
         # Buscar pedido no Firebase
         db = firestore.client()
-        order_doc = db.collection('orders').document(order_id).get()
+        order_doc = db.collection('orders').doc(order_id).get()
         
         if not order_doc.exists:
             return jsonify({

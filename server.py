@@ -25,11 +25,11 @@ except ImportError:
 load_dotenv()  # Carrega variáveis do arquivo .env, se existir
 
 # Versão do servidor para forçar cache refresh
-SERVER_VERSION = "1.0.1"
+SERVER_VERSION = "1.0.2-PRODUCTION"
 
 # ===================== MERCADO PAGO CONFIGURATION =====================
 # Configuração do Mercado Pago - Suporte para Teste e Produção
-MP_MODE = os.getenv('MP_MODE', 'sandbox')  # 'sandbox' ou 'production'
+MP_MODE = os.getenv('MP_MODE', 'production')  # 'sandbox' ou 'production'
 
 if MP_MODE == 'production':
     # Credenciais de PRODUÇÃO

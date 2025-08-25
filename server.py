@@ -4443,6 +4443,74 @@ def get_product_skus(product_id):
         }), 500
 
 # ============================================================================
+# FRONTEND ORDER MANAGEMENT
+# ============================================================================
+
+@app.route('/api/orders/save', methods=['POST'])
+def save_order_from_frontend():
+    """Salvar pedido completo do frontend no Firebase"""
+    try:
+        data = request.get_json()
+        
+        # Validar dados obrigatórios
+        required_fields = ['orderId', 'userId', 'userEmail', 'userName', 'items', 'total', 'shipping', 'shippingAddress', 'paymentMethod']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({
+                    'success': False,
+                    'message': f'Campo obrigatório ausente: {field}'
+                }), 400
+        
+        # Preparar dados do pedido
+        order_data = {
+            'orderId': data['orderId'],
+            'userId': data['userId'],
+            'userEmail': data['userEmail'],
+            'userName': data['userName'],
+            'items': data['items'],
+            'subtotal': data['total'] - data['shipping'],
+            'shipping': data['shipping'],
+            'total': data['total'],
+            'status': 'aguardando_pagamento',
+            'paymentMethod': data['paymentMethod'],
+            'shippingAddress': data['shippingAddress'],
+            'createdAt': datetime.now().isoformat(),
+            'updatedAt': datetime.now().isoformat(),
+            'paymentId': None,
+            'paymentStatus': 'pending',
+            'aliexpressOrderId': None,
+            'adminNotes': '',
+            'approvedBy': None,
+            'approvedAt': None,
+        }
+        
+        # Salvar no Firebase
+        db = firestore.client()
+        try:
+            order_ref = db.collection('orders').doc(data['orderId']).set(order_data)
+            print(f'✅ Pedido salvo no Firebase: {data["orderId"]} - Status: aguardando_pagamento')
+            
+            return jsonify({
+                'success': True,
+                'message': 'Pedido salvo com sucesso no Firebase',
+                'orderId': data['orderId']
+            })
+            
+        except Exception as firebase_error:
+            print(f'❌ Erro ao salvar no Firebase: {firebase_error}')
+            return jsonify({
+                'success': False,
+                'message': f'Erro ao salvar pedido: {str(firebase_error)}'
+            }), 500
+            
+    except Exception as e:
+        print(f'❌ Erro ao processar pedido do frontend: {e}')
+        return jsonify({
+            'success': False,
+            'message': f'Erro interno: {str(e)}'
+        }), 500
+
+# ============================================================================
 # MERCADO PAGO PAYMENT ENDPOINTS
 # ============================================================================
 

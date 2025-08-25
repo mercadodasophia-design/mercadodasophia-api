@@ -4442,6 +4442,7 @@ def get_product_skus(product_id):
             'message': f'Erro ao buscar SKUs: {str(e)}'
         }), 500
 
+
 # ============================================================================
 # FRONTEND ORDER MANAGEMENT
 # ============================================================================
@@ -4505,6 +4506,76 @@ def save_order_from_frontend():
             
     except Exception as e:
         print(f'❌ Erro ao processar pedido do frontend: {e}')
+        return jsonify({
+            'success': False,
+            'message': f'Erro interno: {str(e)}'
+        }), 500
+
+@app.route('/api/orders/<order_id>/retry-payment', methods=['POST'])
+def retry_payment(order_id):
+    """Gerar nova preferência de pagamento para um pedido existente"""
+    try:
+        data = request.get_json() or {}
+        
+        # Buscar pedido no Firebase
+        db = firestore.client()
+        order_doc = db.collection('orders').doc(order_id).get()
+        
+        if not order_doc.exists:
+            return jsonify({
+                'success': False,
+                'message': 'Pedido não encontrado'
+            }), 404
+        
+        order_data = order_doc.to_dict()
+        
+        # Verificar se o pedido está aguardando pagamento
+        if order_data.get('status') != 'aguardando_pagamento':
+            return jsonify({
+                'success': False,
+                'message': 'Pedido não está aguardando pagamento'
+            }), 400
+        
+        # Preparar dados para nova preferência
+        mp_data = {
+            'order_id': order_id,
+            'total_amount': order_data.get('total', 0),
+            'payer': {
+                'email': order_data.get('userEmail', ''),
+                'name': order_data.get('userName', ''),
+            },
+            'items': order_data.get('items', []),
+            'external_reference': order_id,
+        }
+        
+        # Gerar nova preferência no Mercado Pago
+        result = mp_integration.create_preference(mp_data)
+        
+        if result['success']:
+            # Atualizar pedido com nova preferência
+            db.collection('orders').doc(order_id).update({
+                'updatedAt': datetime.now().isoformat(),
+                'lastPaymentAttempt': datetime.now().isoformat(),
+                'paymentAttempts': order_data.get('paymentAttempts', 0) + 1,
+            })
+            
+            print(f'✅ Nova preferência gerada para pedido {order_id}: {result["preference_id"]}')
+            
+            return jsonify({
+                'success': True,
+                'preference_id': result['preference_id'],
+                'init_point': result['init_point'],
+                'sandbox_init_point': result.get('sandbox_init_point'),
+                'message': 'Nova preferência de pagamento gerada com sucesso'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': f'Erro ao gerar preferência: {result["error"]}'
+            }), 500
+            
+    except Exception as e:
+        print(f'❌ Erro ao tentar pagamento novamente: {e}')
         return jsonify({
             'success': False,
             'message': f'Erro interno: {str(e)}'

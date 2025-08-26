@@ -25,7 +25,7 @@ except ImportError:
 load_dotenv()  # Carrega variáveis do arquivo .env, se existir
 
 # Versão do servidor para forçar cache refresh
-SERVER_VERSION = "1.0.4-PRODUCTION"
+SERVER_VERSION = "1.0.5-PRODUCTION"
 
 # ===================== MERCADO PAGO CONFIGURATION =====================
 # Configuração do Mercado Pago - Suporte para Teste e Produção
@@ -4517,9 +4517,27 @@ def retry_payment(order_id):
     try:
         data = request.get_json() or {}
         
+        # Debug: verificar versão do Firebase
+        print(f'🔍 DEBUG: Firebase disponível: {FIREBASE_AVAILABLE}')
+        print(f'🔍 DEBUG: firestore disponível: {firestore is not None}')
+        
         # Buscar pedido no Firebase
         db = firestore.client()
-        order_doc = db.collection('orders').doc(order_id).get()
+        print(f'🔍 DEBUG: db type: {type(db)}')
+        print(f'🔍 DEBUG: db.collection type: {type(db.collection("orders"))}')
+        
+        # Tentar acessar o documento com fallback
+        collection_ref = db.collection('orders')
+        print(f'🔍 DEBUG: collection_ref type: {type(collection_ref)}')
+        print(f'🔍 DEBUG: collection_ref methods: {dir(collection_ref)}')
+        
+        # Fallback para versões antigas do Firebase Admin SDK
+        try:
+            order_doc = collection_ref.doc(order_id).get()
+        except AttributeError:
+            # Se .doc() não existir, tentar .document()
+            print('⚠️ Usando fallback .document() para versão antiga do Firebase')
+            order_doc = collection_ref.document(order_id).get()
         
         if not order_doc.exists:
             return jsonify({
@@ -4553,11 +4571,20 @@ def retry_payment(order_id):
         
         if result['success']:
             # Atualizar pedido com nova preferência
-            db.collection('orders').doc(order_id).update({
-                'updatedAt': datetime.now().isoformat(),
-                'lastPaymentAttempt': datetime.now().isoformat(),
-                'paymentAttempts': order_data.get('paymentAttempts', 0) + 1,
-            })
+            try:
+                db.collection('orders').doc(order_id).update({
+                    'updatedAt': datetime.now().isoformat(),
+                    'lastPaymentAttempt': datetime.now().isoformat(),
+                    'paymentAttempts': order_data.get('paymentAttempts', 0) + 1,
+                })
+            except AttributeError:
+                # Fallback para versões antigas do Firebase Admin SDK
+                print('⚠️ Usando fallback .document() para update')
+                db.collection('orders').document(order_id).update({
+                    'updatedAt': datetime.now().isoformat(),
+                    'lastPaymentAttempt': datetime.now().isoformat(),
+                    'paymentAttempts': order_data.get('paymentAttempts', 0) + 1,
+                })
             
             print(f'✅ Nova preferência gerada para pedido {order_id}: {result["preference_id"]}')
             

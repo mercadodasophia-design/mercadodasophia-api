@@ -4617,7 +4617,14 @@ def cancel_order(order_id):
         
         # Buscar pedido no Firebase
         db = firestore.client()
-        order_doc = db.collection('orders').doc(order_id).get()
+        
+        # Fallback para versões antigas do Firebase Admin SDK
+        try:
+            order_doc = db.collection('orders').doc(order_id).get()
+        except AttributeError:
+            # Se .doc() não existir, tentar .document()
+            print('⚠️ Usando fallback .document() para cancel_order')
+            order_doc = db.collection('orders').document(order_id).get()
         
         if not order_doc.exists:
             return jsonify({
@@ -4635,12 +4642,22 @@ def cancel_order(order_id):
             }), 400
         
         # Cancelar pedido
-        db.collection('orders').doc(order_id).update({
-            'status': 'cancelado',
-            'cancelReason': reason,
-            'canceledAt': datetime.now().isoformat(),
-            'updatedAt': datetime.now().isoformat(),
-        })
+        try:
+            db.collection('orders').doc(order_id).update({
+                'status': 'cancelado',
+                'cancelReason': reason,
+                'canceledAt': datetime.now().isoformat(),
+                'updatedAt': datetime.now().isoformat(),
+            })
+        except AttributeError:
+            # Fallback para versões antigas do Firebase Admin SDK
+            print('⚠️ Usando fallback .document() para update no cancel_order')
+            db.collection('orders').document(order_id).update({
+                'status': 'cancelado',
+                'cancelReason': reason,
+                'canceledAt': datetime.now().isoformat(),
+                'updatedAt': datetime.now().isoformat(),
+            })
         
         print(f'✅ Pedido cancelado: {order_id} - Motivo: {reason}')
         
@@ -4662,7 +4679,14 @@ def get_order_items(order_id):
     try:
         # Buscar pedido no Firebase
         db = firestore.client()
-        order_doc = db.collection('orders').doc(order_id).get()
+        
+        # Fallback para versões antigas do Firebase Admin SDK
+        try:
+            order_doc = db.collection('orders').doc(order_id).get()
+        except AttributeError:
+            # Se .doc() não existir, tentar .document()
+            print('⚠️ Usando fallback .document() para get_order_items')
+            order_doc = db.collection('orders').document(order_id).get()
         
         if not order_doc.exists:
             return jsonify({

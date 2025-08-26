@@ -163,7 +163,7 @@ def save_tokens(tokens):
     if FIREBASE_AVAILABLE:
         try:
             db = firestore.client()
-            db.collection('config').document('aliexpress_tokens').set(tokens, merge=True)
+            db.collection('config').doc('aliexpress_tokens').set(tokens, merge=True)
             print('✅ Tokens salvos no Firestore com sucesso!')
             return
         except Exception as e:
@@ -177,7 +177,7 @@ def load_tokens():
     if FIREBASE_AVAILABLE:
         try:
             db = firestore.client()
-            doc = db.collection('config').document('aliexpress_tokens').get()
+            doc = db.collection('config').doc('aliexpress_tokens').get()
             if doc and doc.exists:
                 data = doc.to_dict()
                 # Normalizar estrutura esperada por endpoints
@@ -5163,7 +5163,7 @@ def admin_approve_order(order_id):
     try:
         # Verificar se o pedido existe
         db = firestore.client()
-        order_ref = db.collection('orders').document(order_id)
+        order_ref = db.collection('orders').doc(order_id)
         order_doc = order_ref.get()
         
         if not order_doc.exists:
@@ -5274,7 +5274,7 @@ def reject_order(order_id):
     try:
         # Verificar se o pedido existe
         db = firestore.client()
-        order_ref = db.collection('orders').document(order_id)
+        order_ref = db.collection('orders').doc(order_id)
         order_doc = order_ref.get()
         
         if not order_doc.exists:
@@ -5319,7 +5319,7 @@ def get_order_status(order_id):
     """Obter status detalhado do pedido"""
     try:
         db = firestore.client()
-        order_ref = db.collection('orders').document(order_id)
+        order_ref = db.collection('orders').doc(order_id)
         order_doc = order_ref.get()
         
         if not order_doc.exists:
@@ -6485,7 +6485,7 @@ def sync_feeds_to_firebase():
                 aliexpress_id = str(product.get('product_id'))
 
                 # Documento por aliexpress_id (idempotente)
-                doc_ref = db.collection('products').document(aliexpress_id)
+                doc_ref = db.collection('products').doc(aliexpress_id)
 
                 # Construir payload básico
                 payload = {
@@ -6549,7 +6549,7 @@ def cron_update_price_stock():
 
         # Seleção de produtos
         if ids:
-            docs = [db.collection('products').document(str(pid)).get() for pid in ids]
+            docs = [db.collection('products').doc(str(pid)).get() for pid in ids]
         else:
             docs = db.collection('products').orderBy('updated_at', direction=firestore.Query.DESCENDING).limit(100).stream()
 
@@ -6569,7 +6569,7 @@ def cron_update_price_stock():
                     price = _parse_price(details.get('price'))
                     stock_available = True if details else True
 
-                    db.collection('products').document(aliexpress_id).set({
+                    db.collection('products').doc(aliexpress_id).set({
                         'price': price,
                         'stockAvailable': stock_available,
                         'updated_at': datetime.utcnow()

@@ -25,7 +25,7 @@ except ImportError:
 load_dotenv()  # Carrega variáveis do arquivo .env, se existir
 
 # Versão do servidor para forçar cache refresh
-SERVER_VERSION = "1.0.7-PRODUCTION"
+SERVER_VERSION = "1.0.8-PRODUCTION"
 
 # ===================== MERCADO PAGO CONFIGURATION =====================
 # Configuração do Mercado Pago - Suporte para Teste e Produção
@@ -163,7 +163,11 @@ def save_tokens(tokens):
     if FIREBASE_AVAILABLE:
         try:
             db = firestore.client()
-            db.collection('config').doc('aliexpress_tokens').set(tokens, merge=True)
+            # Fallback para versões antigas do Firebase Admin SDK
+            try:
+                db.collection('config').doc('aliexpress_tokens').set(tokens, merge=True)
+            except AttributeError:
+                db.collection('config').document('aliexpress_tokens').set(tokens, merge=True)
             print('✅ Tokens salvos no Firestore com sucesso!')
             return
         except Exception as e:
@@ -177,7 +181,12 @@ def load_tokens():
     if FIREBASE_AVAILABLE:
         try:
             db = firestore.client()
-            doc = db.collection('config').doc('aliexpress_tokens').get()
+            # Fallback para versões antigas do Firebase Admin SDK
+            try:
+                doc = db.collection('config').doc('aliexpress_tokens').get()
+            except AttributeError:
+                doc = db.collection('config').document('aliexpress_tokens').get()
+            
             if doc and doc.exists:
                 data = doc.to_dict()
                 # Normalizar estrutura esperada por endpoints

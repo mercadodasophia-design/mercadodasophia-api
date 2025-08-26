@@ -25,7 +25,7 @@ except ImportError:
 load_dotenv()  # Carrega variáveis do arquivo .env, se existir
 
 # Versão do servidor para forçar cache refresh
-SERVER_VERSION = "1.0.5-PRODUCTION"
+SERVER_VERSION = "1.0.6-PRODUCTION"
 
 # ===================== MERCADO PAGO CONFIGURATION =====================
 # Configuração do Mercado Pago - Suporte para Teste e Produção
@@ -216,9 +216,13 @@ def refresh_access_token():
     """Função auxiliar para fazer refresh do access token"""
     try:
         import iop  # Import lazy para evitar falha de boot
-    except Exception as e:
+    except ImportError as e:
         print(f'❌ SDK iop não disponível para refresh: {e}')
         return None, 'SDK iop não disponível'
+    except Exception as e:
+        print(f'❌ Erro ao importar iop: {e}')
+        return None, 'Erro ao importar SDK iop'
+    
     tokens = load_tokens()
     
     if not tokens or not tokens.get('refresh_token'):
@@ -248,6 +252,10 @@ def refresh_access_token():
             print(f'❌ {error_msg}')
             return None, error_msg
             
+    except NameError as e:
+        error_msg = f'Erro de nome no SDK iop: {str(e)}'
+        print(f'❌ {error_msg}')
+        return None, error_msg
     except Exception as e:
         error_msg = f'Erro ao fazer refresh token: {str(e)}'
         print(f'❌ {error_msg}')
@@ -1222,6 +1230,16 @@ def oauth_callback():
                 # Usar SDK oficial do AliExpress - Método correto da documentação
                 print(f'🔧 Usando SDK oficial do AliExpress (método correto)...')
                 try:
+                    # Importar iop dentro do try para capturar erros de import
+                    try:
+                        import iop
+                    except ImportError as import_error:
+                        print(f'❌ SDK iop não disponível: {import_error}')
+                        continue
+                    except Exception as import_error:
+                        print(f'❌ Erro ao importar iop: {import_error}')
+                        continue
+                    
                     # URL base correta conforme documentação
                     client = iop.IopClient('https://api-sg.aliexpress.com/rest', APP_KEY, APP_SECRET)
                     request_obj = iop.IopRequest('/auth/token/create')
@@ -1244,6 +1262,9 @@ def oauth_callback():
                         print(f'ÔØî Erro no SDK: {response.body}')
                         continue
                         
+                except NameError as name_error:
+                    print(f'ÔØî Erro de nome no SDK: {name_error}')
+                    continue
                 except Exception as sdk_error:
                     print(f'ÔØî Erro no SDK: {sdk_error}')
                     continue
@@ -4624,7 +4645,7 @@ def cancel_order(order_id):
         except AttributeError:
             # Se .doc() não existir, tentar .document()
             print('⚠️ Usando fallback .document() para cancel_order')
-            order_doc = db.collection('orders').document(order_id).get()
+            order_doc = db.collection('orders').document(order_id).get() 
         
         if not order_doc.exists:
             return jsonify({
@@ -4739,6 +4760,8 @@ def get_order_items(order_id):
             'success': False,
             'message': f'Erro interno: {str(e)}'
         }), 500
+
+
 
 # ============================================================================
 # MERCADO PAGO PAYMENT ENDPOINTS

@@ -4697,10 +4697,38 @@ def get_order_items(order_id):
         order_data = order_doc.to_dict()
         items = order_data.get('items', [])
         
+        # Buscar dados completos dos produtos se o título estiver vazio
+        enhanced_items = []
+        for item in items:
+            enhanced_item = item.copy()
+            
+            # Se o título estiver vazio, tentar buscar do produto no Firebase
+            if not enhanced_item.get('title') or enhanced_item.get('title') == '':
+                try:
+                    product_id = enhanced_item.get('id')
+                    if product_id:
+                        # Fallback para versões antigas do Firebase Admin SDK
+                        try:
+                            product_doc = db.collection('products').doc(product_id).get()
+                        except AttributeError:
+                            product_doc = db.collection('products').document(product_id).get()
+                        
+                        if product_doc.exists:
+                            product_data = product_doc.to_dict()
+                            enhanced_item['title'] = product_data.get('titulo', product_data.get('title', ''))
+                            enhanced_item['imageUrl'] = product_data.get('imagem', product_data.get('imageUrl', ''))
+                            print(f'✅ Dados do produto {product_id} carregados: {enhanced_item["title"]}')
+                        else:
+                            print(f'⚠️ Produto {product_id} não encontrado no Firebase')
+                except Exception as e:
+                    print(f'❌ Erro ao buscar dados do produto {enhanced_item.get("id")}: {e}')
+            
+            enhanced_items.append(enhanced_item)
+        
         return jsonify({
             'success': True,
             'orderId': order_id,
-            'items': items,
+            'items': enhanced_items,
             'total': order_data.get('total', 0),
             'status': order_data.get('status', ''),
         })

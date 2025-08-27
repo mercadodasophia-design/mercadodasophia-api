@@ -25,7 +25,7 @@ except ImportError:
 load_dotenv()  # Carrega variáveis do arquivo .env, se existir
 
 # Versão do servidor para forçar cache refresh
-SERVER_VERSION = "1.0.20-FEED-COMPLETE-ARCHITECTURE"
+SERVER_VERSION = "1.0.21-FEED-FIRESTORE-FIX"
 
 # ===================== MERCADO PAGO CONFIGURATION =====================
 # Configuração do Mercado Pago - Suporte para Teste e Produção
@@ -89,6 +89,18 @@ def init_firebase():
 
 # Chamar inicialização
 init_firebase()
+
+# Inicializar cliente Firestore globalmente
+if FIREBASE_AVAILABLE:
+    try:
+        db = firestore.client()
+        print('✅ Cliente Firestore inicializado globalmente')
+    except Exception as e:
+        print(f'⚠️ Erro ao inicializar cliente Firestore: {e}')
+        db = None
+else:
+    db = None
+    print('⚠️ Firestore não disponível - funcionalidades de feeds limitadas')
 
 # Configurar CORS para permitir requisições do navegador
 ALLOWED_ORIGINS = [

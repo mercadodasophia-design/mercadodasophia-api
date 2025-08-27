@@ -25,7 +25,7 @@ except ImportError:
 load_dotenv()  # Carrega variáveis do arquivo .env, se existir
 
 # Versão do servidor para forçar cache refresh
-SERVER_VERSION = "1.0.17-FEED-NAMES-TEST"
+SERVER_VERSION = "1.0.18-FEED-IDS-LOGS"
 
 # ===================== MERCADO PAGO CONFIGURATION =====================
 # Configuração do Mercado Pago - Suporte para Teste e Produção
@@ -6057,36 +6057,95 @@ def get_feed_names():
         return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
 
     try:
-        print(f'🔍 ETAPA 1: Testando endpoint...')
+        print(f'🔍 ETAPA 1: Buscando nomes dos feeds disponíveis...')
         
-        # Retornar dados de teste para verificar se o endpoint funciona
-        feeds = [
-            {
-                'feed_name': 'test_feed_1',
-                'feed_id': '1',
-                'display_name': 'Test Feed 1',
-                'description': 'Feed de teste',
-                'product_count': 100
-            },
-            {
-                'feed_name': 'test_feed_2',
-                'feed_id': '2',
-                'display_name': 'Test Feed 2',
-                'description': 'Feed de teste 2',
-                'product_count': 200
-            }
-        ]
+        # Parâmetros para a API conforme documentação
+        params = {
+            "method": "aliexpress.ds.feedname.get",
+            "app_key": APP_KEY,
+            "timestamp": int(time.time() * 1000),
+            "sign_method": "md5",
+            "format": "json",
+            "v": "2.0",
+            "access_token": tokens['access_token']
+        }
         
-        print(f'📦 Feeds de teste criados: {len(feeds)}')
+        # Gerar assinatura
+        params["sign"] = generate_api_signature(params, APP_SECRET)
         
-        return jsonify({
-            'success': True,
-            'message': 'Endpoint funcionando - dados de teste',
-            'data': {
-                'feeds': feeds,
-                'total_feeds': len(feeds)
-            }
-        })
+        # Fazer requisição
+        response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
+        
+        if response.status_code == 200:
+            data = response.json()
+            
+            feeds = []
+            
+            # Verificar estrutura esperada conforme documentação
+            if 'aliexpress_ds_feedname_get_response' in data:
+                feed_response = data['aliexpress_ds_feedname_get_response']
+                resp_result = feed_response.get('resp_result', {})
+                result = resp_result.get('result', {})
+                
+                # Extrair feeds (promos) conforme documentação
+                if 'promos' in result:
+                    promos_data = result['promos']
+                    
+                    if isinstance(promos_data, list):
+                        feeds = [
+                            {
+                                'feed_name': promo.get('promo_name', ''),
+                                'feed_id': str(i + 1),
+                                'display_name': promo.get('promo_name', ''),
+                                'description': promo.get('promo_desc', ''),
+                                'product_count': int(promo.get('product_num', 0))
+                            }
+                            for i, promo in enumerate(promos_data)
+                        ]
+                    elif isinstance(promos_data, dict) and 'promo' in promos_data:
+                        promo_list = promos_data['promo']
+                        if isinstance(promo_list, list):
+                            feeds = [
+                                {
+                                    'feed_name': promo.get('promo_name', ''),
+                                    'feed_id': str(i + 1),
+                                    'display_name': promo.get('promo_name', ''),
+                                    'description': promo.get('promo_desc', ''),
+                                    'product_count': int(promo.get('product_num', 0))
+                                }
+                                for i, promo in enumerate(promo_list)
+                            ]
+                        else:
+                            feeds = [{
+                                'feed_name': promo_list.get('promo_name', ''),
+                                'feed_id': '1',
+                                'display_name': promo_list.get('promo_name', ''),
+                                'description': promo_list.get('promo_desc', ''),
+                                'product_count': int(promo_list.get('product_num', 0))
+                            }]
+                    else:
+                        feeds = []
+                else:
+                    feeds = []
+            else:
+                feeds = []
+            
+            print(f'📦 Feeds encontrados: {len(feeds)}')
+            
+            return jsonify({
+                'success': True,
+                'message': 'Nomes dos feeds obtidos com sucesso',
+                'data': {
+                    'feeds': feeds,
+                    'total_feeds': len(feeds)
+                }
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': f'Erro {response.status_code}',
+                'error': response.text
+            }), response.status_code
             
     except Exception as e:
         print(f'❌ Erro ao buscar nomes dos feeds: {e}')
@@ -6098,11 +6157,10 @@ def get_feed_names():
         }), 500
 
 
-# ===================== FEEDS: IDS POR FEED =====================
+# ===================== FEEDS: IDS POR FEED (ETAPA 2) =====================
 @app.route('/api/aliexpress/feeds/<feed_name>/ids', methods=['GET'])
 def get_feed_item_ids(feed_name):
-    """Retorna apenas os item_ids de um feed específico (para documentação/estudo)."""
-    ensure_fresh_token()
+    """ETAPA 2: Buscar IDs dos produtos de um feed específico usando aliexpress.ds.feed.itemids.get"""
     tokens = load_tokens()
     if not tokens or not tokens.get('access_token'):
         return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
@@ -6111,8 +6169,11 @@ def get_feed_item_ids(feed_name):
     page_size = int(request.args.get('page_size', 20))
 
     try:
+        print(f'🔍 ETAPA 2: Buscando IDs dos produtos do feed "{feed_name}"...')
+        
+        # Parâmetros para a API conforme documentação
         params = {
-            "method": "aliexpress.ds.feed.items.get",
+            "method": "aliexpress.ds.feed.itemids.get",
             "app_key": APP_KEY,
             "timestamp": int(time.time() * 1000),
             "sign_method": "md5",
@@ -6120,55 +6181,70 @@ def get_feed_item_ids(feed_name):
             "v": "2.0",
             "access_token": tokens['access_token'],
             "feed_name": feed_name,
-            "page_no": page,
             "page_size": page_size
         }
+        
+        # Gerar assinatura
         params["sign"] = generate_api_signature(params, APP_SECRET)
+        
+        # Fazer requisição
         response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
-
-        if response.status_code != 200:
-            return jsonify({'success': False, 'status': response.status_code, 'error': response.text}), response.status_code
-
-        data = response.json()
-        # Tentar múltiplas estruturas possíveis
-        item_ids = []
-        # 1) Estrutura direta
-        if 'aliexpress_ds_feed_items_get_response' in data:
-            resp = data['aliexpress_ds_feed_items_get_response']
-            result = resp.get('resp_result', {}).get('result', {})
-            # Alguns retornos podem listar "items" ou "products"
-            possible_lists = []
-            if isinstance(result.get('items'), dict):
-                possible_lists.append(result['items'].get('item'))
-            if result.get('products'):
-                possible_lists.append(result.get('products'))
-            for lst in possible_lists:
-                if isinstance(lst, list):
-                    for it in lst:
-                        iid = str(it.get('item_id') or it.get('product_id') or it.get('itemId') or '')
-                        if iid:
-                            item_ids.append(iid)
-        # 2) Fallback: procurar em toda a árvore
-        if not item_ids:
-            def walk(obj):
-                nonlocal item_ids
-                if isinstance(obj, dict):
-                    for k, v in obj.items():
-                        if k in ('item_id', 'product_id', 'itemId') and v:
-                            item_ids.append(str(v))
-                        walk(v)
-                elif isinstance(obj, list):
-                    for x in obj:
-                        walk(x)
-            walk(data)
-
-        # Log para documentação
-        print(f"\n📄 FEED: {feed_name} | page={page} page_size={page_size}")
-        print(json.dumps({"feed": feed_name, "item_ids": item_ids[:50]}, indent=2, ensure_ascii=False))
-
-        return jsonify({'success': True, 'feed_name': feed_name, 'item_ids': item_ids})
+        
+        if response.status_code == 200:
+            data = response.json()
+            
+            print(f'📄 Resposta da API para feed "{feed_name}":')
+            print(json.dumps(data, indent=2, ensure_ascii=False))
+            
+            # Extrair IDs dos produtos conforme documentação
+            item_ids = []
+            
+            # Verificar estrutura da resposta
+            if 'result' in data:
+                result = data['result']
+                print(f'📊 Keys do result: {list(result.keys())}')
+                
+                if 'products' in result:
+                    products = result['products']
+                    print(f'📊 Tipo de products: {type(products)}')
+                    print(f'📄 Products: {products}')
+                    
+                    if isinstance(products, list):
+                        for product in products:
+                            item_id = str(product.get('item_id', ''))
+                            if item_id:
+                                item_ids.append(item_id)
+                    elif isinstance(products, dict):
+                        item_id = str(products.get('item_id', ''))
+                        if item_id:
+                            item_ids.append(item_id)
+                else:
+                    print(f'❌ products não encontrado em result')
+                    print(f'📄 Estrutura completa do result:')
+                    print(json.dumps(result, indent=2, ensure_ascii=False))
+            else:
+                print(f'❌ result não encontrado na resposta')
+                print(f'📄 Keys da resposta: {list(data.keys())}')
+            
+            print(f'📦 IDs encontrados para feed "{feed_name}": {len(item_ids)}')
+            
+            return jsonify({
+                'success': True,
+                'feed_name': feed_name,
+                'page': page,
+                'page_size': page_size,
+                'item_ids': item_ids,
+                'total_ids': len(item_ids)
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': f'Erro {response.status_code}',
+                'error': response.text
+            }), response.status_code
+            
     except Exception as e:
-        print(f'❌ Erro ao obter IDs do feed {feed_name}: {e}')
+        print(f'❌ Erro ao buscar IDs do feed {feed_name}: {e}')
         return jsonify({'success': False, 'message': str(e)}), 500
 
 

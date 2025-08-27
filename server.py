@@ -25,7 +25,7 @@ except ImportError:
 load_dotenv()  # Carrega variáveis do arquivo .env, se existir
 
 # Versão do servidor para forçar cache refresh
-SERVER_VERSION = "1.0.14-FEED-NAMES-FIXED"
+SERVER_VERSION = "1.0.15-FEED-NAMES-SIMPLIFIED"
 
 # ===================== MERCADO PAGO CONFIGURATION =====================
 # Configuração do Mercado Pago - Suporte para Teste e Produção
@@ -6085,47 +6085,20 @@ def get_feed_names():
         print(f'📡 Status da resposta: {response.status_code}')
         print(f'📄 Tamanho da resposta: {len(response.text)} caracteres')
         
-        # Salvar resposta bruta
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        log_filename = f"logs/feed_names_{timestamp}.json"
-        os.makedirs("logs", exist_ok=True)
-        
-        with open(log_filename, 'w', encoding='utf-8') as f:
-            f.write(response.text)
-        
-        print(f'💾 Resposta bruta salva em: {log_filename}')
-        
         if response.status_code == 200:
             data = response.json()
-            
-            # Salvar dados processados
-            processed_log_filename = f"logs/feed_names_processed_{timestamp}.json"
-            with open(processed_log_filename, 'w', encoding='utf-8') as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
-            
-            print(f'💾 Dados processados salvos em: {processed_log_filename}')
-            
-            # Análise detalhada da estrutura
-            print(f'🔍 ANÁLISE ESTRUTURAL - NOMES DOS FEEDS:')
-            print(f'📊 Keys do nível raiz: {list(data.keys())}')
             
             feeds = []
             
             # Verificar estrutura esperada conforme documentação
             if 'aliexpress_ds_feedname_get_response' in data:
                 feed_response = data['aliexpress_ds_feedname_get_response']
-                print(f'📊 Keys do feed_response: {list(feed_response.keys())}')
-                
                 resp_result = feed_response.get('resp_result', {})
-                print(f'📊 Keys do resp_result: {list(resp_result.keys())}')
-                
                 result = resp_result.get('result', {})
-                print(f'📊 Keys do result: {list(result.keys())}')
                 
                 # Extrair feeds (promos) conforme documentação
                 if 'promos' in result:
                     promos_data = result['promos']
-                    print(f'📊 Tipo de promos: {type(promos_data)}')
                     
                     if isinstance(promos_data, list):
                         feeds = [
@@ -6138,7 +6111,6 @@ def get_feed_names():
                             }
                             for i, promo in enumerate(promos_data)
                         ]
-                        print(f'📦 PROMOS ENCONTRADOS: {len(feeds)}')
                     elif isinstance(promos_data, dict) and 'promo' in promos_data:
                         promo_list = promos_data['promo']
                         if isinstance(promo_list, list):
@@ -6152,7 +6124,6 @@ def get_feed_names():
                                 }
                                 for i, promo in enumerate(promo_list)
                             ]
-                            print(f'📦 PROMOS ENCONTRADOS: {len(feeds)}')
                         else:
                             feeds = [{
                                 'feed_name': promo_list.get('promo_name', ''),
@@ -6161,42 +6132,14 @@ def get_feed_names():
                                 'description': promo_list.get('promo_desc', ''),
                                 'product_count': int(promo_list.get('product_num', 0))
                             }]
-                            print(f'📦 PROMO ÚNICO ENCONTRADO')
                     else:
-                        print(f'⚠️ Estrutura inesperada de promos: {type(promos_data)}')
-                        print(f'📄 Conteúdo: {promos_data}')
                         feeds = []
                 else:
-                    print(f'❌ promos não encontrado em result')
-                    print(f'📄 Estrutura completa do result:')
-                    print(json.dumps(result, indent=2, ensure_ascii=False))
                     feeds = []
             else:
-                print(f'❌ aliexpress_ds_feedname_get_response não encontrado')
-                print(f'📄 Estrutura completa da resposta:')
-                print(json.dumps(data, indent=2, ensure_ascii=False))
                 feeds = []
             
-            # Análise detalhada do primeiro feed
-            if feeds:
-                first_feed = feeds[0]
-                print(f'🔍 ANÁLISE DO PRIMEIRO FEED:')
-                print(f'📊 Keys disponíveis: {list(first_feed.keys())}')
-                
-                # Campos importantes
-                important_fields = [
-                    'feed_name', 'feed_id', 'display_name', 'description', 'product_count'
-                ]
-                
-                for field in important_fields:
-                    value = first_feed.get(field, 'N/A')
-                    print(f'  - {field}: {value}')
-                
-                # Mostrar estrutura completa do primeiro feed
-                print(f'📄 ESTRUTURA COMPLETA DO PRIMEIRO FEED:')
-                print(json.dumps(first_feed, indent=2, ensure_ascii=False))
-            else:
-                print(f'❌ Nenhum feed encontrado na lista')
+            print(f'📦 Feeds encontrados: {len(feeds)}')
             
             return jsonify({
                 'success': True,

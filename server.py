@@ -25,7 +25,7 @@ except ImportError:
 load_dotenv()  # Carrega variáveis do arquivo .env, se existir
 
 # Versão do servidor para forçar cache refresh
-SERVER_VERSION = "1.0.22-FEED-DEBUG-LOGS"
+SERVER_VERSION = "1.0.24-FEED-ERROR-DETECTION"
 
 # ===================== MERCADO PAGO CONFIGURATION =====================
 # Configuração do Mercado Pago - Suporte para Teste e Produção
@@ -2899,6 +2899,94 @@ def get_saved_feed_products(feed_name):
     except Exception as e:
         print(f'❌ Erro ao listar produtos do feed {feed_name}: {e}')
         return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app.route('/api/aliexpress/feeds/test', methods=['GET'])
+def test_feed_api():
+    """Teste simples da API do AliExpress para feeds"""
+    ensure_fresh_token()
+    tokens = load_tokens()
+    if not tokens or not tokens.get('access_token'):
+        return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
+
+    try:
+        print(f'🧪 Testando API do AliExpress para feeds...')
+        
+        # Teste 1: Buscar feeds disponíveis
+        params = {
+            "method": "aliexpress.ds.feedname.get",
+            "app_key": APP_KEY,
+            "timestamp": int(time.time() * 1000),
+            "sign_method": "md5",
+            "format": "json",
+            "v": "2.0",
+            "access_token": tokens['access_token']
+        }
+        params["sign"] = generate_api_signature(params, APP_SECRET)
+        
+        print(f'📡 Teste 1: Buscando feeds...')
+        response = requests.get('https://api-sg.aliexpress.com/sync', params=params, timeout=30)
+        
+        print(f'📡 Status: {response.status_code}')
+        print(f'📄 Resposta: {response.text}')
+        
+        if response.status_code == 200:
+            data = response.json()
+            
+            # Teste 2: Se encontrou feeds, testar busca de IDs
+            if 'aliexpress_ds_feedname_get_response' in data:
+                feed_response = data['aliexpress_ds_feedname_get_response']
+                resp_result = feed_response.get('resp_result', {})
+                result = resp_result.get('result', {})
+                
+                if 'promos' in result:
+                    promos_data = result['promos']
+                    if isinstance(promos_data, list) and len(promos_data) > 0:
+                        first_feed = promos_data[0].get('promo_name', '')
+                        
+                        if first_feed:
+                            print(f'📦 Teste 2: Buscando IDs do feed {first_feed}...')
+                            
+                            params2 = {
+                                "method": "aliexpress.ds.feed.itemids.get",
+                                "app_key": APP_KEY,
+                                "timestamp": int(time.time() * 1000),
+                                "sign_method": "md5",
+                                "format": "json",
+                                "v": "2.0",
+                                "access_token": tokens['access_token'],
+                                "feed_name": first_feed,
+                                "page_no": 1,
+                                "page_size": 5
+                            }
+                            params2["sign"] = generate_api_signature(params2, APP_SECRET)
+                            
+                            response2 = requests.get('https://api-sg.aliexpress.com/sync', params=params2, timeout=30)
+                            
+                            print(f'📡 Status 2: {response2.status_code}')
+                            print(f'📄 Resposta 2: {response2.text}')
+                            
+                            return jsonify({
+                                'success': True,
+                                'test1_status': response.status_code,
+                                'test1_response': data,
+                                'test2_status': response2.status_code,
+                                'test2_response': response2.json() if response2.status_code == 200 else response2.text,
+                                'first_feed': first_feed
+                            })
+        
+        return jsonify({
+            'success': True,
+            'test1_status': response.status_code,
+            'test1_response': data if response.status_code == 200 else response.text
+        })
+        
+    except Exception as e:
+        print(f'❌ Erro no teste: {e}')
+        return jsonify({
+            'success': False,
+            'message': f'Erro interno: {str(e)}'
+        }), 500
 
 
     try:
@@ -6488,8 +6576,15 @@ def get_feed_item_ids(feed_name):
         response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
         
         print(f'📡 Status da resposta: {response.status_code}')
-        print(f'📄 Resposta bruta completa:')
-        print(response.text)
+        print(f'📄 Tamanho da resposta: {len(response.text)} caracteres')
+        print(f'📄 Primeiros 500 caracteres da resposta:')
+        print(response.text[:500])
+        
+        # Verificar se há erro na resposta
+        if 'error_response' in response.text.lower():
+            print(f'❌ ERRO DETECTADO NA RESPOSTA!')
+            print(f'📄 Resposta completa:')
+            print(response.text)
         
         if response.status_code == 200:
             data = response.json()

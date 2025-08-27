@@ -25,7 +25,7 @@ except ImportError:
 load_dotenv()  # Carrega variáveis do arquivo .env, se existir
 
 # Versão do servidor para forçar cache refresh
-SERVER_VERSION = "1.0.13-FEED-NAMES"
+SERVER_VERSION = "1.0.14-FEED-NAMES-FIXED"
 
 # ===================== MERCADO PAGO CONFIGURATION =====================
 # Configuração do Mercado Pago - Suporte para Teste e Produção
@@ -6111,41 +6111,71 @@ def get_feed_names():
             
             feeds = []
             
-            # Verificar estrutura esperada
+            # Verificar estrutura esperada conforme documentação
             if 'aliexpress_ds_feedname_get_response' in data:
                 feed_response = data['aliexpress_ds_feedname_get_response']
                 print(f'📊 Keys do feed_response: {list(feed_response.keys())}')
                 
-                result = feed_response.get('result', {})
+                resp_result = feed_response.get('resp_result', {})
+                print(f'📊 Keys do resp_result: {list(resp_result.keys())}')
+                
+                result = resp_result.get('result', {})
                 print(f'📊 Keys do result: {list(result.keys())}')
                 
-                # Extrair feeds
-                if 'feeds' in result:
-                    feeds_data = result['feeds']
-                    print(f'📊 Tipo de feeds: {type(feeds_data)}')
+                # Extrair feeds (promos) conforme documentação
+                if 'promos' in result:
+                    promos_data = result['promos']
+                    print(f'📊 Tipo de promos: {type(promos_data)}')
                     
-                    if isinstance(feeds_data, dict) and 'feed' in feeds_data:
-                        feeds_list = feeds_data['feed']
-                        if isinstance(feeds_list, list):
-                            feeds = feeds_list
-                            print(f'📦 FEEDS ENCONTRADOS: {len(feeds)}')
+                    if isinstance(promos_data, list):
+                        feeds = [
+                            {
+                                'feed_name': promo.get('promo_name', ''),
+                                'feed_id': str(i + 1),
+                                'display_name': promo.get('promo_name', ''),
+                                'description': promo.get('promo_desc', ''),
+                                'product_count': int(promo.get('product_num', 0))
+                            }
+                            for i, promo in enumerate(promos_data)
+                        ]
+                        print(f'📦 PROMOS ENCONTRADOS: {len(feeds)}')
+                    elif isinstance(promos_data, dict) and 'promo' in promos_data:
+                        promo_list = promos_data['promo']
+                        if isinstance(promo_list, list):
+                            feeds = [
+                                {
+                                    'feed_name': promo.get('promo_name', ''),
+                                    'feed_id': str(i + 1),
+                                    'display_name': promo.get('promo_name', ''),
+                                    'description': promo.get('promo_desc', ''),
+                                    'product_count': int(promo.get('product_num', 0))
+                                }
+                                for i, promo in enumerate(promo_list)
+                            ]
+                            print(f'📦 PROMOS ENCONTRADOS: {len(feeds)}')
                         else:
-                            feeds = [feeds_list]
-                            print(f'📦 FEED ÚNICO ENCONTRADO')
-                    elif isinstance(feeds_data, list):
-                        feeds = feeds_data
-                        print(f'📦 FEEDS ENCONTRADOS: {len(feeds)}')
+                            feeds = [{
+                                'feed_name': promo_list.get('promo_name', ''),
+                                'feed_id': '1',
+                                'display_name': promo_list.get('promo_name', ''),
+                                'description': promo_list.get('promo_desc', ''),
+                                'product_count': int(promo_list.get('product_num', 0))
+                            }]
+                            print(f'📦 PROMO ÚNICO ENCONTRADO')
                     else:
-                        print(f'⚠️ Estrutura inesperada de feeds: {type(feeds_data)}')
-                        print(f'📄 Conteúdo: {feeds_data}')
+                        print(f'⚠️ Estrutura inesperada de promos: {type(promos_data)}')
+                        print(f'📄 Conteúdo: {promos_data}')
+                        feeds = []
                 else:
-                    print(f'❌ feeds não encontrado em result')
+                    print(f'❌ promos não encontrado em result')
                     print(f'📄 Estrutura completa do result:')
                     print(json.dumps(result, indent=2, ensure_ascii=False))
+                    feeds = []
             else:
                 print(f'❌ aliexpress_ds_feedname_get_response não encontrado')
                 print(f'📄 Estrutura completa da resposta:')
                 print(json.dumps(data, indent=2, ensure_ascii=False))
+                feeds = []
             
             # Análise detalhada do primeiro feed
             if feeds:

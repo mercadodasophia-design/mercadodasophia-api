@@ -25,7 +25,7 @@ except ImportError:
 load_dotenv()  # Carrega variáveis do arquivo .env, se existir
 
 # Versão do servidor para forçar cache refresh
-SERVER_VERSION = "1.0.15-FEED-NAMES-SIMPLIFIED"
+SERVER_VERSION = "1.0.16-FEED-NAMES-FIXED"
 
 # ===================== MERCADO PAGO CONFIGURATION =====================
 # Configuração do Mercado Pago - Suporte para Teste e Produção
@@ -6147,11 +6147,6 @@ def get_feed_names():
                 'data': {
                     'feeds': feeds,
                     'total_feeds': len(feeds)
-                },
-                'logs': {
-                    'raw_file': log_filename,
-                    'processed_file': processed_log_filename,
-                    'timestamp': timestamp
                 }
             })
         else:

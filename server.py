@@ -3252,15 +3252,24 @@ def admin_feed_products(feed_name):
                         product_data = product_response.json()
                         result = product_data.get("aliexpress_ds_product_get_response", {}).get("result", {}) or {}
                         
+                        # Debug: verificar estrutura dos dados
+                        print(f'🔍 DEBUG: Estrutura do produto {product_id}:')
+                        print(f'  - Keys disponíveis: {list(result.keys())}')
+                        print(f'  - sale_price: {result.get("sale_price")}')
+                        print(f'  - original_price: {result.get("original_price")}')
+                        print(f'  - product_price: {result.get("product_price")}')
+                        print(f'  - target_sale_price: {result.get("target_sale_price")}')
+                        print(f'  - target_original_price: {result.get("target_original_price")}')
+                        
                         # Formatar produto para o painel admin
                         product = {
                             'id': str(product_id),
                             'title': result.get("product_title") or result.get("ae_item_base_info_dto", {}).get("subject", ""),
                             'main_image': result.get("product_main_image_url") or "",
                             'images': (result.get("ae_multimedia_info_dto", {}).get("image_urls", "") or "").split(";") if result.get("ae_multimedia_info_dto") else [],
-                            'price': float(result.get("sale_price", "0") or 0),
+                            'price': float(result.get("target_sale_price", result.get("sale_price", "0")) or 0),
                             'currency': result.get("currency", "BRL"),
-                            'original_price': float(result.get("original_price", "0") or 0),
+                            'original_price': float(result.get("target_original_price", result.get("original_price", "0")) or 0),
                             'discount': float(str(result.get("discount", "0")).replace("%","") or 0),
                             'detail_url': result.get("detail_url", ""),
                             'store_name': result.get("store_info_dto", {}).get("store_name", ""),

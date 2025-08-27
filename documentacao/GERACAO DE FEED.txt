@@ -1,0 +1,371 @@
+Perfeito. Vamos montar uma arquitetura que não estoura timeout, com cache em banco e paginação no front. Vou deixar tudo “plug-and-play”: endpoints Flask, esquema no Firestore e exemplo de consumo em Flutter com infinite scroll.
+
+Arquitetura (resumo)
+
+Worker de sincronização (backend)
+
+Busca feeds e produtos na API do AliExpress em lotes (paginado).
+
+Salva/atualiza no Firestore (ou Postgres).
+
+Roda sob demanda (endpoint protegido) ou agendado (Cloud Scheduler → Cloud Run/Tasks).
+
+API de leitura (rápida)
+
+Lê apenas do banco (Firestore).
+
+Endpoints paginados para o app Flutter.
+
+Sem chamadas diretas ao AliExpress → sem timeout.
+
+Flutter Web/App
+
+Lista feeds e produtos via endpoints paginados.
+
+Infinite scroll com page/pageSize.
+
+Opcional: cache local (Hive) para suavizar navegação.
+
+Firestore – modelo de dados
+aliexpress_feeds (collection)
+  {feed_name} (document)
+    name: string
+    updated_at: timestamp
+    total_products: number
+    product_count_by_status: map
+
+aliexpress_feed_products (collection)
+  {feed_name}_{product_id} (document)
+    feed_name: string
+    product_id: string
+    title: string
+    main_image: string
+    images: array<string>
+    price: number
+    currency: string
+    original_price: number
+    discount: number
+    detail_url: string
+    store_id: string
+    store_name: string
+    rating: number
+    orders: number
+    ship_to_country: string
+    updated_at: timestamp
+    searchable_title: string (lowercase p/ index)
+
+
+Índices recomendados (Firestore):
+
+aliexpress_feed_products:
+
+feed_name ASC, updated_at DESC
+
+feed_name ASC, price ASC
+
+feed_name ASC, orders DESC
+
+Backend (Flask) – código principal
+
+Dep.: flask, flask_cors, google-cloud-firestore, requests
+
+import os, time, hashlib, requests
+from datetime import datetime, timezone
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+from google.cloud import firestore
+
+APP_KEY = os.getenv("AE_APP_KEY")
+APP_SECRET = os.getenv("AE_APP_SECRET")
+API_URL = "https://api-sg.aliexpress.com/sync"
+
+# ── Flask
+app = Flask(__name__)
+CORS(app, origins=[
+    "http://localhost:8080", "http://localhost:5000",
+    "https://mercadodasophia-bbd01.web.app",
+    "https://mercadodasophia-bbd01.firebaseapp.com",
+    "https://admin-mercadodasophia.firebaseapp.com",
+    "https://admin.mercadodasophia.com.br",
+    "https://mercadodasophia.com.br",
+    "https://www.mercadodasophia.com.br",
+    "https://service-api-aliexpress.mercadodasophia.com.br",
+], supports_credentials=True)
+
+db = firestore.Client()
+
+def md5_sign(params: dict, secret: str) -> str:
+    s = secret + "".join(f"{k}{params[k]}" for k in sorted(params)) + secret
+    return hashlib.md5(s.encode("utf-8")).hexdigest().upper()
+
+def ali_get(method: str, access_token: str, extra: dict):
+    base = {
+        "method": method,
+        "app_key": APP_KEY,
+        "timestamp": int(time.time() * 1000),
+        "sign_method": "md5",
+        "format": "json",
+        "v": "2.0",
+        "access_token": access_token
+    }
+    base.update(extra)
+    base["sign"] = md5_sign(base, APP_SECRET)
+    r = requests.get(API_URL, params=base, timeout=20)
+    r.raise_for_status()
+    return r.json()
+
+def upsert_product(feed_name: str, prod: dict):
+    doc_id = f"{feed_name}_{prod['product_id']}"
+    doc = {
+        **prod,
+        "feed_name": feed_name,
+        "searchable_title": (prod.get("title") or "").lower(),
+        "updated_at": datetime.now(timezone.utc)
+    }
+    db.collection("aliexpress_feed_products").document(doc_id).set(doc, merge=True)
+
+# ── 1) Worker: sincronizar UM feed (paginado, salva no Firestore)
+@app.post("/sync/feed/<feed_name>")
+def sync_feed(feed_name):
+    access_token = request.headers.get("X-AE-Token")
+    if not access_token:
+        return jsonify({"success": False, "message": "X-AE-Token ausente"}), 401
+
+    page_size = int(request.args.get("page_size", 20))
+    max_pages  = int(request.args.get("max_pages", 50))  # proteção
+    ship_to    = request.args.get("ship_to_country", "BR")
+    currency   = request.args.get("target_currency", "BRL")
+    language   = request.args.get("target_language", "pt")
+
+    total_saved = 0
+    page = 1
+    all_ids = []
+
+    # 1.1 Buscar todos os item_ids do feed
+    while page <= max_pages:
+        try:
+            ids_json = ali_get("aliexpress.ds.feed.itemids.get", access_token, {
+                "feed_name": feed_name,
+                "page_no": page,
+                "page_size": page_size
+            })
+        except Exception as e:
+            break
+
+        ids = []
+        def walk(o):
+            if isinstance(o, dict):
+                for k, v in o.items():
+                    if k in ("item_id", "product_id", "itemId") and v:
+                        ids.append(str(v))
+                    walk(v)
+            elif isinstance(o, list):
+                for x in o: walk(x)
+        walk(ids_json)
+        ids = list(dict.fromkeys(ids))
+        if not ids:
+            break
+
+        all_ids.extend(ids)
+        page += 1
+
+    all_ids = list(dict.fromkeys(all_ids))
+    if not all_ids:
+        return jsonify({"success": True, "feed_name": feed_name, "saved": 0})
+
+    # 1.2 Detalhar e salvar
+    for product_id in all_ids:
+        try:
+            j = ali_get("aliexpress.ds.product.get", access_token, {
+                "product_id": product_id,
+                "ship_to_country": ship_to,
+                "target_currency": currency,
+                "target_language": language,
+                "remove_personal_benefit": "false"
+            })
+            res = j.get("aliexpress_ds_product_get_response", {}).get("result", {}) or {}
+            prod = {
+                "product_id": str(product_id),
+                "title": res.get("product_title") or res.get("ae_item_base_info_dto", {}).get("subject", ""),
+                "main_image": res.get("product_main_image_url") or res.get("ae_multimedia_info_dto", {}).get("image_urls", "").split(";")[0:1] or [""][0],
+                "images": (res.get("ae_multimedia_info_dto", {}).get("image_urls", "") or "").split(";") if res.get("ae_multimedia_info_dto") else [],
+                "price": float(res.get("sale_price", "0") or 0),
+                "currency": res.get("currency", "BRL"),
+                "original_price": float(res.get("original_price", "0") or 0),
+                "discount": float(str(res.get("discount", "0")).replace("%","") or 0),
+                "detail_url": res.get("detail_url", ""),
+                "store_id": str(res.get("store_info_dto", {}).get("store_id", "")),
+                "store_name": res.get("store_info_dto", {}).get("store_name", ""),
+                "rating": float(res.get("product_rating", 0) or 0),
+                "orders": int(res.get("orders", 0) or 0),
+                "ship_to_country": ship_to
+            }
+            upsert_product(feed_name, prod)
+            total_saved += 1
+        except Exception:
+            continue
+
+    # 1.3 Atualizar cabeçalho do feed
+    db.collection("aliexpress_feeds").document(feed_name).set({
+        "name": feed_name,
+        "updated_at": datetime.now(timezone.utc),
+        "total_products": total_saved
+    }, merge=True)
+
+    return jsonify({"success": True, "feed_name": feed_name, "saved": total_saved})
+
+# ── 2) Leitura rápida: listar feeds salvos
+@app.get("/feeds")
+def list_feeds():
+    docs = db.collection("aliexpress_feeds").order_by("name").stream()
+    feeds = []
+    for d in docs:
+        x = d.to_dict()
+        feeds.append({
+            "feed_name": d.id,
+            "updated_at": x.get("updated_at"),
+            "total_products": x.get("total_products", 0)
+        })
+    return jsonify({"success": True, "feeds": feeds})
+
+# ── 3) Leitura rápida: produtos paginados de um feed
+@app.get("/feeds/<feed_name>/products")
+def get_feed_products(feed_name):
+    page = int(request.args.get("page", 1))
+    page_size = min(int(request.args.get("page_size", 20)), 100)
+    sort = request.args.get("sort", "updated_at_desc")  # updated_at_desc | price_asc | orders_desc
+
+    q = db.collection("aliexpress_feed_products").where("feed_name", "==", feed_name)
+
+    if sort == "price_asc":
+        q = q.order_by("price")
+    elif sort == "orders_desc":
+        q = q.order_by("orders", direction=firestore.Query.DESCENDING)
+    else:
+        q = q.order_by("updated_at", direction=firestore.Query.DESCENDING)
+
+    # paginação simples por offset (ok p/ vitrine)
+    offset = (page - 1) * page_size
+    docs = list(q.offset(offset).limit(page_size).stream())
+
+    items = []
+    for d in docs:
+        items.append(d.to_dict())
+
+    return jsonify({
+        "success": True,
+        "feed_name": feed_name,
+        "page": page,
+        "page_size": page_size,
+        "items": items,
+        "count": len(items)
+    })
+
+
+Dica: se o volume crescer, troque offset por cursor (document snapshots) para evitar custo de leitura.
+
+Como operar (sem timeout)
+
+Sincronizar (worker) – por feed:
+
+curl -X POST "https://SEU_BACKEND/sync/feed/Hot_Products?page_size=20&max_pages=50" \
+  -H "X-AE-Token: SEU_ACCESS_TOKEN"
+
+
+Use Cloud Scheduler de 15 em 15 min para feeds principais.
+
+Consumir no Flutter – leitura paginada:
+
+GET https://SEU_BACKEND/feeds
+GET https://SEU_BACKEND/feeds/Hot_Products/products?page=1&page_size=20&sort=updated_at_desc
+
+Flutter – exemplo de consumo (infinite scroll)
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
+class FeedProductsPage extends StatefulWidget {
+  final String feedName;
+  const FeedProductsPage({super.key, required this.feedName});
+  @override
+  State<FeedProductsPage> createState() => _FeedProductsPageState();
+}
+
+class _FeedProductsPageState extends State<FeedProductsPage> {
+  final _items = <Map<String, dynamic>>[];
+  int _page = 1;
+  final int _pageSize = 20;
+  bool _loading = false;
+  bool _hasMore = true;
+
+  Future<void> _load() async {
+    if (_loading || !_hasMore) return;
+    setState(() => _loading = true);
+
+    final uri = Uri.parse(
+      'https://SEU_BACKEND/feeds/${widget.feedName}/products?page=$_page&page_size=$_pageSize&sort=updated_at_desc'
+    );
+    final resp = await http.get(uri);
+    if (resp.statusCode == 200) {
+      final data = jsonDecode(resp.body);
+      final List items = data['items'] ?? [];
+      setState(() {
+        _items.addAll(items.cast<Map<String, dynamic>>());
+        _hasMore = items.length == _pageSize;
+        if (_hasMore) _page += 1;
+      });
+    }
+    setState(() => _loading = false);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(widget.feedName)),
+      body: NotificationListener<ScrollNotification>(
+        onNotification: (sn) {
+          if (sn.metrics.pixels >= sn.metrics.maxScrollExtent - 300) {
+            _load();
+          }
+          return false;
+        },
+        child: ListView.builder(
+          itemCount: _items.length + (_loading ? 1 : 0),
+          itemBuilder: (ctx, i) {
+            if (i >= _items.length) return const Center(child: Padding(
+              padding: EdgeInsets.all(16), child: CircularProgressIndicator()));
+            final p = _items[i];
+            return ListTile(
+              leading: p['main_image'] != null && p['main_image'].toString().isNotEmpty
+                ? Image.network(p['main_image'], width: 56, height: 56, fit: BoxFit.cover)
+                : const Icon(Icons.image_not_supported),
+              title: Text(p['title'] ?? ''),
+              subtitle: Text("${p['price']} ${p['currency']} • ${p['store_name'] ?? ''}"),
+              onTap: () { /* abrir detalhe */ },
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+Evitando timeout e rate limits (dicas finais)
+
+Sincronize por feed e em páginas, com max_pages e retry exponencial em erros 429/5xx.
+
+Armazene updated_at e faça upsert só quando mudar preço/estoque para diminuir custo.
+
+Faça backoff entre chamadas product.get (ex.: sleep(80–120ms) aleatório).
+
+Proteja /sync/feed/... com token/bearer ou IP allowlist.
+
+CORS já ajustado no exemplo; não use "*" com supports_credentials=True.
+
+Se quiser, eu adapto esse esqueleto para Cloud Run com Dockerfile e um Cloud Scheduler (YAML) que dispara a sincronização de X em X minutos para uma lista de feeds.

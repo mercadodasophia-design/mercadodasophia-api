@@ -25,7 +25,7 @@ except ImportError:
 load_dotenv()  # Carrega variáveis do arquivo .env, se existir
 
 # Versão do servidor para forçar cache refresh
-SERVER_VERSION = "1.0.8-PRODUCTION"
+SERVER_VERSION = "1.0.13-FEED-NAMES"
 
 # ===================== MERCADO PAGO CONFIGURATION =====================
 # Configuração do Mercado Pago - Suporte para Teste e Produção
@@ -168,6 +168,7 @@ def save_tokens(tokens):
                 db.collection('config').doc('aliexpress_tokens').set(tokens, merge=True)
             except AttributeError:
                 db.collection('config').document('aliexpress_tokens').set(tokens, merge=True)
+                
             print('✅ Tokens salvos no Firestore com sucesso!')
             return
         except Exception as e:
@@ -1487,7 +1488,8 @@ def products():
         with open(log_filename, 'w', encoding='utf-8') as f:
             f.write(response.text)
         
-        print(f'Ô£à Resposta produtos: {response.text[:500]}...')
+        print(f'📡 Status da resposta: {response.status_code}')
+        print(f'📄 Tamanho da resposta: {len(response.text)} caracteres')
         print(f'💾 Resposta completa salva em: {log_filename}')
         
         if response.status_code == 200:
@@ -1498,8 +1500,8 @@ def products():
             with open(processed_log_filename, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
             
-            print(f'­ƒôè ESTRUTURA COMPLETA - BUSCA PRODUTOS:')
-            print(json.dumps(data, indent=2, ensure_ascii=False))
+            print(f'🔍 ANÁLISE ESTRUTURAL - BUSCA PRODUTOS:')
+            print(f'📊 Keys do nível raiz: {list(data.keys())}')
             print(f'💾 Dados processados salvos em: {processed_log_filename}')
             
             # Verificar se há produtos na resposta
@@ -1509,13 +1511,23 @@ def products():
                 # Analisar estrutura dos dados
                 result = search_response.get('result', {})
                 print(f'🔍 ANÁLISE ESTRUTURA - BUSCA RESULT:')
-                print(f'  - Keys disponíveis: {list(result.keys())}')
+                print(f'📊 Keys disponíveis: {list(result.keys())}')
+                
+                # Informações de paginação
+                total_count = result.get('total_count', 0)
+                page_size = result.get('page_size', 20)
+                page_index = result.get('page_index', 1)
+                
+                print(f'📄 INFORMAÇÕES DE PAGINAÇÃO:')
+                print(f'  - Total de produtos: {total_count}')
+                print(f'  - Tamanho da página: {page_size}')
+                print(f'  - Página atual: {page_index}')
                 
                 # Extrair informações úteis para o frontend
                 processed_search = {
-                    'total_count': result.get('total_count', 0),
-                    'page_size': result.get('page_size', 20),
-                    'page_index': result.get('page_index', 1),
+                    'total_count': total_count,
+                    'page_size': page_size,
+                    'page_index': page_index,
                     'products': [],
                     'raw_data': result
                 }
@@ -1523,25 +1535,45 @@ def products():
                 # Extrair lista de produtos
                 if 'products' in result:
                     products_data = result['products']
+                    print(f'📊 Keys do products: {list(products_data.keys())}')
+                    
                     if 'selection_search_product' in products_data:
                         products = products_data['selection_search_product']
                         if isinstance(products, list):
                             processed_search['products'] = products
+                            print(f'📦 PRODUTOS ENCONTRADOS: {len(products)}')
                         else:
                             processed_search['products'] = [products]
+                            print(f'📦 PRODUTO ÚNICO ENCONTRADO')
+                    else:
+                        print(f'❌ selection_search_product não encontrado em products')
+                else:
+                    print(f'❌ products não encontrado em result')
                 
-                print(f'­ƒôï DADOS DE BUSCA PROCESSADOS:')
+                print(f'📊 DADOS DE BUSCA PROCESSADOS:')
                 print(f'  - Total de produtos: {processed_search["total_count"]}')
                 print(f'  - Produtos encontrados: {len(processed_search["products"])}')
-                print(f'  - P├ígina: {processed_search["page_index"]}/{processed_search["page_size"]}')
+                print(f'  - Página: {processed_search["page_index"]}/{processed_search["page_size"]}')
                 
-                # Log do primeiro produto para an├ílise
+                # Análise detalhada do primeiro produto
                 if processed_search['products']:
                     first_product = processed_search['products'][0]
-                    print(f'­ƒôª EXEMPLO PRIMEIRO PRODUTO:')
-                    print(f'  - ID: {first_product.get("itemId", "N/A")}')
-                    print(f'  - T├¡tulo: {first_product.get("title", "N/A")[:50]}...')
-                    print(f'  - Pre├ºo: {first_product.get("targetSalePrice", "N/A")}')
+                    print(f'🔍 ANÁLISE DO PRIMEIRO PRODUTO:')
+                    print(f'📊 Keys disponíveis: {list(first_product.keys())}')
+                    
+                    # Campos importantes
+                    important_fields = [
+                        'itemId', 'title', 'targetSalePrice', 'targetOriginalPrice',
+                        'discount', 'evaluateRate', 'orders', 'productUrl', 'imageUrl'
+                    ]
+                    
+                    for field in important_fields:
+                        value = first_product.get(field, 'N/A')
+                        print(f'  - {field}: {value}')
+                    
+                    # Mostrar estrutura completa do primeiro produto
+                    print(f'📄 ESTRUTURA COMPLETA DO PRIMEIRO PRODUTO:')
+                    print(json.dumps(first_product, indent=2, ensure_ascii=False))
                     print(f'  - Keys dispon├¡veis: {list(first_product.keys())}')
                 
                 return jsonify({
@@ -6016,6 +6048,158 @@ def check_product_status(product_id):
     if not tokens or not tokens.get('access_token'):
         return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
 
+# ===================== FEEDS: NOMES DOS FEEDS (ETAPA 1) =====================
+@app.route('/api/aliexpress/feeds/names', methods=['GET'])
+def get_feed_names():
+    """ETAPA 1: Buscar nomes dos feeds disponíveis usando aliexpress.ds.feedname.get"""
+    tokens = load_tokens()
+    if not tokens or not tokens.get('access_token'):
+        return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
+
+    try:
+        print(f'🔍 ETAPA 1: Buscando nomes dos feeds disponíveis...')
+        
+        # Parâmetros para a API conforme documentação
+        params = {
+            "method": "aliexpress.ds.feedname.get",
+            "app_key": APP_KEY,
+            "timestamp": int(time.time() * 1000),
+            "sign_method": "md5",
+            "format": "json",
+            "v": "2.0",
+            "access_token": tokens['access_token']
+        }
+        
+        # Gerar assinatura
+        params["sign"] = generate_api_signature(params, APP_SECRET)
+        
+        print(f'🔧 Parâmetros da requisição:')
+        for key, value in params.items():
+            if key != 'sign':  # Não mostrar a assinatura por segurança
+                print(f'  {key}: {value}')
+        
+        # Fazer requisição
+        print(f'🌐 Fazendo requisição para AliExpress...')
+        response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
+        
+        print(f'📡 Status da resposta: {response.status_code}')
+        print(f'📄 Tamanho da resposta: {len(response.text)} caracteres')
+        
+        # Salvar resposta bruta
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        log_filename = f"logs/feed_names_{timestamp}.json"
+        os.makedirs("logs", exist_ok=True)
+        
+        with open(log_filename, 'w', encoding='utf-8') as f:
+            f.write(response.text)
+        
+        print(f'💾 Resposta bruta salva em: {log_filename}')
+        
+        if response.status_code == 200:
+            data = response.json()
+            
+            # Salvar dados processados
+            processed_log_filename = f"logs/feed_names_processed_{timestamp}.json"
+            with open(processed_log_filename, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            
+            print(f'💾 Dados processados salvos em: {processed_log_filename}')
+            
+            # Análise detalhada da estrutura
+            print(f'🔍 ANÁLISE ESTRUTURAL - NOMES DOS FEEDS:')
+            print(f'📊 Keys do nível raiz: {list(data.keys())}')
+            
+            feeds = []
+            
+            # Verificar estrutura esperada
+            if 'aliexpress_ds_feedname_get_response' in data:
+                feed_response = data['aliexpress_ds_feedname_get_response']
+                print(f'📊 Keys do feed_response: {list(feed_response.keys())}')
+                
+                result = feed_response.get('result', {})
+                print(f'📊 Keys do result: {list(result.keys())}')
+                
+                # Extrair feeds
+                if 'feeds' in result:
+                    feeds_data = result['feeds']
+                    print(f'📊 Tipo de feeds: {type(feeds_data)}')
+                    
+                    if isinstance(feeds_data, dict) and 'feed' in feeds_data:
+                        feeds_list = feeds_data['feed']
+                        if isinstance(feeds_list, list):
+                            feeds = feeds_list
+                            print(f'📦 FEEDS ENCONTRADOS: {len(feeds)}')
+                        else:
+                            feeds = [feeds_list]
+                            print(f'📦 FEED ÚNICO ENCONTRADO')
+                    elif isinstance(feeds_data, list):
+                        feeds = feeds_data
+                        print(f'📦 FEEDS ENCONTRADOS: {len(feeds)}')
+                    else:
+                        print(f'⚠️ Estrutura inesperada de feeds: {type(feeds_data)}')
+                        print(f'📄 Conteúdo: {feeds_data}')
+                else:
+                    print(f'❌ feeds não encontrado em result')
+                    print(f'📄 Estrutura completa do result:')
+                    print(json.dumps(result, indent=2, ensure_ascii=False))
+            else:
+                print(f'❌ aliexpress_ds_feedname_get_response não encontrado')
+                print(f'📄 Estrutura completa da resposta:')
+                print(json.dumps(data, indent=2, ensure_ascii=False))
+            
+            # Análise detalhada do primeiro feed
+            if feeds:
+                first_feed = feeds[0]
+                print(f'🔍 ANÁLISE DO PRIMEIRO FEED:')
+                print(f'📊 Keys disponíveis: {list(first_feed.keys())}')
+                
+                # Campos importantes
+                important_fields = [
+                    'feed_name', 'feed_id', 'display_name', 'description', 'product_count'
+                ]
+                
+                for field in important_fields:
+                    value = first_feed.get(field, 'N/A')
+                    print(f'  - {field}: {value}')
+                
+                # Mostrar estrutura completa do primeiro feed
+                print(f'📄 ESTRUTURA COMPLETA DO PRIMEIRO FEED:')
+                print(json.dumps(first_feed, indent=2, ensure_ascii=False))
+            else:
+                print(f'❌ Nenhum feed encontrado na lista')
+            
+            return jsonify({
+                'success': True,
+                'message': 'Nomes dos feeds obtidos com sucesso',
+                'data': {
+                    'feeds': feeds,
+                    'total_feeds': len(feeds)
+                },
+                'logs': {
+                    'raw_file': log_filename,
+                    'processed_file': processed_log_filename,
+                    'timestamp': timestamp
+                }
+            })
+        else:
+            print(f'❌ Erro na resposta: {response.status_code}')
+            print(f'📄 Conteúdo do erro: {response.text}')
+            return jsonify({
+                'success': False,
+                'message': f'Erro {response.status_code}',
+                'error': response.text
+            }), response.status_code
+            
+    except Exception as e:
+        print(f'❌ Erro ao buscar nomes dos feeds: {e}')
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'message': f'Erro interno: {str(e)}'
+        }), 500
+
+
 # ===================== FEEDS: IDS POR FEED =====================
 @app.route('/api/aliexpress/feeds/<feed_name>/ids', methods=['GET'])
 def get_feed_item_ids(feed_name):
@@ -6694,6 +6878,7 @@ def cron_update_price_stock():
     except Exception as e:
         print(f'❌ Erro no cron de atualização: {e}')
         return jsonify({'success': False, 'message': str(e)}), 500
+
 
 
 

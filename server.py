@@ -25,7 +25,7 @@ except ImportError:
 load_dotenv()  # Carrega variáveis do arquivo .env, se existir
 
 # Versão do servidor para forçar cache refresh
-SERVER_VERSION = "1.0.30-FIX-SYNTAX-ERRORS"
+SERVER_VERSION = "1.0.31-ALL-SYNTAX-FIXED"
 
 # ===================== MERCADO PAGO CONFIGURATION =====================
 # Configuração do Mercado Pago - Suporte para Teste e Produção
@@ -4580,11 +4580,11 @@ def test_product_page():
         function extractProductId(url) {
             // Extrair ID do produto de diferentes formatos de URL do AliExpress
             const patterns = [
-                r'\/item\/(\d+)\.html',
-                r'\/item\/(\d+)',
-                r'product_id=(\d+)',
-                r'itemId=(\d+)',
-                r'(\d{10,})'  // ID do produto geralmente tem 10+ dígitos
+                /\/item\/(\d+)\.html/,
+                /\/item\/(\d+)/,
+                /product_id=(\d+)/,
+                /itemId=(\d+)/,
+                /(\d{10,})/  // ID do produto geralmente tem 10+ dígitos
             ];
             
             for (let pattern of patterns) {
@@ -6997,8 +6997,8 @@ def get_feed_item_ids(feed_name):
             print(f'📄 Resposta da API para feed "{feed_name}":')
             print(json.dumps(data, indent=2, ensure_ascii=False))
             
-            # Extrair IDs dos produtos conforme documentação
-        item_ids = []
+                        # Extrair IDs dos produtos conforme documentação
+            item_ids = []
             
             # Verificar estrutura da resposta
             if 'result' in data:
@@ -7073,88 +7073,6 @@ def get_all_feeds_item_ids():
     except Exception as e:
         print(f'❌ Erro ao obter IDs de todos os feeds: {e}')
         return jsonify({'success': False, 'message': str(e)}), 500
-    
-    try:
-        # Parâmetros para verificar status do produto
-        params = {
-            "method": "aliexpress.ds.product.get",
-            "app_key": APP_KEY,
-            "timestamp": int(time.time() * 1000),
-            "sign_method": "md5",
-            "format": "json",
-            "v": "2.0",
-            "access_token": tokens['access_token'],
-            "product_id": product_id,
-            "ship_to_country": "BR",
-            "target_currency": "BRL",
-            "target_language": "pt"
-        }
-        
-        # Gerar assinatura
-        params["sign"] = generate_api_signature(params, APP_SECRET)
-        
-        # Fazer requisição
-        response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
-        
-        if response.status_code == 200:
-            data = response.json()
-            
-            if 'aliexpress_ds_product_get_response' in data:
-                product_response = data['aliexpress_ds_product_get_response']
-                result = product_response.get('result', {})
-                base_info = result.get('ae_item_base_info_dto', {})
-                
-                # Extrair informações de status
-                product_status = {
-                    'product_id': product_id,
-                    'status_type': base_info.get('product_status_type', 'unknown'),
-                    'title': base_info.get('subject', ''),
-                    'gmt_modified': base_info.get('gmt_modified', ''),
-                    'gmt_create': base_info.get('gmt_create', ''),
-                    'category_id': base_info.get('category_id', ''),
-                    'currency_code': base_info.get('currency_code', 'USD'),
-                    'sales_count': base_info.get('sales_count', '0'),
-                    'evaluation_count': base_info.get('evaluation_count', '0'),
-                    'avg_evaluation_rating': base_info.get('avg_evaluation_rating', '0'),
-                }
-                
-                # Mapear status para português
-                status_mapping = {
-                    'on_selling': 'À venda',
-                    'offline': 'Offline',
-                    'auditing': 'Em revisão',
-                    'editing_required': 'Edição necessária',
-                    'approved': 'Aprovado',
-                    'rejected': 'Rejeitado',
-                    'unknown': 'Status desconhecido'
-                }
-                
-                product_status['status_description'] = status_mapping.get(
-                    product_status['status_type'], 
-                    'Status desconhecido'
-                )
-                
-                return jsonify({
-                    'success': True,
-                    'data': product_status
-                })
-            else:
-                return jsonify({
-                    'success': False,
-                    'message': 'Produto não encontrado ou erro na resposta da API'
-                }), 404
-        else:
-            return jsonify({
-                'success': False,
-                'message': f'Erro na API AliExpress: {response.status_code}'
-            }), response.status_code
-            
-    except Exception as e:
-        print(f"❌ Erro ao verificar status do produto {product_id}: {e}")
-        return jsonify({
-            'success': False,
-            'message': f'Erro ao verificar status: {str(e)}'
-        }), 500
 
 @app.route('/api/aliexpress/products-status', methods=['POST'])
 def check_multiple_products_status():

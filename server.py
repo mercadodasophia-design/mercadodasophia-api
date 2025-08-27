@@ -25,7 +25,7 @@ except ImportError:
 load_dotenv()  # Carrega variáveis do arquivo .env, se existir
 
 # Versão do servidor para forçar cache refresh
-SERVER_VERSION = "1.0.18-FEED-IDS-LOGS"
+SERVER_VERSION = "1.0.20-FEED-COMPLETE-ARCHITECTURE"
 
 # ===================== MERCADO PAGO CONFIGURATION =====================
 # Configuração do Mercado Pago - Suporte para Teste e Produção
@@ -2531,78 +2531,363 @@ def sku_attributes_batch():
 
 @app.route('/api/aliexpress/feeds/list', methods=['GET'])
 def get_available_feeds():
-    """Obter lista de feeds disponíveis do AliExpress"""
+    """Obter lista de feeds disponíveis do AliExpress e sincronizar produtos"""
     ensure_fresh_token()
     tokens = load_tokens()
     if not tokens or not tokens.get('access_token'):
         return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
     
-    # Parametrização para a etapa 2 (IDs)
-    page = int(request.args.get('page', 1))
+    # Parâmetros de controle
+    sync_products = request.args.get('sync_products', 'false').lower() == 'true'
     page_size = int(request.args.get('page_size', 20))
+    max_pages = int(request.args.get('max_pages', 5))  # Proteção contra timeout
+    ship_to = request.args.get('ship_to_country', 'BR')
+    currency = request.args.get('target_currency', 'BRL')
+    language = request.args.get('target_language', 'pt')
 
-    # Etapa 1 já concluída: nomes dos feeds (usando lista conhecida/testada)
-    default_feeds = [
-        {
-            "feed_name": "DS_Brazil_topsellers",
-            "feed_id": "1",
-            "display_name": "Mais Vendidos Brasil",
-            "description": "Produtos mais vendidos no Brasil",
-            "product_count": 14544
-        },
-        {
-            "feed_name": "DS_NewArrivals", 
-            "feed_id": "2",
-            "display_name": "Novidades",
-            "description": "Produtos recém-chegados",
-            "product_count": 14818
-        },
-        {
-            "feed_name": "DS_ConsumerElectronics_bestsellers",
-            "feed_id": "3", 
-            "display_name": "Eletrônicos",
-            "description": "Eletrônicos mais vendidos",
-            "product_count": 20633
-        },
-        {
-            "feed_name": "DS_Home&Kitchen_bestsellers",
-            "feed_id": "4",
-            "display_name": "Casa e Cozinha", 
-            "description": "Produtos para casa e cozinha",
-            "product_count": 12751
-        }
-    ]
+    print(f'🔍 ETAPA 1: Buscando feeds disponíveis...')
     
-    # Etapa 2: para cada feed, buscar IDs (sample) e imprimir estrutura
-    for feed in default_feeds:
-        fname = feed.get('feed_name')
+    # ETAPA 1: Buscar feeds disponíveis via API
+    try:
+        params = {
+            "method": "aliexpress.ds.feedname.get",
+            "app_key": APP_KEY,
+            "timestamp": int(time.time() * 1000),
+            "sign_method": "md5",
+            "format": "json",
+            "v": "2.0",
+            "access_token": tokens['access_token']
+        }
+        params["sign"] = generate_api_signature(params, APP_SECRET)
+        
+        response = requests.get('https://api-sg.aliexpress.com/sync', params=params, timeout=30)
+        
+        if response.status_code == 200:
+            data = response.json()
+            feeds = []
+            
+            # Processar resposta conforme documentação
+            if 'aliexpress_ds_feedname_get_response' in data:
+                feed_response = data['aliexpress_ds_feedname_get_response']
+                resp_result = feed_response.get('resp_result', {})
+                result = resp_result.get('result', {})
+                
+                if 'promos' in result:
+                    promos_data = result['promos']
+                    if isinstance(promos_data, list):
+                        feeds = [
+                            {
+                                'feed_name': promo.get('promo_name', ''),
+                                'feed_id': str(i + 1),
+                                'display_name': promo.get('promo_name', ''),
+                                'description': promo.get('promo_desc', ''),
+                                'product_count': int(promo.get('product_num', 0))
+                            }
+                            for i, promo in enumerate(promos_data)
+                        ]
+                    elif isinstance(promos_data, dict) and 'promo' in promos_data:
+                        promo_list = promos_data['promo']
+                        if isinstance(promo_list, list):
+                            feeds = [
+                                {
+                                    'feed_name': promo.get('promo_name', ''),
+                                    'feed_id': str(i + 1),
+                                    'display_name': promo.get('promo_name', ''),
+                                    'description': promo.get('promo_desc', ''),
+                                    'product_count': int(promo.get('product_num', 0))
+                                }
+                                for i, promo in enumerate(promo_list)
+                            ]
+                        else:
+                            feeds = [{
+                                'feed_name': promo_list.get('promo_name', ''),
+                                'feed_id': '1',
+                                'display_name': promo_list.get('promo_name', ''),
+                                'description': promo_list.get('promo_desc', ''),
+                                'product_count': int(promo_list.get('product_num', 0))
+                            }]
+            
+            # Se não encontrou feeds via API, usar lista padrão
+            if not feeds:
+                print(f'⚠️ Nenhum feed encontrado via API, usando lista padrão...')
+                feeds = [
+                    {
+                        "feed_name": "DS_Brazil_topsellers",
+                        "feed_id": "1",
+                        "display_name": "Mais Vendidos Brasil",
+                        "description": "Produtos mais vendidos no Brasil",
+                        "product_count": 14544
+                    },
+                    {
+                        "feed_name": "DS_NewArrivals", 
+                        "feed_id": "2",
+                        "display_name": "Novidades",
+                        "description": "Produtos recém-chegados",
+                        "product_count": 14818
+                    },
+                    {
+                        "feed_name": "DS_ConsumerElectronics_bestsellers",
+                        "feed_id": "3", 
+                        "display_name": "Eletrônicos",
+                        "description": "Eletrônicos mais vendidos",
+                        "product_count": 20633
+                    },
+                    {
+                        "feed_name": "DS_Home&Kitchen_bestsellers",
+                        "feed_id": "4",
+                        "display_name": "Casa e Cozinha", 
+                        "description": "Produtos para casa e cozinha",
+                        "product_count": 12751
+                    }
+                ]
+            
+            print(f'📦 Feeds encontrados: {len(feeds)}')
+            
+            # ETAPA 2 e 3: Sincronizar produtos se solicitado
+            if sync_products:
+                print(f'🔄 ETAPA 2 e 3: Sincronizando produtos dos feeds...')
+                total_saved = 0
+                
+                for feed in feeds[:3]:  # Limitar a 3 feeds para evitar timeout
+                    feed_name = feed.get('feed_name')
+                    if not feed_name:
+                        continue
+                        
+                    print(f'📦 Sincronizando feed: {feed_name}')
+                    saved_count = sync_feed_products(tokens['access_token'], feed_name, page_size, max_pages, ship_to, currency, language)
+                    total_saved += saved_count
+                    feed['synced_products'] = saved_count
+                    
+                    # Pequena pausa entre feeds para evitar rate limit
+                    time.sleep(1)
+                
+                print(f'✅ Total de produtos sincronizados: {total_saved}')
+            
+            return jsonify({
+                'success': True,
+                'feeds': feeds,
+                'sync_products': sync_products,
+                'total_feeds': len(feeds)
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': f'Erro {response.status_code} ao buscar feeds',
+                'error': response.text
+            }), response.status_code
+            
+    except Exception as e:
+        print(f'❌ Erro ao buscar feeds: {e}')
+        return jsonify({
+            'success': False,
+            'message': f'Erro interno: {str(e)}'
+        }), 500
+
+
+def sync_feed_products(access_token, feed_name, page_size=20, max_pages=5, ship_to='BR', currency='BRL', language='pt'):
+    """ETAPA 2 e 3: Sincronizar produtos de um feed específico"""
+    print(f'🔄 Sincronizando produtos do feed: {feed_name}')
+    
+    total_saved = 0
+    page = 1
+    all_ids = []
+    
+    # ETAPA 2: Buscar todos os item_ids do feed
+    while page <= max_pages:
         try:
-            with app.test_request_context(f'/api/aliexpress/feeds/{fname}/ids?page={page}&page_size={page_size}'):
-                ids_resp = get_feed_item_ids(fname)
-            payload = ids_resp.get_json() if hasattr(ids_resp, 'get_json') else ids_resp[0].get_json()
-            item_ids = payload.get('item_ids', []) if isinstance(payload, dict) else []
-
-            # guardar amostra no feed e logar para documentação
-            feed['sample_item_ids'] = item_ids
-            print('\n🧾 FEED → IDS (amostra)')
-            print(json.dumps({
-                'feed_name': fname,
-                'page': page,
-                'page_size': page_size,
-                'item_ids': item_ids
-            }, indent=2, ensure_ascii=False))
+            print(f'📄 Buscando página {page} do feed {feed_name}...')
+            
+            params = {
+                "method": "aliexpress.ds.feed.itemids.get",
+                "app_key": APP_KEY,
+                "timestamp": int(time.time() * 1000),
+                "sign_method": "md5",
+                "format": "json",
+                "v": "2.0",
+                "access_token": access_token,
+                "feed_name": feed_name,
+                "page_no": page,
+                "page_size": page_size
+            }
+            params["sign"] = generate_api_signature(params, APP_SECRET)
+            
+            response = requests.get('https://api-sg.aliexpress.com/sync', params=params, timeout=30)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Extrair IDs dos produtos
+                ids = []
+                def walk(o):
+                    if isinstance(o, dict):
+                        for k, v in o.items():
+                            if k in ("item_id", "product_id", "itemId") and v:
+                                ids.append(str(v))
+                            walk(v)
+                    elif isinstance(o, list):
+                        for x in o: walk(x)
+                walk(data)
+                
+                ids = list(dict.fromkeys(ids))  # Remover duplicatas
+                if not ids:
+                    print(f'⚠️ Nenhum ID encontrado na página {page}')
+                    break
+                
+                all_ids.extend(ids)
+                print(f'📦 IDs encontrados na página {page}: {len(ids)}')
+                page += 1
+                
+                # Pequena pausa para evitar rate limit
+                time.sleep(0.1)
+            else:
+                print(f'❌ Erro na página {page}: {response.status_code}')
+                break
+                
         except Exception as e:
-            print(f"⚠️ Falha ao buscar IDs para feed {fname}: {e}")
-            feed['sample_item_ids'] = []
+            print(f'❌ Erro ao buscar página {page}: {e}')
+            break
     
-    return jsonify({
-        'success': True,
-        'feeds': default_feeds,
-        'pagination': {
-            'page': page,
-            'page_size': page_size
-        }
-    })
+    all_ids = list(dict.fromkeys(all_ids))  # Remover duplicatas
+    print(f'📦 Total de IDs únicos encontrados: {len(all_ids)}')
+    
+    if not all_ids:
+        return 0
+    
+    # ETAPA 3: Buscar detalhes dos produtos e salvar no Firestore
+    for i, product_id in enumerate(all_ids[:50]):  # Limitar a 50 produtos para evitar timeout
+        try:
+            print(f'🔄 Buscando detalhes do produto {i+1}/{min(50, len(all_ids))}: {product_id}')
+            
+            params = {
+                "method": "aliexpress.ds.product.get",
+                "app_key": APP_KEY,
+                "timestamp": int(time.time() * 1000),
+                "sign_method": "md5",
+                "format": "json",
+                "v": "2.0",
+                "access_token": access_token,
+                "product_id": product_id,
+                "ship_to_country": ship_to,
+                "target_currency": currency,
+                "target_language": language,
+                "remove_personal_benefit": "false"
+            }
+            params["sign"] = generate_api_signature(params, APP_SECRET)
+            
+            response = requests.get('https://api-sg.aliexpress.com/sync', params=params, timeout=30)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Extrair dados do produto
+                result = data.get("aliexpress_ds_product_get_response", {}).get("result", {}) or {}
+                
+                # Processar dados do produto
+                product_data = {
+                    "feed_name": feed_name,
+                    "product_id": str(product_id),
+                    "title": result.get("product_title") or result.get("ae_item_base_info_dto", {}).get("subject", ""),
+                    "main_image": result.get("product_main_image_url") or "",
+                    "images": (result.get("ae_multimedia_info_dto", {}).get("image_urls", "") or "").split(";") if result.get("ae_multimedia_info_dto") else [],
+                    "price": float(result.get("sale_price", "0") or 0),
+                    "currency": result.get("currency", "BRL"),
+                    "original_price": float(result.get("original_price", "0") or 0),
+                    "discount": float(str(result.get("discount", "0")).replace("%","") or 0),
+                    "detail_url": result.get("detail_url", ""),
+                    "store_id": str(result.get("store_info_dto", {}).get("store_id", "")),
+                    "store_name": result.get("store_info_dto", {}).get("store_name", ""),
+                    "rating": float(result.get("product_rating", 0) or 0),
+                    "orders": int(result.get("orders", 0) or 0),
+                    "ship_to_country": ship_to,
+                    "updated_at": datetime.now()
+                }
+                
+                # Salvar no Firestore
+                doc_id = f"{feed_name}_{product_id}"
+                db.collection("aliexpress_feed_products").document(doc_id).set(product_data, merge=True)
+                total_saved += 1
+                
+                print(f'✅ Produto salvo: {product_data.get("title", "")[:50]}...')
+                
+            else:
+                print(f'❌ Erro ao buscar produto {product_id}: {response.status_code}')
+                
+        except Exception as e:
+            print(f'❌ Erro ao processar produto {product_id}: {e}')
+            continue
+        
+        # Pausa entre produtos para evitar rate limit
+        time.sleep(0.2)
+    
+    # Atualizar cabeçalho do feed no Firestore
+    db.collection("aliexpress_feeds").document(feed_name).set({
+        "name": feed_name,
+        "updated_at": datetime.now(),
+        "total_products": total_saved
+    }, merge=True)
+    
+    print(f'✅ Feed {feed_name} sincronizado: {total_saved} produtos salvos')
+    return total_saved
+
+
+# ===================== LEITURA RÁPIDA: PRODUTOS SALVOS =====================
+
+@app.route('/api/aliexpress/feeds/saved', methods=['GET'])
+def get_saved_feeds():
+    """Listar feeds salvos no Firestore"""
+    try:
+        docs = db.collection("aliexpress_feeds").order_by("name").stream()
+        feeds = []
+        for d in docs:
+            x = d.to_dict()
+            feeds.append({
+                "feed_name": d.id,
+                "updated_at": x.get("updated_at"),
+                "total_products": x.get("total_products", 0)
+            })
+        return jsonify({"success": True, "feeds": feeds})
+    except Exception as e:
+        print(f'❌ Erro ao listar feeds salvos: {e}')
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app.route('/api/aliexpress/feeds/<feed_name>/products/saved', methods=['GET'])
+def get_saved_feed_products(feed_name):
+    """Listar produtos salvos de um feed específico (paginado)"""
+    try:
+        page = int(request.args.get("page", 1))
+        page_size = min(int(request.args.get("page_size", 20)), 100)
+        sort = request.args.get("sort", "updated_at_desc")  # updated_at_desc | price_asc | orders_desc
+
+        q = db.collection("aliexpress_feed_products").where("feed_name", "==", feed_name)
+
+        if sort == "price_asc":
+            q = q.order_by("price")
+        elif sort == "orders_desc":
+            q = q.order_by("orders", direction=firestore.Query.DESCENDING)
+        else:
+            q = q.order_by("updated_at", direction=firestore.Query.DESCENDING)
+
+        # Paginação simples por offset
+        offset = (page - 1) * page_size
+        docs = list(q.offset(offset).limit(page_size).stream())
+
+        items = []
+        for d in docs:
+            items.append(d.to_dict())
+
+        return jsonify({
+            "success": True,
+            "feed_name": feed_name,
+            "page": page,
+            "page_size": page_size,
+            "items": items,
+            "count": len(items)
+        })
+    except Exception as e:
+        print(f'❌ Erro ao listar produtos do feed {feed_name}: {e}')
+        return jsonify({"success": False, "message": str(e)}), 500
+
 
     try:
         # Parâmetros para a API de feeds
@@ -6189,6 +6474,9 @@ def get_feed_item_ids(feed_name):
         
         # Fazer requisição
         response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
+        
+        print(f'📡 Status da resposta: {response.status_code}')
+        print(f'📄 Resposta bruta: {response.text[:1000]}...')
         
         if response.status_code == 200:
             data = response.json()

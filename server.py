@@ -14,8 +14,8 @@ from dotenv import load_dotenv
 from flask_cors import CORS
 # Firebase Admin SDK (opcional)
 try:
-    import firebase_admin
-    from firebase_admin import credentials, firestore
+import firebase_admin
+from firebase_admin import credentials, firestore
     FIREBASE_AVAILABLE = True
 except ImportError:
     FIREBASE_AVAILABLE = False
@@ -45,10 +45,10 @@ if MP_MODE == 'production':
     print('🚀 Mercado Pago configurado para PRODUÇÃO')
 else:
     # Credenciais de SANDBOX/TESTE
-    if not os.getenv('MP_ACCESS_TOKEN'):
-        os.environ['MP_ACCESS_TOKEN'] = 'TEST-6048716701718688-080816-b095cf4abaa34073116ac070ff38e8f4-1514652489'
-    if not os.getenv('MP_PUBLIC_KEY'):
-        os.environ['MP_PUBLIC_KEY'] = 'TEST-ce63c4af-fb50-4bef-b3dd-f0003f16cea3'
+if not os.getenv('MP_ACCESS_TOKEN'):
+    os.environ['MP_ACCESS_TOKEN'] = 'TEST-6048716701718688-080816-b095cf4abaa34073116ac070ff38e8f4-1514652489'
+if not os.getenv('MP_PUBLIC_KEY'):
+    os.environ['MP_PUBLIC_KEY'] = 'TEST-ce63c4af-fb50-4bef-b3dd-f0003f16cea3'
     if not os.getenv('MP_CLIENT_ID'):
         os.environ['MP_CLIENT_ID'] = '6048716701718688'
     if not os.getenv('MP_CLIENT_SECRET'):
@@ -58,7 +58,7 @@ else:
 
 # Importar integração Mercado Pago (DEPOIS de definir as variáveis)
 try:
-    from mercadopago_integration import mp_integration
+from mercadopago_integration import mp_integration
     MP_AVAILABLE = True
 except ImportError:
     MP_AVAILABLE = False
@@ -72,19 +72,19 @@ def init_firebase():
         print('✅ Firebase não disponível - apenas APIs do AliExpress ativas')
         return
     
-    try:
-        # Tentar usar credenciais de arquivo
-        cred = credentials.Certificate('firebase-credentials.json')
-        firebase_admin.initialize_app(cred)
-        print('✅ Firebase Admin SDK inicializado com credenciais de arquivo')
+try:
+    # Tentar usar credenciais de arquivo
+    cred = credentials.Certificate('firebase-credentials.json')
+    firebase_admin.initialize_app(cred)
+    print('✅ Firebase Admin SDK inicializado com credenciais de arquivo')
     except Exception:
-        try:
-            # Tentar usar variáveis de ambiente
-            firebase_admin.initialize_app()
-            print('✅ Firebase Admin SDK inicializado com variáveis de ambiente')
-        except Exception as e2:
-            print(f'⚠️ Firebase Admin SDK não inicializado: {e2}')
-            print('⚠️ Funcionalidades de pedidos podem não funcionar corretamente')
+    try:
+        # Tentar usar variáveis de ambiente
+        firebase_admin.initialize_app()
+        print('✅ Firebase Admin SDK inicializado com variáveis de ambiente')
+    except Exception as e2:
+        print(f'⚠️ Firebase Admin SDK não inicializado: {e2}')
+        print('⚠️ Funcionalidades de pedidos podem não funcionar corretamente')
             print('✅ Feeds do AliExpress funcionarão normalmente')
 
 # Chamar inicialização
@@ -179,7 +179,7 @@ def save_tokens(tokens):
             try:
                 db.collection('config').doc('aliexpress_tokens').set(tokens, merge=True)
             except AttributeError:
-                db.collection('config').document('aliexpress_tokens').set(tokens, merge=True)
+            db.collection('config').document('aliexpress_tokens').set(tokens, merge=True)
                 
             print('✅ Tokens salvos no Firestore com sucesso!')
             return
@@ -198,7 +198,7 @@ def load_tokens():
             try:
                 doc = db.collection('config').doc('aliexpress_tokens').get()
             except AttributeError:
-                doc = db.collection('config').document('aliexpress_tokens').get()
+            doc = db.collection('config').document('aliexpress_tokens').get()
             
             if doc and doc.exists:
                 data = doc.to_dict()
@@ -2738,7 +2738,7 @@ def sync_feed_products(access_token, feed_name, page_size=20, max_pages=5, ship_
                     # Converter para string
                     ids = [str(id) for id in ids if id]
                     print(f'✅ IDs extraídos corretamente: {len(ids)} IDs encontrados')
-                except Exception as e:
+        except Exception as e:
                     print(f"⚠️ Erro extraindo IDs: {e}")
                     ids = []
                 if not ids:
@@ -3157,9 +3157,9 @@ def admin_feeds_list():
                         'is_active': True
                     }
                 ]
-            
-            return jsonify({
-                'success': True,
+    
+    return jsonify({
+        'success': True,
                 'data': {
                     'feeds': feeds,
                     'total_feeds': len(feeds)
@@ -3255,26 +3255,34 @@ def admin_feed_products(feed_name):
                         # Debug: verificar estrutura dos dados
                         print(f'🔍 DEBUG: Estrutura do produto {product_id}:')
                         print(f'  - Keys disponíveis: {list(result.keys())}')
-                        print(f'  - sale_price: {result.get("sale_price")}')
-                        print(f'  - original_price: {result.get("original_price")}')
-                        print(f'  - product_price: {result.get("product_price")}')
-                        print(f'  - target_sale_price: {result.get("target_sale_price")}')
-                        print(f'  - target_original_price: {result.get("target_original_price")}')
+                        
+                        # Extrair preços das variações (SKUs)
+                        sale_price = 0.0
+                        original_price = 0.0
+                        
+                        if 'ae_item_sku_info_dtos' in result and result['ae_item_sku_info_dtos']:
+                            skus = result['ae_item_sku_info_dtos']
+                            if isinstance(skus, list) and len(skus) > 0:
+                                first_sku = skus[0]
+                                sale_price = float(first_sku.get('offer_sale_price', 0))
+                                original_price = float(first_sku.get('sku_price', 0))
+                                print(f'  - offer_sale_price: {sale_price}')
+                                print(f'  - sku_price: {original_price}')
                         
                         # Formatar produto para o painel admin
                         product = {
                             'id': str(product_id),
-                            'title': result.get("product_title") or result.get("ae_item_base_info_dto", {}).get("subject", ""),
+                            'title': result.get("ae_item_base_info_dto", {}).get("subject", ""),
                             'main_image': result.get("product_main_image_url") or "",
                             'images': (result.get("ae_multimedia_info_dto", {}).get("image_urls", "") or "").split(";") if result.get("ae_multimedia_info_dto") else [],
-                            'price': float(result.get("target_sale_price", result.get("sale_price", "0")) or 0),
+                            'price': sale_price,
                             'currency': result.get("currency", "BRL"),
-                            'original_price': float(result.get("target_original_price", result.get("original_price", "0")) or 0),
+                            'original_price': original_price,
                             'discount': float(str(result.get("discount", "0")).replace("%","") or 0),
                             'detail_url': result.get("detail_url", ""),
-                            'store_name': result.get("store_info_dto", {}).get("store_name", ""),
-                            'rating': float(result.get("product_rating", 0) or 0),
-                            'orders': int(result.get("orders", 0) or 0),
+                            'store_name': result.get("ae_store_info", {}).get("store_name", ""),
+                            'rating': float(result.get("ae_item_base_info_dto", {}).get("avg_evaluation_rating", 0) or 0),
+                            'orders': int(result.get("ae_item_base_info_dto", {}).get("sales_count", "0").replace("+", "") or 0),
                             'feed_name': feed_name,
                             'is_imported': False  # Status para controle no painel admin
                         }
@@ -3291,8 +3299,8 @@ def admin_feed_products(feed_name):
                 'success': True,
                 'data': {
                     'products': products,
-                    'pagination': {
-                        'page': page,
+        'pagination': {
+            'page': page,
                         'page_size': page_size,
                         'total_products': len(product_ids),
                         'has_more': len(product_ids) > page_size
@@ -7001,13 +7009,13 @@ def get_feed_item_ids(feed_name):
             print(response.text)
         
         if response.status_code == 200:
-            data = response.json()
+        data = response.json()
             
             print(f'📄 Resposta da API para feed "{feed_name}":')
             print(json.dumps(data, indent=2, ensure_ascii=False))
             
                         # Extrair IDs dos produtos conforme documentação
-            item_ids = []
+        item_ids = []
             
             # Verificar estrutura da resposta
             if 'result' in data:

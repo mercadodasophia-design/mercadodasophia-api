@@ -25,7 +25,7 @@ except ImportError:
 load_dotenv()  # Carrega variáveis do arquivo .env, se existir
 
 # Versão do servidor para forçar cache refresh
-SERVER_VERSION = "1.0.29-FIX-TYPO"
+SERVER_VERSION = "1.0.30-FIX-SYNTAX-ERRORS"
 
 # ===================== MERCADO PAGO CONFIGURATION =====================
 # Configuração do Mercado Pago - Suporte para Teste e Produção
@@ -2738,7 +2738,7 @@ def sync_feed_products(access_token, feed_name, page_size=20, max_pages=5, ship_
                     # Converter para string
                     ids = [str(id) for id in ids if id]
                     print(f'✅ IDs extraídos corretamente: {len(ids)} IDs encontrados')
-        except Exception as e:
+                except Exception as e:
                     print(f"⚠️ Erro extraindo IDs: {e}")
                     ids = []
                 if not ids:
@@ -2888,7 +2888,7 @@ def get_saved_feed_products(feed_name):
         for d in docs:
             items.append(d.to_dict())
     
-    return jsonify({
+        return jsonify({
             "success": True,
             "feed_name": feed_name,
             "page": page,
@@ -4580,11 +4580,11 @@ def test_product_page():
         function extractProductId(url) {
             // Extrair ID do produto de diferentes formatos de URL do AliExpress
             const patterns = [
-                /\/item\/(\d+)\.html/,
-                /\/item\/(\d+)/,
-                /product_id=(\d+)/,
-                /itemId=(\d+)/,
-                /(\d{10,})/  // ID do produto geralmente tem 10+ dígitos
+                r'\/item\/(\d+)\.html',
+                r'\/item\/(\d+)',
+                r'product_id=(\d+)',
+                r'itemId=(\d+)',
+                r'(\d{10,})'  // ID do produto geralmente tem 10+ dígitos
             ];
             
             for (let pattern of patterns) {
@@ -6992,7 +6992,7 @@ def get_feed_item_ids(feed_name):
             print(response.text)
         
         if response.status_code == 200:
-        data = response.json()
+            data = response.json()
             
             print(f'📄 Resposta da API para feed "{feed_name}":')
             print(json.dumps(data, indent=2, ensure_ascii=False))

@@ -25,7 +25,7 @@ except ImportError:
 load_dotenv()  # Carrega variáveis do arquivo .env, se existir
 
 # Versão do servidor para forçar cache refresh
-SERVER_VERSION = "1.0.24-FEED-ERROR-DETECTION"
+SERVER_VERSION = "1.0.25-FEED-HTML-INTERFACE"
 
 # ===================== MERCADO PAGO CONFIGURATION =====================
 # Configuração do Mercado Pago - Suporte para Teste e Produção
@@ -2728,19 +2728,19 @@ def sync_feed_products(access_token, feed_name, page_size=20, max_pages=5, ship_
             if response.status_code == 200:
                 data = response.json()
                 
-                # Extrair IDs dos produtos
+                # Extrair IDs dos produtos - caminho correto conforme resposta da API
                 ids = []
-                def walk(o):
-                    if isinstance(o, dict):
-                        for k, v in o.items():
-                            if k in ("item_id", "product_id", "itemId") and v:
-                                ids.append(str(v))
-                            walk(v)
-                    elif isinstance(o, list):
-                        for x in o: walk(x)
-                walk(data)
-                
-                ids = list(dict.fromkeys(ids))  # Remover duplicatas
+                try:
+                    ids = data.get("aliexpress_ds_feed_itemids_get_response", {}) \
+                              .get("result", {}) \
+                              .get("products", {}) \
+                              .get("number", [])
+                    # Converter para string
+                    ids = [str(id) for id in ids if id]
+                    print(f'✅ IDs extraídos corretamente: {len(ids)} IDs encontrados')
+                except Exception as e:
+                    print(f"⚠️ Erro extraindo IDs: {e}")
+                    ids = []
                 if not ids:
                     print(f'⚠️ Nenhum ID encontrado na página {page}')
                     break
@@ -2899,6 +2899,153 @@ def get_saved_feed_products(feed_name):
     except Exception as e:
         print(f'❌ Erro ao listar produtos do feed {feed_name}: {e}')
         return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app.route('/', methods=['GET'])
+def home():
+    """Página inicial com interface para testar feeds"""
+    html = """
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>AliExpress Feeds API - Teste</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+            .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+            h1 { color: #333; text-align: center; }
+            .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+            .section h2 { color: #666; margin-top: 0; }
+            button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+            button:hover { background: #0056b3; }
+            button:disabled { background: #ccc; cursor: not-allowed; }
+            .result { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; padding: 15px; margin: 10px 0; white-space: pre-wrap; font-family: monospace; font-size: 12px; max-height: 400px; overflow-y: auto; }
+            .loading { color: #666; font-style: italic; }
+            .error { color: #dc3545; }
+            .success { color: #28a745; }
+            .info { color: #17a2b8; }
+            input, select { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; }
+            label { display: inline-block; width: 120px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🚀 AliExpress Feeds API - Teste</h1>
+            
+            <div class="section">
+                <h2>📋 1. Listar Feeds Disponíveis</h2>
+                <button onclick="listFeeds()">Buscar Feeds</button>
+                <button onclick="listSavedFeeds()">Feeds Salvos</button>
+                <div id="feedsResult" class="result"></div>
+            </div>
+
+            <div class="section">
+                <h2>🔄 2. Sincronizar Produtos</h2>
+                <label>Feed Name:</label>
+                <input type="text" id="feedName" value="DS_Brazil_topsellers" placeholder="Nome do feed">
+                <br>
+                <label>Page Size:</label>
+                <input type="number" id="pageSize" value="5" min="1" max="50">
+                <label>Max Pages:</label>
+                <input type="number" id="maxPages" value="1" min="1" max="10">
+                <br>
+                <button onclick="syncProducts()">Sincronizar Produtos</button>
+                <div id="syncResult" class="result"></div>
+            </div>
+
+            <div class="section">
+                <h2>📦 3. Buscar IDs de Produtos</h2>
+                <label>Feed Name:</label>
+                <input type="text" id="feedNameIds" value="DS_Brazil_topsellers" placeholder="Nome do feed">
+                <br>
+                <button onclick="getProductIds()">Buscar IDs</button>
+                <div id="idsResult" class="result"></div>
+            </div>
+
+            <div class="section">
+                <h2>📖 4. Produtos Salvos</h2>
+                <label>Feed Name:</label>
+                <input type="text" id="feedNameSaved" value="DS_Brazil_topsellers" placeholder="Nome do feed">
+                <label>Page:</label>
+                <input type="number" id="page" value="1" min="1">
+                <label>Page Size:</label>
+                <input type="number" id="pageSizeSaved" value="10" min="1" max="100">
+                <br>
+                <button onclick="getSavedProducts()">Buscar Produtos Salvos</button>
+                <div id="savedResult" class="result"></div>
+            </div>
+
+            <div class="section">
+                <h2>🧪 5. Teste Completo da API</h2>
+                <button onclick="testCompleteAPI()">Teste Completo</button>
+                <div id="testResult" class="result"></div>
+            </div>
+        </div>
+
+        <script>
+            const API_BASE = window.location.origin;
+
+            function showResult(elementId, data, isError = false) {
+                const element = document.getElementById(elementId);
+                element.className = 'result ' + (isError ? 'error' : 'success');
+                element.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+            }
+
+            function showLoading(elementId) {
+                const element = document.getElementById(elementId);
+                element.className = 'result loading';
+                element.textContent = 'Carregando...';
+            }
+
+            async function makeRequest(url, elementId) {
+                showLoading(elementId);
+                try {
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    showResult(elementId, data);
+                } catch (error) {
+                    showResult(elementId, 'Erro: ' + error.message, true);
+                }
+            }
+
+            function listFeeds() {
+                makeRequest(API_BASE + '/api/aliexpress/feeds/list?sync_products=false', 'feedsResult');
+            }
+
+            function listSavedFeeds() {
+                makeRequest(API_BASE + '/api/aliexpress/feeds/saved', 'feedsResult');
+            }
+
+            function syncProducts() {
+                const feedName = document.getElementById('feedName').value;
+                const pageSize = document.getElementById('pageSize').value;
+                const maxPages = document.getElementById('maxPages').value;
+                const url = `${API_BASE}/api/aliexpress/feeds/list?sync_products=true&page_size=${pageSize}&max_pages=${maxPages}`;
+                makeRequest(url, 'syncResult');
+            }
+
+            function getProductIds() {
+                const feedName = document.getElementById('feedNameIds').value;
+                makeRequest(API_BASE + '/api/aliexpress/feeds/' + feedName + '/ids', 'idsResult');
+            }
+
+            function getSavedProducts() {
+                const feedName = document.getElementById('feedNameSaved').value;
+                const page = document.getElementById('page').value;
+                const pageSize = document.getElementById('pageSizeSaved').value;
+                const url = `${API_BASE}/api/aliexpress/feeds/${feedName}/products/saved?page=${page}&page_size=${pageSize}`;
+                makeRequest(url, 'savedResult');
+            }
+
+            function testCompleteAPI() {
+                makeRequest(API_BASE + '/api/aliexpress/feeds/test', 'testResult');
+            }
+        </script>
+    </body>
+    </html>
+    """
+    return html
 
 
 @app.route('/api/aliexpress/feeds/test', methods=['GET'])

@@ -20,6 +20,7 @@ try:
     FIREBASE_AVAILABLE = True
 except ImportError:
     FIREBASE_AVAILABLE = False
+
     print('⚠️ Firebase Admin SDK não disponível - funcionalidades locais desabilitadas')
 
 
@@ -3055,13 +3056,65 @@ def home():
 @app.route('/api/admin/feeds/list', methods=['GET'])
 def admin_feeds_list():
     """Endpoint para painel admin - lista feeds com chips"""
-    ensure_fresh_token()
-    tokens = load_tokens()
-    if not tokens or not tokens.get('access_token'):
-        return jsonify({'success': False, 'message': 'Token não encontrado. Faça autorização primeiro.'}), 401
-
     try:
         print(f'📋 ADMIN: Listando feeds para painel admin...')
+        
+        # Tentar carregar tokens
+        tokens = load_tokens()
+        if not tokens or not tokens.get('access_token'):
+            print(f'⚠️ ADMIN: Tokens não encontrados, usando lista padrão de feeds')
+            # Retornar lista padrão se não há tokens
+            feeds = [
+                {
+                    'id': '1',
+                    'name': 'DS_Brazil_topsellers',
+                    'display_name': 'Mais Vendidos Brasil',
+                    'description': 'Produtos mais vendidos no Brasil',
+                    'product_count': 17605,
+                    'category': 'aliexpress',
+                    'is_active': True
+                },
+                {
+                    'id': '2',
+                    'name': 'DS_ConsumerElectronics_bestsellers',
+                    'display_name': 'Eletrônicos',
+                    'description': 'Eletrônicos mais vendidos',
+                    'product_count': 66299,
+                    'category': 'aliexpress',
+                    'is_active': True
+                },
+                {
+                    'id': '3',
+                    'name': 'DS_HomeGarden_bestsellers',
+                    'display_name': 'Casa e Jardim',
+                    'description': 'Produtos para casa e jardim',
+                    'product_count': 44523,
+                    'category': 'aliexpress',
+                    'is_active': True
+                },
+                {
+                    'id': '4',
+                    'name': 'DS_Fashion_bestsellers',
+                    'display_name': 'Moda',
+                    'description': 'Produtos de moda e acessórios',
+                    'product_count': 88912,
+                    'category': 'aliexpress',
+                    'is_active': True
+                }
+            ]
+            return jsonify({
+                'success': True,
+                'feeds': feeds,
+                'message': 'Lista padrão de feeds (tokens não disponíveis)'
+            })
+        
+        # Tentar renovar token se necessário
+        try:
+            ensure_fresh_token()
+            tokens = load_tokens()  # Recarregar tokens após renovação
+        except Exception as e:
+            print(f'⚠️ ADMIN: Erro ao renovar token: {e}')
+            # Continuar com tokens existentes
         
         # Buscar feeds via API
         params = {
@@ -3075,7 +3128,54 @@ def admin_feeds_list():
         }
         params["sign"] = generate_api_signature(params, APP_SECRET)
         
-        response = requests.get('https://api-sg.aliexpress.com/sync', params=params, timeout=30)
+        try:
+            response = requests.get('https://api-sg.aliexpress.com/sync', params=params, timeout=30)
+        except Exception as e:
+            print(f'❌ ADMIN: Erro na requisição da API: {e}')
+            # Retornar lista padrão em caso de erro na API
+            feeds = [
+                {
+                    'id': '1',
+                    'name': 'DS_Brazil_topsellers',
+                    'display_name': 'Mais Vendidos Brasil',
+                    'description': 'Produtos mais vendidos no Brasil',
+                    'product_count': 17605,
+                    'category': 'aliexpress',
+                    'is_active': True
+                },
+                {
+                    'id': '2',
+                    'name': 'DS_ConsumerElectronics_bestsellers',
+                    'display_name': 'Eletrônicos',
+                    'description': 'Eletrônicos mais vendidos',
+                    'product_count': 66299,
+                    'category': 'aliexpress',
+                    'is_active': True
+                },
+                {
+                    'id': '3',
+                    'name': 'DS_HomeGarden_bestsellers',
+                    'display_name': 'Casa e Jardim',
+                    'description': 'Produtos para casa e jardim',
+                    'product_count': 44523,
+                    'category': 'aliexpress',
+                    'is_active': True
+                },
+                {
+                    'id': '4',
+                    'name': 'DS_Fashion_bestsellers',
+                    'display_name': 'Moda',
+                    'description': 'Produtos de moda e acessórios',
+                    'product_count': 88912,
+                    'category': 'aliexpress',
+                    'is_active': True
+                }
+            ]
+            return jsonify({
+                'success': True,
+                'feeds': feeds,
+                'message': 'Lista padrão de feeds (erro na API)'
+            })
         
         if response.status_code == 200:
             data = response.json()
@@ -4348,12 +4448,14 @@ def test_endpoint():
         }
     })
 
-@app.route('/test-product')
-def test_product_page():
-    """Página de teste para buscar produtos por link"""
-    base_url = os.getenv('RENDER_EXTERNAL_URL', 'https://service-api-aliexpress.mercadodasophia.com.br')
-    
-    return '''
+@app.route('/test-product', methods=['GET', 'POST'])
+def test_product():
+    """Endpoint para buscar produto por link - retorna JSON"""
+    if request.method == 'GET':
+        # Retorna a página HTML para teste
+        base_url = os.getenv('RENDER_EXTERNAL_URL', 'https://service-api-aliexpress.mercadodasophia.com.br')
+        
+        return '''
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -4796,6 +4898,85 @@ def test_product_page():
 </body>
 </html>
     '''
+    
+    elif request.method == 'POST':
+        # Retorna JSON para requisições POST
+        try:
+            data = request.get_json()
+            if not data or 'product_url' not in data:
+                return jsonify({
+                    'success': False,
+                    'message': 'URL do produto é obrigatória'
+                }), 400
+            
+            product_url = data['product_url'].strip()
+            if not product_url:
+                return jsonify({
+                    'success': False,
+                    'message': 'URL do produto não pode estar vazia'
+                }), 400
+            
+            # Extrair ID do produto da URL
+            product_id = extract_product_id_from_url(product_url)
+            if not product_id:
+                return jsonify({
+                    'success': False,
+                    'message': 'Não foi possível extrair o ID do produto da URL'
+                }), 400
+            
+            # Buscar dados do produto usando o endpoint existente
+            try:
+                # Fazer requisição interna para o endpoint de produto
+                import requests
+                internal_url = f"{request.host_url.rstrip('/')}/api/aliexpress/product/{product_id}"
+                response = requests.get(internal_url, timeout=30)
+                
+                if response.status_code == 200:
+                    product_data = response.json()
+                    return jsonify(product_data)
+                else:
+                    return jsonify({
+                        'success': False,
+                        'message': f'Erro ao buscar produto: {response.status_code}'
+                    }), response.status_code
+                    
+            except requests.exceptions.Timeout:
+                return jsonify({
+                    'success': False,
+                    'message': 'Timeout ao buscar dados do produto'
+                }), 408
+            except requests.exceptions.RequestException as e:
+                return jsonify({
+                    'success': False,
+                    'message': f'Erro na requisição: {str(e)}'
+                }), 500
+                
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'message': f'Erro interno: {str(e)}'
+            }), 500
+
+
+def extract_product_id_from_url(url):
+    """Extrai o ID do produto de diferentes formatos de URL do AliExpress"""
+    import re
+    
+    patterns = [
+        r'/item/(\d+)\.html',
+        r'/item/(\d+)',
+        r'product_id=(\d+)',
+        r'itemId=(\d+)',
+        r'(\d{10,})'  # ID do produto geralmente tem 10+ dígitos
+    ]
+    
+    for pattern in patterns:
+        match = re.search(pattern, url)
+        if match:
+            return match.group(1)
+    
+    return None
+
 
 @app.route('/debug/tokens', methods=['GET'])
 def debug_tokens():

@@ -4926,10 +4926,10 @@ def test_product():
             
             # Buscar dados do produto usando o endpoint existente
             try:
-                # Fazer requisição interna para o endpoint de produto
+                # Fazer requisição interna para o endpoint de produto com timeout menor
                 import requests
                 internal_url = f"{request.host_url.rstrip('/')}/api/aliexpress/product/{product_id}"
-                response = requests.get(internal_url, timeout=30)
+                response = requests.get(internal_url, timeout=15)  # Timeout reduzido para 15 segundos
                 
                 if response.status_code == 200:
                     product_data = response.json()
@@ -4943,7 +4943,7 @@ def test_product():
             except requests.exceptions.Timeout:
                 return jsonify({
                     'success': False,
-                    'message': 'Timeout ao buscar dados do produto'
+                    'message': 'Timeout ao buscar dados do produto (15s). Tente novamente.'
                 }), 408
             except requests.exceptions.RequestException as e:
                 return jsonify({

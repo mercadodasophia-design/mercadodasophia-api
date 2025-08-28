@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 from flask_cors import CORS
 # Firebase Admin SDK (opcional)
 try:
+
     import firebase_admin
     from firebase_admin import credentials, firestore
     FIREBASE_AVAILABLE = True
@@ -179,7 +180,7 @@ def save_tokens(tokens):
             try:
                 db.collection('config').doc('aliexpress_tokens').set(tokens, merge=True)
             except AttributeError:
-            db.collection('config').document('aliexpress_tokens').set(tokens, merge=True)
+                db.collection('config').document('aliexpress_tokens').set(tokens, merge=True)
                 
             print('✅ Tokens salvos no Firestore com sucesso!')
             return
@@ -198,7 +199,7 @@ def load_tokens():
             try:
                 doc = db.collection('config').doc('aliexpress_tokens').get()
             except AttributeError:
-            doc = db.collection('config').document('aliexpress_tokens').get()
+                doc = db.collection('config').document('aliexpress_tokens').get()
             
             if doc and doc.exists:
                 data = doc.to_dict()
@@ -2738,7 +2739,7 @@ def sync_feed_products(access_token, feed_name, page_size=20, max_pages=5, ship_
                     # Converter para string
                     ids = [str(id) for id in ids if id]
                     print(f'✅ IDs extraídos corretamente: {len(ids)} IDs encontrados')
-        except Exception as e:
+                except Exception as e:
                     print(f"⚠️ Erro extraindo IDs: {e}")
                     ids = []
                 if not ids:
@@ -3158,21 +3159,21 @@ def admin_feeds_list():
                     }
                 ]
     
-    return jsonify({
-        'success': True,
-                'data': {
-                    'feeds': feeds,
-                    'total_feeds': len(feeds)
-                },
-                'message': 'Feeds carregados com sucesso'
-            })
+                return jsonify({
+            'success': True,
+            'data': {
+                'feeds': feeds,
+                'total_feeds': len(feeds)
+            },
+            'message': 'Feeds carregados com sucesso'
+        })
         else:
             return jsonify({
                 'success': False,
                 'message': f'Erro {response.status_code} ao buscar feeds',
                 'error': response.text
             }), response.status_code
-            
+        
     except Exception as e:
         print(f'❌ Erro ao listar feeds para admin: {e}')
         return jsonify({
@@ -7009,7 +7010,7 @@ def get_feed_item_ids(feed_name):
             print(response.text)
         
         if response.status_code == 200:
-        data = response.json()
+            data = response.json()
             
             print(f'📄 Resposta da API para feed "{feed_name}":')
             print(json.dumps(data, indent=2, ensure_ascii=False))

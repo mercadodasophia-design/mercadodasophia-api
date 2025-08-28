@@ -7018,35 +7018,35 @@ def get_feed_item_ids(feed_name):
             print(f'📄 Resposta da API para feed "{feed_name}":')
             print(json.dumps(data, indent=2, ensure_ascii=False))
             
-                        # Extrair IDs dos produtos conforme documentação
-        item_ids = []
-        
-        # Verificar estrutura da resposta
-        if 'result' in data:
-            result = data['result']
-            print(f'📊 Keys do result: {list(result.keys())}')
+            # Extrair IDs dos produtos conforme documentação
+            item_ids = []
             
-            if 'products' in result:
-                products = result['products']
-                print(f'📊 Tipo de products: {type(products)}')
-                print(f'📄 Products: {products}')
+            # Verificar estrutura da resposta
+            if 'result' in data:
+                result = data['result']
+                print(f'📊 Keys do result: {list(result.keys())}')
                 
-                if isinstance(products, list):
-                    for product in products:
-                        item_id = str(product.get('item_id', ''))
+                if 'products' in result:
+                    products = result['products']
+                    print(f'📊 Tipo de products: {type(products)}')
+                    print(f'📄 Products: {products}')
+                    
+                    if isinstance(products, list):
+                        for product in products:
+                            item_id = str(product.get('item_id', ''))
+                            if item_id:
+                                item_ids.append(item_id)
+                    elif isinstance(products, dict):
+                        item_id = str(products.get('item_id', ''))
                         if item_id:
                             item_ids.append(item_id)
-                elif isinstance(products, dict):
-                    item_id = str(products.get('item_id', ''))
-                    if item_id:
-                        item_ids.append(item_id)
+                else:
+                    print(f'❌ products não encontrado em result')
+                    print(f'📄 Estrutura completa do result:')
+                    print(json.dumps(result, indent=2, ensure_ascii=False))
             else:
-                print(f'❌ products não encontrado em result')
-                print(f'📄 Estrutura completa do result:')
-                print(json.dumps(result, indent=2, ensure_ascii=False))
-        else:
-            print(f'❌ result não encontrado na resposta')
-            print(f'📄 Keys da resposta: {list(data.keys())}')
+                print(f'❌ result não encontrado na resposta')
+                print(f'📄 Keys da resposta: {list(data.keys())}')
             
             print(f'📦 IDs encontrados para feed "{feed_name}": {len(item_ids)}')
             

@@ -2767,9 +2767,10 @@ def sync_feed_products(access_token, feed_name, page_size=20, max_pages=5, ship_
         return 0
     
     # ETAPA 3: Buscar detalhes dos produtos e salvar no Firestore
-    for i, product_id in enumerate(all_ids[:50]):  # Limitar a 50 produtos para evitar timeout
+    # Limitar a 10 produtos para evitar timeout do servidor
+    for i, product_id in enumerate(all_ids[:10]):  
         try:
-            print(f'🔄 Buscando detalhes do produto {i+1}/{min(50, len(all_ids))}: {product_id}')
+            print(f'🔄 Buscando detalhes do produto {i+1}/{min(10, len(all_ids))}: {product_id}')
             
             params = {
                 "method": "aliexpress.ds.product.get",
@@ -2787,7 +2788,7 @@ def sync_feed_products(access_token, feed_name, page_size=20, max_pages=5, ship_
             }
             params["sign"] = generate_api_signature(params, APP_SECRET)
             
-            response = requests.get('https://api-sg.aliexpress.com/sync', params=params, timeout=30)
+            response = requests.get('https://api-sg.aliexpress.com/sync', params=params, timeout=10)
             
             if response.status_code == 200:
                 data = response.json()
@@ -2829,8 +2830,8 @@ def sync_feed_products(access_token, feed_name, page_size=20, max_pages=5, ship_
             print(f'❌ Erro ao processar produto {product_id}: {e}')
             continue
         
-        # Pausa entre produtos para evitar rate limit
-        time.sleep(0.2)
+        # Pausa reduzida entre produtos
+        time.sleep(0.1)
     
     # Atualizar cabeçalho do feed no Firestore
     db.collection("aliexpress_feeds").document(feed_name).set({
@@ -3211,7 +3212,7 @@ def admin_feed_products(feed_name):
         }
         params["sign"] = generate_api_signature(params, APP_SECRET)
         
-        response = requests.get('https://api-sg.aliexpress.com/sync', params=params, timeout=30)
+        response = requests.get('https://api-sg.aliexpress.com/sync', params=params, timeout=15)
         
         if response.status_code == 200:
             data = response.json()
@@ -3227,9 +3228,11 @@ def admin_feed_products(feed_name):
             except Exception as e:
                 print(f"⚠️ Erro extraindo IDs: {e}")
             
-            # Buscar detalhes dos produtos
+            # Buscar detalhes dos produtos (limitado a 10 para evitar timeout)
             products = []
-            for product_id in product_ids[:page_size]:  # Limitar ao page_size
+            max_products = min(10, page_size)  # Limitar a 10 produtos por vez
+            
+            for product_id in product_ids[:max_products]:
                 try:
                     product_params = {
                         "method": "aliexpress.ds.product.get",
@@ -3247,7 +3250,7 @@ def admin_feed_products(feed_name):
                     }
                     product_params["sign"] = generate_api_signature(product_params, APP_SECRET)
                     
-                    product_response = requests.get('https://api-sg.aliexpress.com/sync', params=product_params, timeout=30)
+                    product_response = requests.get('https://api-sg.aliexpress.com/sync', params=product_params, timeout=10)
                     
                     if product_response.status_code == 200:
                         product_data = product_response.json()
@@ -3348,7 +3351,7 @@ def test_feed_api():
         params["sign"] = generate_api_signature(params, APP_SECRET)
         
         print(f'📡 Teste 1: Buscando feeds...')
-        response = requests.get('https://api-sg.aliexpress.com/sync', params=params, timeout=30)
+        response = requests.get('https://api-sg.aliexpress.com/sync', params=params, timeout=15)
         
         print(f'📡 Status: {response.status_code}')
         print(f'📄 Resposta: {response.text}')

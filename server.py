@@ -112,6 +112,7 @@ ALLOWED_ORIGINS = [
     "https://www.mercadodasophia.com.br",
     "https://service-api-aliexpress.mercadodasophia.com.br",
     "http://localhost:3000",
+    "http://localhost:3001",
     "http://localhost:5000",
     "http://localhost:8000",
     "http://localhost:8080",  # Flutter web porta fixa
@@ -4448,105 +4449,9 @@ def test_endpoint():
         }
     })
 
-@app.route('/test-product', methods=['GET', 'POST'])
+@app.route('/test-product', methods=['POST'])
 def test_product():
-    """Endpoint para buscar produto por link - retorna JSON"""
-    if request.method == 'GET':
-        # Retorna a página HTML para teste
-        base_url = os.getenv('RENDER_EXTERNAL_URL', 'https://service-api-aliexpress.mercadodasophia.com.br')
-        
-        return '''
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teste - Buscar Produto AliExpress</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-        
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-        
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-        }
-        
-        .header p {
-            font-size: 1.2em;
-            opacity: 0.9;
-        }
-        
-        .content {
-            padding: 40px;
-        }
-        
-        .search-section {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 30px;
-            margin-bottom: 30px;
-        }
-        
-        .search-section h2 {
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 1.8em;
-        }
-        
-        .input-group {
-            margin-bottom: 20px;
-        }
-        
-        .input-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #333;
-        }
-        
-        .input-group input {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s ease;
-        }
-        
-        .input-group input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        
-        .btn {
-            display: inline-block;
-            padding: 15px 30px;
+    """Endpoint para buscar produto por link - retorna apenas JSON do produto"""
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             text-decoration: none;

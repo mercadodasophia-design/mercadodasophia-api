@@ -4926,26 +4926,37 @@ def test_product():
             
             # Buscar dados do produto usando o endpoint existente
             try:
-                # Fazer requisição interna para o endpoint de produto com timeout menor
+                print(f'🔍 Extraído ID do produto: {product_id}')
+                print(f'🔗 URL original: {product_url}')
+                
+                # Fazer requisição interna para o endpoint de produto
                 import requests
                 internal_url = f"{request.host_url.rstrip('/')}/api/aliexpress/product/{product_id}"
-                response = requests.get(internal_url, timeout=15)  # Timeout reduzido para 15 segundos
+                print(f'📡 Fazendo requisição interna para: {internal_url}')
+                
+                response = requests.get(internal_url, timeout=45)  # Aumentado para 45 segundos
+                
+                print(f'📡 Resposta interna: {response.status_code}')
                 
                 if response.status_code == 200:
                     product_data = response.json()
+                    print('✅ Produto encontrado com sucesso')
                     return jsonify(product_data)
                 else:
+                    print(f'❌ Erro na requisição interna: {response.status_code} - {response.text}')
                     return jsonify({
                         'success': False,
                         'message': f'Erro ao buscar produto: {response.status_code}'
                     }), response.status_code
                     
             except requests.exceptions.Timeout:
+                print('⏰ Timeout na requisição interna (45s)')
                 return jsonify({
                     'success': False,
-                    'message': 'Timeout ao buscar dados do produto (15s). Tente novamente.'
+                    'message': 'Timeout ao buscar dados do produto (45s). A API do AliExpress pode estar lenta.'
                 }), 408
             except requests.exceptions.RequestException as e:
+                print(f'❌ Erro na requisição interna: {str(e)}')
                 return jsonify({
                     'success': False,
                     'message': f'Erro na requisição: {str(e)}'

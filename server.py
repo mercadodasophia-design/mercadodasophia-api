@@ -1984,6 +1984,67 @@ def product_details(product_id):
         print(f'❌ Erro ao buscar detalhes do produto {product_id}: {e}')
         return jsonify({'success': False, 'message': str(e)}), 500
 
+
+@app.route('/api/aliexpress/product-ds/url', methods=['GET'])
+def product_from_url():
+    """Recebe a URL do AliExpress e retorna JSON detalhado do produto"""
+    url = request.args.get('url')
+    if not url:
+        return jsonify({'success': False, 'message': 'URL não fornecida'}), 400
+
+    # Extrair product_id da URL com regex
+    match = re.search(r'/item/(\d+)\.html', url)
+    if not match:
+        return jsonify({'success': False, 'message': 'URL inválida'}), 400
+    product_id = match.group(1)
+
+    tokens = load_tokens()
+    if not tokens or not tokens.get('access_token'):
+        return jsonify({'success': False, 'message': 'Token não encontrado'}), 401
+
+    # Montar chamada da API
+    params = {
+        "method": "aliexpress.ds.product.get",
+        "app_key": APP_KEY,
+        "timestamp": int(time.time() * 1000),
+        "sign_method": "md5",
+        "format": "json",
+        "v": "2.0",
+        "access_token": tokens['access_token'],
+        "product_id": product_id,
+        "ship_to_country": "BR",
+        "target_currency": "BRL",
+        "target_language": "pt"
+    }
+    params["sign"] = generate_api_signature(params, APP_SECRET)
+
+    response = requests.get('https://api-sg.aliexpress.com/sync', params=params, timeout=20)
+
+    if response.status_code != 200:
+        return jsonify({'success': False, 'error': response.text}), response.status_code
+
+    data = response.json()
+    result = data.get('aliexpress_ds_product_get_response', {}).get('result', {})
+
+    # Estrutura simplificada pro frontend
+    product = {
+        "id": product_id,
+        "title": result.get("ae_item_base_info_dto", {}).get("subject", ""),
+        "description": result.get("ae_item_base_info_dto", {}).get("detail", ""),
+        "images": result.get("ae_multimedia_info_dto", {}).get("image_urls", "").split(";"),
+        "videos": result.get("ae_multimedia_info_dto", {}).get("ae_video_dtos", []),
+        "price": result.get("sale_price", ""),
+        "currency": result.get("currency_code", "BRL"),
+        "stock": result.get("ae_item_base_info_dto", {}).get("inventory", 0),
+        "store": result.get("ae_store_info", {}).get("store_name", ""),
+        "rating": result.get("ae_item_base_info_dto", {}).get("avg_evaluation_rating", 0),
+        "sales": result.get("ae_item_base_info_dto", {}).get("sales_count", 0),
+        "skus": result.get("ae_item_sku_info_dtos", {}),
+        "raw": result
+    }
+
+    return jsonify({'success': True, 'data': product})
+
 @app.route('/api/aliexpress/product/wholesale/<product_id>')
 def product_wholesale_details(product_id):
     """Buscar detalhes completos de um produto usando aliexpress.ds.product.wholesale.get"""

@@ -2078,6 +2078,8 @@ def product_from_url():
         return jsonify({'success': False, 'message': 'URL inválida'}), 400
     product_id = match.group(1)
 
+    print(f'🔍 Buscando produto ID: {product_id}')
+
     tokens = load_tokens()
     if not tokens or not tokens.get('access_token'):
         return jsonify({'success': False, 'message': 'Token não encontrado'}), 401
@@ -2098,32 +2100,104 @@ def product_from_url():
     }
     params["sign"] = generate_api_signature(params, APP_SECRET)
 
-    response = requests.get('https://api-sg.aliexpress.com/sync', params=params, timeout=20)
+    try:
+        response = requests.get('https://api-sg.aliexpress.com/sync', params=params, timeout=20)
+        print(f'📡 Resposta da API AliExpress: {response.status_code}')
 
-    if response.status_code != 200:
-        return jsonify({'success': False, 'error': response.text}), response.status_code
+        if response.status_code != 200:
+            print(f'❌ Erro na API: {response.text}')
+            return jsonify({'success': False, 'error': response.text}), response.status_code
 
-    data = response.json()
-    result = data.get('aliexpress_ds_product_get_response', {}).get('result', {})
+        data = response.json()
+        print(f'📦 Dados brutos recebidos: {json.dumps(data, indent=2)[:1000]}...')
 
-    # Estrutura simplificada pro frontend
-    product = {
-        "id": product_id,
-        "title": result.get("ae_item_base_info_dto", {}).get("subject", ""),
-        "description": result.get("ae_item_base_info_dto", {}).get("detail", ""),
-        "images": result.get("ae_multimedia_info_dto", {}).get("image_urls", "").split(";"),
-        "videos": result.get("ae_multimedia_info_dto", {}).get("ae_video_dtos", []),
-        "price": result.get("sale_price", ""),
-        "currency": result.get("currency_code", "BRL"),
-        "stock": result.get("ae_item_base_info_dto", {}).get("inventory", 0),
-        "store": result.get("ae_store_info", {}).get("store_name", ""),
-        "rating": result.get("ae_item_base_info_dto", {}).get("avg_evaluation_rating", 0),
-        "sales": result.get("ae_item_base_info_dto", {}).get("sales_count", 0),
-        "skus": result.get("ae_item_sku_info_dtos", {}),
-        "raw": result
-    }
+        result = data.get('aliexpress_ds_product_get_response', {}).get('result', {})
+        
+        if not result:
+            print('❌ Nenhum resultado encontrado na resposta')
+            return jsonify({'success': False, 'message': 'Produto não encontrado'}), 404
 
-    return jsonify({'success': True, 'data': product})
+        # Extrair informações básicas
+        base_info = result.get("ae_item_base_info_dto", {})
+        multimedia_info = result.get("ae_multimedia_info_dto", {})
+        store_info = result.get("ae_store_info", {})
+        sku_info = result.get("ae_item_sku_info_dtos", {})
+
+        # Processar imagens
+        image_urls = multimedia_info.get("image_urls", "")
+        images = [img.strip() for img in image_urls.split(";") if img.strip()] if image_urls else []
+
+        # Processar SKUs/variações
+        variations = []
+        if sku_info and isinstance(sku_info, dict):
+            sku_list = sku_info.get("ae_sku_property_dto", [])
+            if isinstance(sku_list, list):
+                variations = sku_list
+            elif isinstance(sku_list, dict):
+                variations = [sku_list]
+
+        # Estrutura organizada para o frontend
+        product = {
+            "basic_info": {
+                "product_id": product_id,
+                "title": base_info.get("subject", "Sem título"),
+                "brand": base_info.get("brand", ""),
+                "category_id": base_info.get("category_id", ""),
+                "product_status_type": base_info.get("product_status_type", ""),
+                "product_type": base_info.get("product_type", ""),
+            },
+            "price_info": {
+                "sale_price": result.get("sale_price", ""),
+                "original_price": result.get("original_price", ""),
+                "currency": result.get("currency_code", "BRL"),
+                "discount": result.get("discount", ""),
+            },
+            "ratings": {
+                "avg_evaluation_rating": base_info.get("avg_evaluation_rating", 0),
+                "evaluation_count": base_info.get("evaluation_count", 0),
+                "sales_count": base_info.get("sales_count", 0),
+                "positive_rate": base_info.get("positive_rate", 0),
+            },
+            "store_info": {
+                "store_name": store_info.get("store_name", ""),
+                "store_id": store_info.get("store_id", ""),
+                "store_country_code": store_info.get("store_country_code", ""),
+                "store_rating": store_info.get("store_rating", ""),
+                "store_years": store_info.get("store_years", ""),
+            },
+            "package_info": {
+                "gross_weight": base_info.get("gross_weight", ""),
+                "package_length": base_info.get("package_length", ""),
+                "package_width": base_info.get("package_width", ""),
+                "package_height": base_info.get("package_height", ""),
+                "package_type": base_info.get("package_type", ""),
+                "package_volume": base_info.get("package_volume", ""),
+            },
+            "images": images,
+            "videos": multimedia_info.get("ae_video_dtos", []),
+            "variations": variations,
+            "properties": result.get("ae_item_properties", []),
+            "description": base_info.get("detail", ""),
+            "freight_info": {
+                "free_shipping": result.get("free_shipping", False),
+                "delivery_time": result.get("delivery_time", ""),
+                "shipping_cost": result.get("shipping_cost", ""),
+                "shipping_method": result.get("shipping_method", ""),
+            },
+            "special_info": {
+                "certifications": base_info.get("certifications", ""),
+                "warranty": base_info.get("warranty", ""),
+                "material": base_info.get("material", ""),
+                "origin": base_info.get("origin", ""),
+            }
+        }
+
+        print(f'✅ Produto processado com sucesso: {product["basic_info"]["title"]}')
+        return jsonify({'success': True, 'data': product})
+
+    except Exception as e:
+        print(f'❌ Erro ao processar produto: {e}')
+        return jsonify({'success': False, 'message': f'Erro interno: {str(e)}'}), 500
 
 @app.route('/api/aliexpress/product/wholesale/<product_id>')
 def product_wholesale_details(product_id):

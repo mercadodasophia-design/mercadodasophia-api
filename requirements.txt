@@ -1,8 +1,36 @@
-flask==2.3.3
-requests==2.31.0
+# Dependências principais
+Flask==2.3.3
+Flask-CORS==4.0.0
+Flask-Limiter==3.5.0
 python-dotenv==1.0.0
-gunicorn==21.2.0
+requests==2.31.0
+
+# Firebase
+firebase-admin==6.2.0
+
+# Monitoramento de memória
+psutil==5.9.6
+
+# Mercado Pago
 mercadopago==2.2.0
-flask-cors==4.0.0
-firebase-admin==6.4.0
-iop 
+
+# AliExpress SDK
+iop-sdk-python==1.0.0
+
+# Otimizações de memória
+gunicorn==21.2.0
+gevent==23.9.1
+
+# Logging e monitoramento
+structlog==23.2.0
+
+# Cache e performance
+redis==5.0.1
+cachetools==5.3.2
+
+# Segurança
+cryptography==41.0.7
+
+# Utilitários
+python-dateutil==2.8.2
+pytz==2023.3 

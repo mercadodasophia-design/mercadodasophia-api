@@ -1,6 +1,53 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# ===================== CONFIGURAÇÕES DE MEMÓRIA E PERFORMANCE =====================
+import gc
+import psutil
+import threading
+import time
+from functools import wraps
+
+# Configurações de memória
+MAX_MEMORY_USAGE = 0.8  # 80% da memória disponível
+MEMORY_CHECK_INTERVAL = 30  # segundos
+ENABLE_MEMORY_MONITORING = True
+
+def memory_monitor():
+    """Monitor de memória para evitar SIGKILL"""
+    while ENABLE_MEMORY_MONITORING:
+        try:
+            memory_percent = psutil.virtual_memory().percent / 100
+            if memory_percent > MAX_MEMORY_USAGE:
+                print(f'⚠️ ALERTA: Uso de memória alto ({memory_percent:.1%}). Forçando garbage collection...')
+                gc.collect()
+                time.sleep(5)
+            time.sleep(MEMORY_CHECK_INTERVAL)
+        except Exception as e:
+            print(f'❌ Erro no monitor de memória: {e}')
+            time.sleep(60)
+
+# Iniciar monitor de memória em thread separada
+if ENABLE_MEMORY_MONITORING:
+    memory_thread = threading.Thread(target=memory_monitor, daemon=True)
+    memory_thread.start()
+
+def optimize_memory(func):
+    """Decorator para otimizar uso de memória"""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            result = func(*args, **kwargs)
+            # Forçar garbage collection após operações pesadas
+            if func.__name__ in ['sync_feed_products', 'get_feed_products', 'product_details']:
+                gc.collect()
+            return result
+        except MemoryError:
+            print(f'❌ Erro de memória em {func.__name__}. Forçando cleanup...')
+            gc.collect()
+            raise
+    return wrapper
+
 #fjoiherferferuifiufuieruerierofrio
 import os
 import json
@@ -68,6 +115,36 @@ except ImportError:
     print('⚠️ Mercado Pago integration não disponível')
 
 app = Flask(__name__)
+
+# ===================== RATE LIMITING E SEGURANÇA =====================
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://"
+)
+
+# Proteção contra ataques
+@app.before_request
+def security_check():
+    """Verificações de segurança antes de cada requisição"""
+    # Bloquear tentativas de acessar arquivos sensíveis
+    sensitive_paths = ['.git', '.env', 'config', 'logs', 'tokens.json']
+    path = request.path.lower()
+    
+    for sensitive in sensitive_paths:
+        if sensitive in path:
+            print(f'🚨 TENTATIVA DE ACESSO SUSPEITO: {request.path} - IP: {request.remote_addr}')
+            return jsonify({'error': 'Access denied'}), 403
+    
+    # Verificar User-Agent suspeito
+    user_agent = request.headers.get('User-Agent', '').lower()
+    if 'bot' in user_agent or 'crawler' in user_agent or 'scraper' in user_agent:
+        print(f'🚨 BOT DETECTADO: {user_agent} - IP: {request.remote_addr}')
+        return jsonify({'error': 'Bot access denied'}), 403
 
 # Inicialização do Firebase movida para função para evitar problemas de indentação
 def init_firebase():
@@ -1492,17 +1569,19 @@ def products():
         # Fazer requisição HTTP direta para /sync
         response = requests.get('https://api-sg.aliexpress.com/sync', params=params)
         
-        # Salvar resposta completa em arquivo JSON
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        query = request.args.get('q', 'electronics')
-        log_filename = f"logs/product_search_{query}_{timestamp}.json"
-        
-        # Criar diretório logs se não existir
-        os.makedirs("logs", exist_ok=True)
-        
-        # Salvar resposta bruta
-        with open(log_filename, 'w', encoding='utf-8') as f:
-            f.write(response.text)
+        # Salvar resposta completa em arquivo JSON (apenas em desenvolvimento)
+        if os.getenv('FLASK_ENV') == 'development':
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            query = request.args.get('q', 'electronics')
+            log_filename = f"logs/product_search_{query}_{timestamp}.json"
+            
+            # Criar diretório logs se não existir
+            os.makedirs("logs", exist_ok=True)
+            
+            # Salvar resposta bruta (limitada a 1MB)
+            response_text = response.text[:1024*1024]  # Limitar a 1MB
+            with open(log_filename, 'w', encoding='utf-8') as f:
+                f.write(response_text)
         
         print(f'📡 Status da resposta: {response.status_code}')
         print(f'📄 Tamanho da resposta: {len(response.text)} caracteres')
@@ -2761,9 +2840,14 @@ def get_available_feeds():
         }), 500
 
 
+@optimize_memory
 def sync_feed_products(access_token, feed_name, page_size=20, max_pages=5, ship_to='BR', currency='BRL', language='pt'):
     """ETAPA 2 e 3: Sincronizar produtos de um feed específico"""
     print(f'🔄 Sincronizando produtos do feed: {feed_name}')
+    
+    # Limitar uso de memória
+    page_size = min(page_size, 50)  # Máximo 50 produtos por página
+    max_pages = min(max_pages, 10)  # Máximo 10 páginas
     
     total_saved = 0
     page = 1

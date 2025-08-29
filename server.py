@@ -4513,352 +4513,70 @@ def test_endpoint():
 @app.route('/test-product', methods=['POST'])
 def test_product():
     """Endpoint para buscar produto por link - retorna apenas JSON do produto"""
-            border-radius: 5px;
+    try:
+        data = request.get_json()
+        if not data or 'product_url' not in data:
+            return jsonify({'success': False, 'message': 'URL do produto não fornecida'}), 400
+        
+        product_url = data['product_url']
+        
+        # Extrair product_id da URL
+        match = re.search(r'/item/(\d+)\.html', product_url)
+        if not match:
+            return jsonify({'success': False, 'message': 'URL inválida'}), 400
+        
+        product_id = match.group(1)
+        
+        # Carregar tokens
+        tokens = load_tokens()
+        if not tokens or not tokens.get('access_token'):
+            return jsonify({'success': False, 'message': 'Token não encontrado'}), 401
+        
+        # Montar chamada da API
+        params = {
+            "method": "aliexpress.ds.product.get",
+            "app_key": APP_KEY,
+            "timestamp": int(time.time() * 1000),
+            "sign_method": "md5",
+            "format": "json",
+            "v": "2.0",
+            "access_token": tokens['access_token'],
+            "product_id": product_id,
+            "ship_to_country": "BR",
+            "target_currency": "BRL",
+            "target_language": "pt"
+        }
+        params["sign"] = generate_api_signature(params, APP_SECRET)
+        
+        response = requests.get('https://api-sg.aliexpress.com/sync', params=params, timeout=45)
+        
+        if response.status_code != 200:
+            return jsonify({'success': False, 'error': response.text}), response.status_code
+        
+        data = response.json()
+        result = data.get('aliexpress_ds_product_get_response', {}).get('result', {})
+        
+        # Estrutura simplificada pro frontend
+        product = {
+            "id": product_id,
+            "title": result.get("ae_item_base_info_dto", {}).get("subject", ""),
+            "description": result.get("ae_item_base_info_dto", {}).get("detail", ""),
+            "images": result.get("ae_multimedia_info_dto", {}).get("image_urls", "").split(";"),
+            "videos": result.get("ae_multimedia_info_dto", {}).get("ae_video_dtos", []),
+            "price": result.get("sale_price", ""),
+            "currency": result.get("currency_code", "BRL"),
+            "stock": result.get("ae_item_base_info_dto", {}).get("inventory", 0),
+            "store": result.get("ae_store_info", {}).get("store_name", ""),
+            "rating": result.get("ae_item_base_info_dto", {}).get("avg_evaluation_rating", 0),
+            "sales": result.get("ae_item_base_info_dto", {}).get("sales_count", 0),
+            "skus": result.get("ae_item_sku_info_dtos", {}),
+            "raw": result
         }
         
-        .data-item strong {
-            color: #333;
-        }
+        return jsonify({'success': True, 'data': product})
         
-        .variations-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-        }
-        
-        .variation-item {
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            padding: 15px;
-        }
-        
-        .back-btn {
-            display: inline-block;
-            padding: 10px 20px;
-            background: #6c757d;
-            color: white;
-            text-decoration: none;
-            border-radius: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .back-btn:hover {
-            background: #5a6268;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🔍 Teste - Buscar Produto AliExpress</h1>
-            <p>Cole um link do AliExpress e veja todos os dados do produto</p>
-        </div>
-        
-        <div class="content">
-            <a href="''' + base_url + '''/" class="back-btn">← Voltar</a>
-            
-            <div class="search-section">
-                <h2>Buscar Produto por Link</h2>
-                <div class="input-group">
-                    <label for="productLink">Link do Produto AliExpress:</label>
-                    <input type="text" id="productLink" placeholder="https://www.aliexpress.com/item/..." />
-                </div>
-                <button onclick="searchProduct()" class="btn" id="searchBtn">🔍 Buscar Produto</button>
-            </div>
-            
-            <div id="result" class="result-section"></div>
-        </div>
-    </div>
-    
-    <script>
-        function extractProductId(url) {
-            // Extrair ID do produto de diferentes formatos de URL do AliExpress
-            const patterns = [
-                /\\/item\\/(\\d+)\\.html/,
-                /\\/item\\/(\\d+)/,
-                /product_id=(\\d+)/,
-                /itemId=(\\d+)/,
-                /(\\d{10,})/  // ID do produto geralmente tem 10+ dígitos
-            ];
-            
-            for (let pattern of patterns) {
-                const match = url.match(pattern);
-                if (match) {
-                    return match[1];
-                }
-            }
-            
-            return null;
-        }
-        
-        async function searchProduct() {
-            const link = document.getElementById('productLink').value.trim();
-            const searchBtn = document.getElementById('searchBtn');
-            const resultDiv = document.getElementById('result');
-            
-            if (!link) {
-                resultDiv.innerHTML = '<div class="error">Por favor, insira um link do AliExpress</div>';
-                return;
-            }
-            
-            const productId = extractProductId(link);
-            if (!productId) {
-                resultDiv.innerHTML = '<div class="error">Não foi possível extrair o ID do produto do link fornecido</div>';
-                return;
-            }
-            
-            searchBtn.disabled = true;
-            searchBtn.textContent = '🔍 Buscando...';
-            resultDiv.innerHTML = '<div class="loading">Carregando dados do produto...</div>';
-            
-            try {
-                const response = await fetch(`''' + base_url + '''/api/aliexpress/product/${productId}`);
-                const data = await response.json();
-                
-                if (data.success) {
-                    displayProduct(data.data);
-                } else {
-                    resultDiv.innerHTML = `<div class="error">Erro: ${data.message || 'Erro desconhecido'}</div>`;
-                }
-            } catch (error) {
-                resultDiv.innerHTML = `<div class="error">Erro na requisição: ${error.message}</div>`;
-            } finally {
-                searchBtn.disabled = false;
-                searchBtn.textContent = '🔍 Buscar Produto';
-            }
-        }
-        
-        function displayProduct(productData) {
-            const resultDiv = document.getElementById('result');
-            
-            const basicInfo = productData.basic_info || {};
-            const ratings = productData.ratings || {};
-            const storeInfo = productData.store_info || {};
-            const packageInfo = productData.package_info || {};
-            const variations = productData.variations || [];
-            const properties = productData.properties || [];
-            const images = productData.images || [];
-            
-            let html = `
-                <div class="product-card">
-                    <div class="product-header">
-                        <img src="${basicInfo.main_image || ''}" alt="Produto" class="product-image" onerror="this.style.display='none'">
-                        <div class="product-info">
-                            <h3>${basicInfo.title || 'Sem título'}</h3>
-                            <p><strong>ID:</strong> ${basicInfo.product_id || 'N/A'}</p>
-                            <p><strong>Categoria:</strong> ${basicInfo.category_id || 'N/A'}</p>
-                            <p><strong>Status:</strong> ${basicInfo.product_status_type || 'N/A'}</p>
-                        </div>
-                    </div>
-                    
-                    <div class="data-section">
-                        <h4>📊 Avaliações e Vendas</h4>
-                        <div class="data-grid">
-                            <div class="data-item">
-                                <strong>Avaliação:</strong> ${ratings.avg_evaluation_rating || '0'}/5
-                            </div>
-                            <div class="data-item">
-                                <strong>Avaliações:</strong> ${ratings.evaluation_count || '0'}
-                            </div>
-                            <div class="data-item">
-                                <strong>Vendas:</strong> ${ratings.sales_count || '0'}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="data-section">
-                        <h4>🏪 Informações da Loja</h4>
-                        <div class="data-grid">
-                            <div class="data-item">
-                                <strong>Nome:</strong> ${storeInfo.store_name || 'N/A'}
-                            </div>
-                            <div class="data-item">
-                                <strong>ID:</strong> ${storeInfo.store_id || 'N/A'}
-                            </div>
-                            <div class="data-item">
-                                <strong>País:</strong> ${storeInfo.store_country_code || 'N/A'}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="data-section">
-                        <h4>📦 Informações do Pacote</h4>
-                        <div class="data-grid">
-                            <div class="data-item">
-                                <strong>Peso:</strong> ${packageInfo.gross_weight || 'N/A'}
-                            </div>
-                            <div class="data-item">
-                                <strong>Dimensões:</strong> ${packageInfo.package_length || 'N/A'} x ${packageInfo.package_width || 'N/A'} x ${packageInfo.package_height || 'N/A'}
-                            </div>
-                            <div class="data-item">
-                                <strong>Tipo:</strong> ${packageInfo.package_type || 'N/A'}
-                            </div>
-                        </div>
-                    </div>
-            `;
-            
-            if (images.length > 0) {
-                html += `
-                    <div class="data-section">
-                        <h4>🖼️ Imagens (${images.length})</h4>
-                        <div class="data-grid">
-                            ${images.slice(0, 5).map(img => `<div class="data-item"><img src="${img}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 5px;" onerror="this.style.display='none'"></div>`).join('')}
-                        </div>
-                    </div>
-                `;
-            }
-            
-            if (properties.length > 0) {
-                html += `
-                    <div class="data-section">
-                        <h4>🏷️ Propriedades (${properties.length})</h4>
-                        <div class="data-grid">
-                            ${properties.slice(0, 10).map(prop => `
-                                <div class="data-item">
-                                    <strong>${prop.attr_name || 'N/A'}:</strong> ${prop.attr_value || 'N/A'}
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-            }
-            
-            if (variations.length > 0) {
-                html += `
-                    <div class="data-section">
-                        <h4>🎨 Variações (${variations.length})</h4>
-                        <div class="variations-list">
-                            ${variations.slice(0, 10).map(variation => {
-                                const skuProps = variation.ae_sku_property_dtos?.ae_sku_property_d_t_o || [];
-                                const propsHtml = skuProps.map(prop => 
-                                    `<div><strong>${prop.sku_property_name}:</strong> ${prop.sku_property_value}</div>`
-                                ).join('');
-                                
-                                return `
-                                    <div class="variation-item">
-                                        <div><strong>SKU ID:</strong> ${variation.sku_id || 'N/A'}</div>
-                                        <div><strong>Preço:</strong> ${variation.offer_sale_price || 'N/A'}</div>
-                                        <div><strong>Estoque:</strong> ${variation.sku_available_stock || 'N/A'}</div>
-                                        ${propsHtml}
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                    </div>
-                `;
-            }
-            
-            html += `
-                <div class="data-section">
-                    <h4>📋 Dados Completos (JSON)</h4>
-                    <pre style="background: #f8f9fa; padding: 15px; border-radius: 5px; overflow-x: auto; font-size: 12px;">${JSON.stringify(productData, null, 2)}</pre>
-                </div>
-            </div>
-            `;
-            
-            resultDiv.innerHTML = html;
-        }
-        
-        // Permitir busca com Enter
-        document.getElementById('productLink').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                searchProduct();
-            }
-        });
-    </script>
-</body>
-</html>
-    '''
-    
-    elif request.method == 'POST':
-        # Retorna JSON para requisições POST
-        try:
-            data = request.get_json()
-            if not data or 'product_url' not in data:
-                return jsonify({
-                    'success': False,
-                    'message': 'URL do produto é obrigatória'
-                }), 400
-            
-            product_url = data['product_url'].strip()
-            if not product_url:
-                return jsonify({
-                    'success': False,
-                    'message': 'URL do produto não pode estar vazia'
-                }), 400
-            
-            # Extrair ID do produto da URL
-            product_id = extract_product_id_from_url(product_url)
-            if not product_id:
-                return jsonify({
-                    'success': False,
-                    'message': 'Não foi possível extrair o ID do produto da URL'
-                }), 400
-            
-            # Buscar dados do produto usando o endpoint existente
-            try:
-                print(f'🔍 Extraído ID do produto: {product_id}')
-                print(f'🔗 URL original: {product_url}')
-                
-                # Fazer requisição interna para o endpoint de produto
-                import requests
-                internal_url = f"{request.host_url.rstrip('/')}/api/aliexpress/product/{product_id}"
-                print(f'📡 Fazendo requisição interna para: {internal_url}')
-                
-                response = requests.get(internal_url, timeout=45)  # Aumentado para 45 segundos
-                
-                print(f'📡 Resposta interna: {response.status_code}')
-                
-                if response.status_code == 200:
-                    product_data = response.json()
-                    print('✅ Produto encontrado com sucesso')
-                    return jsonify(product_data)
-                else:
-                    print(f'❌ Erro na requisição interna: {response.status_code} - {response.text}')
-                    return jsonify({
-                        'success': False,
-                        'message': f'Erro ao buscar produto: {response.status_code}'
-                    }), response.status_code
-                    
-            except requests.exceptions.Timeout:
-                print('⏰ Timeout na requisição interna (45s)')
-                return jsonify({
-                    'success': False,
-                    'message': 'Timeout ao buscar dados do produto (45s). A API do AliExpress pode estar lenta.'
-                }), 408
-            except requests.exceptions.RequestException as e:
-                print(f'❌ Erro na requisição interna: {str(e)}')
-                return jsonify({
-                    'success': False,
-                    'message': f'Erro na requisição: {str(e)}'
-                }), 500
-                
-        except Exception as e:
-            return jsonify({
-                'success': False,
-                'message': f'Erro interno: {str(e)}'
-            }), 500
-
-
-def extract_product_id_from_url(url):
-    """Extrai o ID do produto de diferentes formatos de URL do AliExpress"""
-    import re
-    
-    patterns = [
-        r'/item/(\d+)\.html',
-        r'/item/(\d+)',
-        r'product_id=(\d+)',
-        r'itemId=(\d+)',
-        r'(\d{10,})'  # ID do produto geralmente tem 10+ dígitos
-    ]
-    
-    for pattern in patterns:
-        match = re.search(pattern, url)
-        if match:
-            return match.group(1)
-    
-    return None
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @app.route('/debug/tokens', methods=['GET'])

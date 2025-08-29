@@ -8,6 +8,7 @@ import requests
 import hashlib
 import time
 import urllib.parse
+import re
 from datetime import datetime
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv

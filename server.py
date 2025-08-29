@@ -4536,7 +4536,7 @@ def calculate_real_shipping_quotes(product_id, destination_cep, items):
                             print(f'❌ Formato inesperado de delivery_options: {type(delivery_options)}')
                             options_list = []
                         
-                        quotes = []
+                     quotes = []
                         for option in options_list:
                             # Converter centavos para reais
                             shipping_fee_cent = float(option.get('shipping_fee_cent', 0))

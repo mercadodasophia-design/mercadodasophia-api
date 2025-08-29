@@ -2100,6 +2100,11 @@ def product_from_url():
     }
     params["sign"] = generate_api_signature(params, APP_SECRET)
 
+    print(f'🔍 PARÂMETROS ENVIADOS PARA API ALIEXPRESS:')
+    print(f'🔍 URL: https://api-sg.aliexpress.com/sync')
+    print(f'🔍 Parâmetros: {json.dumps(params, indent=2, ensure_ascii=False)}')
+    print(f'🔍 ==========================================')
+
     try:
         response = requests.get('https://api-sg.aliexpress.com/sync', params=params, timeout=20)
         print(f'📡 Resposta da API AliExpress: {response.status_code}')
@@ -2109,12 +2114,20 @@ def product_from_url():
             return jsonify({'success': False, 'error': response.text}), response.status_code
 
         data = response.json()
-        print(f'📦 Dados brutos recebidos: {json.dumps(data, indent=2)[:1000]}...')
+        print(f'📦 RESPOSTA COMPLETA DA API ALIEXPRESS:')
+        print(f'📦 Status Code: {response.status_code}')
+        print(f'📦 Headers: {dict(response.headers)}')
+        print(f'📦 Dados brutos recebidos:')
+        print(json.dumps(data, indent=2, ensure_ascii=False))
+        print(f'📦 ==========================================')
 
         result = data.get('aliexpress_ds_product_get_response', {}).get('result', {})
         
         if not result:
             print('❌ Nenhum resultado encontrado na resposta')
+            print(f'❌ Estrutura da resposta: {list(data.keys())}')
+            if 'aliexpress_ds_product_get_response' in data:
+                print(f'❌ Conteúdo de aliexpress_ds_product_get_response: {data["aliexpress_ds_product_get_response"]}')
             return jsonify({'success': False, 'message': 'Produto não encontrado'}), 404
 
         # Extrair informações básicas

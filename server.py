@@ -461,10 +461,40 @@ def shipping_quote():
         if has_ali_express_id:
             # FLUXO 1: Calcular frete pela API do AliExpress
             print('🌐 Usando API do AliExpress para cálculo de frete')
-            quotes = calculate_real_shipping_quotes(product_id, destination_cep, items)
-            fulfillment_mode = 'aliexpress_direct'
-            source = 'aliexpress_api'
-            notes = 'Frete calculado via API oficial do AliExpress'
+            try:
+                quotes = calculate_real_shipping_quotes(product_id, destination_cep, items)
+                fulfillment_mode = 'aliexpress_direct'
+                source = 'aliexpress_api'
+                notes = 'Frete calculado via API oficial do AliExpress'
+            except Exception as e:
+                print(f'❌ Erro na API AliExpress: {e}')
+                # Se houver erro na API do AliExpress, fazer fallback para Correios
+                print(f'🔄 Erro na API AliExpress. Fazendo fallback para Correios...')
+                try:
+                    quotes = calculate_correios_shipping_quotes(destination_cep, items)
+                    fulfillment_mode = 'own_shipping'
+                    source = 'correios_api'
+                    notes = 'Frete calculado via API dos Correios (fallback)'
+                except Exception as correios_error:
+                    print(f'❌ Erro também no fallback Correios: {correios_error}')
+                    # Retornar frete padrão como último recurso
+                    quotes = [{
+                        'service_code': 'FALLBACK_DEFAULT',
+                        'service_name': 'Frete Padrão',
+                        'carrier': 'Loja',
+                        'price': 15.0,
+                        'currency': 'BRL',
+                        'estimated_days': 5,
+                        'max_delivery_days': 7,
+                        'tracking_available': True,
+                        'free_shipping': False,
+                        'origin_cep': STORE_ORIGIN_CEP,
+                        'destination_cep': destination_cep,
+                        'notes': 'Frete padrão (fallback final)'
+                    }]
+                    fulfillment_mode = 'own_shipping'
+                    source = 'fallback'
+                    notes = 'Frete padrão (fallback final)'
         elif has_free_shipping:
             # FLUXO 2A: Frete grátis
             print('🎁 Produto com frete grátis')

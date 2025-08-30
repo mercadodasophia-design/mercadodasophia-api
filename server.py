@@ -551,9 +551,6 @@ def shipping_quote():
             'source': source,
             'notes': notes
         }})
-    except Exception as e:
-        print(f'❌ Erro ao calcular frete: {e}')
-        return jsonify({'success': False, 'message': str(e)}), 500
 
 def generate_gop_signature(params, app_secret):
     """Gera assinatura GOP para AliExpress API"""

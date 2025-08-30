@@ -444,14 +444,61 @@ def shipping_quote():
             print(f'❌ {error_msg}')
             return jsonify({'success': False, 'message': error_msg}), 400
 
-        # Usar API real do AliExpress
-        quotes = calculate_real_shipping_quotes(product_id, destination_cep, items)
-        print(f'✅ Cotações reais calculadas: {quotes}')
+        # Verificar se o produto tem AliExpress ID
+        first_item = items[0]
+        # AliExpress ID válido é um número longo (15-18 dígitos)
+        has_ali_express_id = (product_id and 
+                             product_id.isdigit() and 
+                             len(product_id) >= 15 and 
+                             len(product_id) <= 18 and
+                             product_id != 'produto_sem_aliexpress' and 
+                             product_id != 'produto_frete_gratis')
+        has_free_shipping = first_item.get('has_free_shipping', False)
+        
+        print(f'🔍 Produto tem AliExpress ID: {has_ali_express_id}')
+        print(f'📦 Frete grátis: {has_free_shipping}')
+        
+        if has_ali_express_id:
+            # FLUXO 1: Calcular frete pela API do AliExpress
+            print('🌐 Usando API do AliExpress para cálculo de frete')
+            quotes = calculate_real_shipping_quotes(product_id, destination_cep, items)
+            fulfillment_mode = 'aliexpress_direct'
+            source = 'aliexpress_api'
+            notes = 'Frete calculado via API oficial do AliExpress'
+        elif has_free_shipping:
+            # FLUXO 2A: Frete grátis
+            print('🎁 Produto com frete grátis')
+            quotes = [{
+                'service_code': 'FREE_SHIPPING',
+                'service_name': 'Frete Grátis',
+                'carrier': 'Loja',
+                'price': 0.0,
+                'currency': 'BRL',
+                'estimated_days': 5,
+                'max_delivery_days': 7,
+                'tracking_available': False,
+                'free_shipping': True,
+                'origin_cep': STORE_ORIGIN_CEP,
+                'destination_cep': destination_cep,
+                'notes': 'Frete gratuito para este produto'
+            }]
+            fulfillment_mode = 'own_shipping'
+            source = 'store'
+            notes = 'Frete gratuito'
+        else:
+            # FLUXO 2B: Calcular pelos Correios
+            print('📮 Usando API dos Correios para cálculo de frete')
+            quotes = calculate_correios_shipping_quotes(destination_cep, items)
+            fulfillment_mode = 'own_shipping'
+            source = 'correios_api'
+            notes = 'Frete calculado via API dos Correios'
+        
+        print(f'✅ Cotações calculadas: {quotes}')
         
         return jsonify({'success': True, 'data': quotes, 'fulfillment': {
-            'mode': 'aliexpress_direct',
-            'source': 'aliexpress_api',
-            'notes': 'Frete calculado via API oficial do AliExpress'
+            'mode': fulfillment_mode,
+            'source': source,
+            'notes': notes
         }})
     except Exception as e:
         print(f'❌ Erro ao calcular frete: {e}')
@@ -4569,6 +4616,18 @@ def calculate_real_shipping_quotes(product_id, destination_cep, items):
     
     try:
         # Parâmetros para a API de frete conforme documentação oficial
+        query_delivery_req = {
+            "productId": product_id,
+            "quantity": str(sum(item.get('quantity', 1) for item in items)),
+            "shipToCountry": "BR",
+            "provinceCode": "SP",  # São Paulo como padrão
+            "cityCode": "SAO",     # São Paulo como padrão
+            "selectedSkuId": "12000023999200390",  # SKU padrão
+            "language": "pt_BR",
+            "currency": "BRL",
+            "locale": "pt_BR"
+        }
+        
         params = {
             "method": "aliexpress.ds.freight.query",
             "app_key": APP_KEY,
@@ -4577,17 +4636,7 @@ def calculate_real_shipping_quotes(product_id, destination_cep, items):
             "format": "json",
             "v": "2.0",
             "access_token": tokens['access_token'],
-            "queryDeliveryReq": json.dumps({
-                "productId": product_id,
-                "quantity": str(sum(item.get('quantity', 1) for item in items)),
-                "shipToCountry": "BR",
-                "provinceCode": "SP",  # São Paulo como padrão
-                "cityCode": "SAO",     # São Paulo como padrão
-                "selectedSkuId": "12000023999200390",  # SKU padrão
-                "language": "pt_BR",
-                "currency": "BRL",
-                "locale": "pt_BR"
-            })
+            "queryDeliveryReq": json.dumps(query_delivery_req)
         }
         
         # Gerar assinatura
@@ -4666,6 +4715,101 @@ def calculate_real_shipping_quotes(product_id, destination_cep, items):
     except Exception as e:
         print(f'❌ Erro ao calcular frete real: {e}')
         raise e
+
+def calculate_correios_shipping_quotes(destination_cep, items):
+    """Calcula cotações de frete usando API dos Correios"""
+    try:
+        # Calcular peso total
+        total_weight = sum(item.get('weight', 0.5) * item.get('quantity', 1) for item in items)
+        
+        # Parâmetros para API dos Correios
+        correios_params = {
+            'nCdEmpresa': '',
+            'sDsSenha': '',
+            'nCdServico': '04510',  # PAC
+            'sCepOrigem': '01001000',  # CEP de origem
+            'sCepDestino': destination_cep.replace('-', ''),
+            'nVlPeso': str(total_weight),
+            'nCdFormato': '1',  # Caixa/Pacote
+            'nVlComprimento': '20',
+            'nVlAltura': '10',
+            'nVlLargura': '15',
+            'nVlDiametro': '0',
+            'sCdMaoPropria': 'N',
+            'nVlValorDeclarado': '0',
+            'sCdAvisoRecebimento': 'N'
+        }
+        
+        print(f'📮 Calculando frete Correios para CEP: {destination_cep}')
+        print(f'📮 Parâmetros: {correios_params}')
+        
+        # Fazer requisição para API dos Correios
+        response = requests.get('https://ws.correios.com.br/calculador/CalcPrecoPrazo.asmx/CalcPrecoPrazo', 
+                               params=correios_params, timeout=30)
+        
+        print(f'📮 Status Code: {response.status_code}')
+        print(f'📮 Resposta: {response.text}')
+        
+        if response.status_code == 200:
+            # Parsear resposta XML dos Correios
+            import xml.etree.ElementTree as ET
+            root = ET.fromstring(response.text)
+            
+            quotes = []
+            for servico in root.findall('.//cServico'):
+                codigo = servico.find('Codigo').text if servico.find('Codigo') is not None else '04510'
+                valor = servico.find('Valor').text if servico.find('Valor') is not None else '0'
+                prazo = servico.find('PrazoEntrega').text if servico.find('PrazoEntrega') is not None else '5'
+                erro = servico.find('Erro').text if servico.find('Erro') is not None else '0'
+                
+                if erro == '0':  # Sem erro
+                    # Converter valor de string (ex: "R$ 15,50") para float
+                    valor_limpo = valor.replace('R$', '').replace(',', '.').strip()
+                    try:
+                        valor_float = float(valor_limpo)
+                    except:
+                        valor_float = 0.0
+                    
+                    service_name = 'PAC - Correios' if codigo == '04510' else f'Serviço {codigo} - Correios'
+                    
+                    quotes.append({
+                        'service_code': f'CORREIOS_{codigo}',
+                        'service_name': service_name,
+                        'carrier': 'Correios',
+                        'price': valor_float,
+                        'currency': 'BRL',
+                        'estimated_days': int(prazo),
+                        'max_delivery_days': int(prazo) + 2,
+                        'tracking_available': True,
+                        'free_shipping': False,
+                        'origin_cep': '01001-000',
+                        'destination_cep': destination_cep,
+                        'notes': f'Frete calculado via API dos Correios - {service_name}'
+                    })
+            
+            print(f'✅ Frete Correios calculado: {len(quotes)} opções')
+            return quotes
+        else:
+            print(f'❌ Erro HTTP Correios: {response.status_code}')
+            raise Exception(f'Erro HTTP {response.status_code} na API dos Correios')
+            
+    except Exception as e:
+        print(f'❌ Erro ao calcular frete Correios: {e}')
+        # Retornar frete padrão em caso de erro
+        return [{
+            'service_code': 'CORREIOS_FALLBACK',
+            'service_name': 'Frete Padrão',
+            'carrier': 'Correios',
+            'price': 15.0,
+            'currency': 'BRL',
+            'estimated_days': 5,
+            'max_delivery_days': 7,
+            'tracking_available': True,
+            'free_shipping': False,
+            'origin_cep': '01001-000',
+            'destination_cep': destination_cep,
+            'notes': 'Frete padrão (fallback)'
+        }]
 
 @app.route('/test', methods=['GET'])
 def test_endpoint():

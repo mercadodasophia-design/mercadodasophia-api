@@ -488,10 +488,31 @@ def shipping_quote():
         else:
             # FLUXO 2B: Calcular pelos Correios
             print('📮 Usando API dos Correios para cálculo de frete')
-            quotes = calculate_correios_shipping_quotes(destination_cep, items)
-            fulfillment_mode = 'own_shipping'
-            source = 'correios_api'
-            notes = 'Frete calculado via API dos Correios'
+            try:
+                quotes = calculate_correios_shipping_quotes(destination_cep, items)
+                fulfillment_mode = 'own_shipping'
+                source = 'correios_api'
+                notes = 'Frete calculado via API dos Correios'
+            except Exception as e:
+                print(f'❌ Erro na API dos Correios: {e}')
+                # Fallback para frete padrão
+                quotes = [{
+                    'service_code': 'CORREIOS_FALLBACK',
+                    'service_name': 'Frete Padrão',
+                    'carrier': 'Correios',
+                    'price': 15.0,
+                    'currency': 'BRL',
+                    'estimated_days': 5,
+                    'max_delivery_days': 7,
+                    'tracking_available': True,
+                    'free_shipping': False,
+                    'origin_cep': '01001-000',
+                    'destination_cep': destination_cep,
+                    'notes': 'Frete padrão (fallback)'
+                }]
+                fulfillment_mode = 'own_shipping'
+                source = 'fallback'
+                notes = 'Frete padrão (fallback)'
         
         print(f'✅ Cotações calculadas: {quotes}')
         
@@ -4620,7 +4641,7 @@ def calculate_real_shipping_quotes(product_id, destination_cep, items):
         
         # Parâmetros para a API de frete conforme documentação oficial (Dropshipping API)
         # Ordem correta conforme documentação: quantity, shipToCountry, productId, provinceCode, cityCode, language, locale, selectedSkuId, currency
-        query_delivery_req = {
+        query_delivery_req_json = json.dumps({
             "quantity": str(sum(item.get('quantity', 1) for item in items)),
             "shipToCountry": "BR",
             "productId": product_id,
@@ -4630,7 +4651,7 @@ def calculate_real_shipping_quotes(product_id, destination_cep, items):
             "locale": "pt_BR",
             "selectedSkuId": "12000023999200390",  # SKU padrão
             "currency": "BRL"
-        }
+        })
         
         params = {
             "method": "aliexpress.ds.freight.query",
@@ -4640,7 +4661,7 @@ def calculate_real_shipping_quotes(product_id, destination_cep, items):
             "format": "json",
             "v": "2.0",
             "access_token": tokens['access_token'],
-            "queryDeliveryReq": json.dumps(query_delivery_req)
+            "queryDeliveryReq": query_delivery_req_json
         }
         
         # Gerar assinatura

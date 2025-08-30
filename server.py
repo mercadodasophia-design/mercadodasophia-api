@@ -4776,27 +4776,8 @@ def calculate_real_shipping_quotes(product_id, destination_cep, items):
             
     except Exception as e:
         print(f'❌ Erro ao calcular frete real: {e}')
-        # Se houver erro na API do AliExpress, fazer fallback para Correios
-        print(f'🔄 Erro na API AliExpress. Fazendo fallback para Correios...')
-        try:
-            return calculate_correios_shipping_quotes(destination_cep, items)
-        except Exception as correios_error:
-            print(f'❌ Erro também no fallback Correios: {correios_error}')
-            # Retornar frete padrão como último recurso
-            return [{
-                'service_code': 'FALLBACK_DEFAULT',
-                'service_name': 'Frete Padrão',
-                'carrier': 'Loja',
-                'price': 15.0,
-                'currency': 'BRL',
-                'estimated_days': 5,
-                'max_delivery_days': 7,
-                'tracking_available': True,
-                'free_shipping': False,
-                'origin_cep': STORE_ORIGIN_CEP,
-                'destination_cep': destination_cep,
-                'notes': 'Frete padrão (fallback final)'
-            }]
+        # Propagar erro para função principal fazer o fallback
+        raise e
 
 def calculate_correios_shipping_quotes(destination_cep, items):
     """Calcula cotações de frete usando API dos Correios"""

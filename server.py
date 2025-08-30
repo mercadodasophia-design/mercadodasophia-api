@@ -4757,26 +4757,8 @@ def calculate_real_shipping_quotes(product_id, destination_cep, items):
                         
                         # Se for DELIVERY_INFO_EMPTY, fazer fallback para Correios
                         if 'DELIVERY_INFO_EMPTY' in error_msg:
-                            print(f'🔄 DELIVERY_INFO_EMPTY detectado. Fazendo fallback para Correios...')
-                            try:
-                                return calculate_correios_shipping_quotes(destination_cep, items)
-                            except Exception as correios_error:
-                                print(f'❌ Erro no fallback Correios: {correios_error}')
-                                # Retornar frete padrão como último recurso
-                                return [{
-                                    'service_code': 'FALLBACK_DEFAULT',
-                                    'service_name': 'Frete Padrão',
-                                    'carrier': 'Loja',
-                                    'price': 15.0,
-                                    'currency': 'BRL',
-                                    'estimated_days': 5,
-                                    'max_delivery_days': 7,
-                                    'tracking_available': True,
-                                    'free_shipping': False,
-                                    'origin_cep': STORE_ORIGIN_CEP,
-                                    'destination_cep': destination_cep,
-                                    'notes': 'Frete padrão (fallback final)'
-                                }]
+                            print(f'🔄 DELIVERY_INFO_EMPTY detectado. Propagando erro para fallback na função principal...')
+                            raise Exception(f'Erro na API de frete: {error_msg}')
                         else:
                             raise Exception(f'Erro na API de frete: {error_msg}')
                 else:

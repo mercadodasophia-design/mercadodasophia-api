@@ -4615,28 +4615,31 @@ def calculate_real_shipping_quotes(product_id, destination_cep, items):
         raise Exception('Token não encontrado. Faça autorização primeiro.')
     
     try:
-        # Parâmetros para a API de frete conforme documentação oficial
-        query_delivery_req = {
-            "productId": product_id,
-            "quantity": str(sum(item.get('quantity', 1) for item in items)),
-            "shipToCountry": "BR",
-            "provinceCode": "SP",  # São Paulo como padrão
-            "cityCode": "SAO",     # São Paulo como padrão
-            "selectedSkuId": "12000023999200390",  # SKU padrão
-            "language": "pt_BR",
-            "currency": "BRL",
-            "locale": "pt_BR"
+        # Calcular peso total dos itens
+        total_weight = sum(item.get('weight', 0.5) * item.get('quantity', 1) for item in items)
+        
+        # Parâmetros para a API de frete conforme documentação oficial (Buyer Freight API)
+        freight_params = {
+            "country_code": "BR",
+            "price": str(sum(item.get('price', 0) * item.get('quantity', 1) for item in items)),
+            "product_id": product_id,
+            "city_code": "SAO",     # São Paulo como padrão
+            "sku_id": "12000023999200390",  # SKU padrão
+            "product_num": str(sum(item.get('quantity', 1) for item in items)),
+            "send_goods_country_code": "CN",
+            "province_code": "SP",  # São Paulo como padrão
+            "price_currency": "BRL"
         }
         
         params = {
-            "method": "aliexpress.ds.freight.query",
+            "method": "aliexpress.logistics.buyer.freight.calculate",
             "app_key": APP_KEY,
             "timestamp": int(time.time() * 1000),
             "sign_method": "md5",
             "format": "json",
             "v": "2.0",
             "access_token": tokens['access_token'],
-            "queryDeliveryReq": json.dumps(query_delivery_req)
+            "param_aeop_freight_calculate_for_buyer_d_t_o": json.dumps(freight_params)
         }
         
         # Gerar assinatura
@@ -4656,38 +4659,30 @@ def calculate_real_shipping_quotes(product_id, destination_cep, items):
                 data = response.json()
                 print(f'🚚 Dados JSON: {json.dumps(data, indent=2)}')
                 
-                if 'aliexpress_ds_freight_query_response' in data:
-                    freight_response = data['aliexpress_ds_freight_query_response']
+                if 'aliexpress_logistics_buyer_freight_calculate_response' in data:
+                    freight_response = data['aliexpress_logistics_buyer_freight_calculate_response']
                     result = freight_response.get('result', {})
                     
-                    if result.get('success') == 'true' or result.get('msg') == 'Call succeeds':
-                        delivery_options = result.get('delivery_options', {})
-                        
-                        # Verificar se delivery_options é um objeto com delivery_option_d_t_o
-                        if isinstance(delivery_options, dict) and 'delivery_option_d_t_o' in delivery_options:
-                            options_list = delivery_options['delivery_option_d_t_o']
-                        elif isinstance(delivery_options, list):
-                            options_list = delivery_options
-                        else:
-                            print(f'❌ Formato inesperado de delivery_options: {type(delivery_options)}')
-                            options_list = []
+                    if result.get('success') == 'true':
+                        freight_options = result.get('aeop_freight_calculate_result_for_buyer_d_t_o_list', [])
                         
                         quotes = []
-                        for option in options_list:
+                        for option in freight_options:
                             # Converter centavos para reais
-                            shipping_fee_cent = float(option.get('shipping_fee_cent', 0))
+                            freight_info = option.get('freight', {})
+                            shipping_fee_cent = float(freight_info.get('cent', 0))
                             shipping_fee = shipping_fee_cent / 100
                             
                             quotes.append({
-                                'service_code': option.get('code', 'UNKNOWN'),
-                                'service_name': option.get('company', 'AliExpress'),
-                                'carrier': option.get('company', 'AliExpress'),
+                                'service_code': option.get('service_name', 'UNKNOWN'),
+                                'service_name': option.get('service_name', 'AliExpress'),
+                                'carrier': 'AliExpress',
                                 'price': round(shipping_fee, 2),
-                                'currency': option.get('shipping_fee_currency', 'BRL'),
-                                'estimated_days': int(option.get('min_delivery_days', 30)),
-                                'max_delivery_days': int(option.get('max_delivery_days', 60)),
-                                'tracking_available': option.get('tracking', 'false') == 'true',
-                                'free_shipping': option.get('free_shipping', 'false') == 'true',
+                                'currency': freight_info.get('currency_code', 'BRL'),
+                                'estimated_days': 30,  # Valor padrão
+                                'max_delivery_days': 60,  # Valor padrão
+                                'tracking_available': option.get('tracking_available', 'false') == 'true',
+                                'free_shipping': shipping_fee == 0,
                                 'origin_cep': STORE_ORIGIN_CEP,
                                 'destination_cep': destination_cep,
                                 'notes': f'Frete real AliExpress - {option.get("estimated_delivery_time", "N/A")}'
@@ -4698,7 +4693,13 @@ def calculate_real_shipping_quotes(product_id, destination_cep, items):
                     else:
                         error_msg = result.get('msg', 'Erro desconhecido na API de frete')
                         print(f'❌ Erro API frete: {error_msg}')
-                        raise Exception(f'Erro na API de frete: {error_msg}')
+                        
+                        # Se for DELIVERY_INFO_EMPTY, fazer fallback para Correios
+                        if 'DELIVERY_INFO_EMPTY' in error_msg:
+                            print(f'🔄 DELIVERY_INFO_EMPTY detectado. Fazendo fallback para Correios...')
+                            return calculate_correios_shipping_quotes(destination_cep, items)
+                        else:
+                            raise Exception(f'Erro na API de frete: {error_msg}')
                 else:
                     print(f'❌ Estrutura inesperada. Keys disponíveis: {list(data.keys())}')
                     print(f'❌ Conteúdo completo: {json.dumps(data, indent=2)}')
